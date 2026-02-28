@@ -1,0 +1,122 @@
+# ==========================================
+# 📁 Agent AIGC 项目 Git 忽略配置
+# ==========================================
+
+# ==========================================
+# 🔐 敏感配置文件（重要！）
+# ==========================================
+# 本地敏感配置（包含API密钥、数据库密码等）
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+*.local.env
+
+# 密钥文件
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+secrets/
+credentials/
+
+# ==========================================
+# 📦 Java / Maven
+# ==========================================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# IDE - Eclipse
+.settings/
+.project
+.classpath
+.metadata
+
+# IDE - NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# IDE - VS Code
+.vscode/
+
+# ==========================================
+# 🌐 Node / 前端
+# ==========================================
+node_modules/
+dist/
+.pnpm-store/
+
+# 日志文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 本地环境配置
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ==========================================
+# 📝 日志和临时文件
+# ==========================================
+logs/
+*.log
+*.log.*
+
+# 临时文件
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# 🧪 测试和覆盖率
+# ==========================================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+jacoco/
+
+# ==========================================
+# 🔧 其他
+# ==========================================
+# 爬虫输出（可选择性保留）
+scripts/output/
+!scripts/output/.gitkeep
+
+# 本地数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 上传文件目录
+uploads/
+temp-uploads/
+
+# 学习参考项目（包含第三方代码，独立仓库）
+study_project/
+

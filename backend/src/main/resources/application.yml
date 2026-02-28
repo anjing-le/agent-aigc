@@ -1,0 +1,240 @@
+# 🚀 Agent Dev Scaffolding 配置文件
+# 企业级Spring Boot脚手架 - 条件化配置版本
+
+# 基础配置
+server:
+  port: 10003
+  shutdown: graceful
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: agent-aigc
+  
+  # 环境配置
+  # 启用 local profile 来加载敏感配置
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  
+  # 数据源配置
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/agent_aigc?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    
+    # Druid连接池配置
+    druid:
+      # 初始连接数
+      initial-size: 5
+      # 最小连接池数量
+      min-idle: 10
+      # 最大连接池数量
+      max-active: 20
+      # 配置获取连接等待超时的时间
+      max-wait: 60000
+      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+      time-between-eviction-runs-millis: 60000
+      # 配置一个连接在池中最小生存的时间，单位是毫秒
+      min-evictable-idle-time-millis: 300000
+      # 配置一个连接在池中最大生存的时间，单位是毫秒
+      max-evictable-idle-time-millis: 900000
+      # 配置检测连接是否有效
+      validation-query: SELECT 1 FROM DUAL
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      # 打开PSCache，并且指定每个连接上PSCache的大小
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 20
+      # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+      filters: stat,wall,slf4j
+      # 通过connectProperties属性来打开mergeSql功能；慢SQL记录
+      connection-properties: druid.stat.mergeSql\=true;druid.stat.slowSqlMillis\=5000
+      # 配置DruidStatFilter
+      web-stat-filter:
+        enabled: true
+        url-pattern: "/*"
+        exclusions: "*.js,*.gif,*.jpg,*.bmp,*.png,*.css,*.ico,/druid/*"
+      # 配置DruidStatViewServlet
+      stat-view-servlet:
+        enabled: true
+        # 设置白名单，不填则允许所有访问
+        allow: 127.0.0.1,192.168.0.0/16
+        url-pattern: "/druid/*"
+        # 控制台管理用户名和密码
+        login-username: ${DRUID_USERNAME:admin}
+        login-password: ${DRUID_PASSWORD:admin}
+      filter:
+        stat:
+          enabled: true
+          # 慢SQL记录
+          log-slow-sql: true
+          slow-sql-millis: 1000
+          merge-sql: true
+        wall:
+          config:
+            multi-statement-allow: true
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        # 显示SQL参数绑定
+        show_sql: true
+        use_sql_comments: true
+        # 统计信息
+        generate_statistics: false
+  
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 5000
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+  
+  # Jackson配置
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+# 🔥 日志配置 - 统一标准v1.0
+# 注意：详细的日志配置在 logback-spring.xml 中，包括文件输出、日志分类等
+logging:
+  level:
+    root: INFO
+    com.anjing: DEBUG
+    org.springframework.web: INFO
+    # Hibernate SQL日志（开发环境）
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    # Spring Data JPA日志
+    org.springframework.data.jpa: DEBUG
+    # 抑制JPA Named Query查找日志（抑制 "Did not find named query" 信息）
+    org.springframework.data.jpa.repository.query.NamedQuery: ERROR
+    org.springframework.data.jpa.repository.query.QueryEnhancerFactory: WARN
+    # Spring框架日志
+    org.springframework.boot: INFO
+    org.springframework.security: INFO
+    # 连接池日志
+    com.alibaba.druid: INFO
+    # HTTP客户端日志
+    org.apache.http: WARN
+  pattern:
+    # 控制台格式由logback-spring.xml统一管理
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    # 文件格式由logback-spring.xml统一管理
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} - %msg%n"
+
+# 🔥 自定义日志配置
+anjing:
+  logging:
+    # 日志文件路径
+    path: logs
+    # 应用ID（用于日志标识）
+    app-id: ${spring.application.name}
+    # 是否启用SQL日志文件
+    enable-sql-file: true
+    # 是否启用JSON格式日志
+    enable-json-log: false
+    # 异步日志队列大小
+    async-queue-size: 1024
+    # 日志压缩配置
+    compression:
+      enabled: true
+      # 压缩文件保留天数
+      max-history: 30
+
+# 管理端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# 🎛️ 功能特性配置 - 条件化启用各种功能
+app:
+  features:
+    # Redis功能配置
+    redis:
+      enabled: true                     # 是否启用Redis
+      host: localhost                  # Redis主机
+      port: 6379                      # Redis端口
+      timeout: 5000                   # 连接超时(毫秒)
+      cluster: false                  # 是否集群模式
+
+    # 缓存功能配置
+    cache:
+      enabled: true                   # 是否启用缓存
+      type: redis                     # 缓存类型: redis/memory
+      default-ttl: 3600              # 默认过期时间(秒)
+      enable-stats: true              # 是否启用缓存统计
+    
+    # 分布式锁功能配置
+    distributed-lock:
+      enabled: true                   # 是否启用分布式锁
+      provider: redisson              # 锁提供者: redisson/local
+      default-wait-time: 10           # 默认等待时间(秒)
+      default-expire-time: 30         # 默认过期时间(秒)
+    
+    # 数据库功能配置
+    database:
+      enabled: true                   # 是否启用数据库
+      show-sql: true                  # 是否显示SQL
+      enable-auditing: true           # 是否启用JPA审计
+      enable-pool-monitoring: true    # 是否启用连接池监控
+    
+    # 中间件功能配置
+    middleware:
+      # Kafka消息队列
+      kafka:
+        enabled: false                # 是否启用Kafka
+        bootstrap-servers: localhost:9092
+        group-id: agent-dev-scaffolding
+      
+      # MinIO对象存储
+      minio:
+        enabled: false                # 是否启用MinIO
+        endpoint: http://localhost:9000
+        access-key: ""
+        secret-key: ""
+        bucket-name: default
+      
+      # OSS云存储
+      oss:
+        enabled: false                # 是否启用OSS
+        provider: aliyun              # 提供商: aliyun/tencent/aws
+        endpoint: ""
+        access-key: ""
+        secret-key: ""
+        bucket-name: ""
+    
+    # 监控功能配置
+    monitoring:
+      enabled: true                   # 是否启用监控
+      enable-performance: true        # 是否启用性能监控
+      enable-health-check: true       # 是否启用健康检查
+      enable-metrics: true            # 是否启用指标收集
+
