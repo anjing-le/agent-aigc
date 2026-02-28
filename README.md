@@ -2,150 +2,133 @@
 
 > 用户输入一句话，系统自动理解意图、选择模型、优化提示词，生成图片 / 视频 / 音频。
 
-## 核心设计
+## 环境要求
 
-```
-用户："帮我画一只猫在星空下跳舞，竖屏4K"
-                    ↓
-    ┌───────────────────────────────┐
-    │  IntentAnalyzer (意图分析)     │  ← gpt-4o-mini 解析自然语言
-    │  提取: IMAGE, 9:16, 4K        │
-    └───────────────┬───────────────┘
-                    ↓
-    ┌───────────────────────────────┐
-    │  RoutingAgent (智能路由)       │  ← 4K → 选 gemini-3-pro
-    └───────────────┬───────────────┘
-                    ↓
-    ┌───────────────────────────────┐
-    │  PromptEnhancer (提示词增强)   │  ← 自动加 "high quality, detailed"
-    └───────────────┬───────────────┘
-                    ↓
-    ┌───────────────────────────────┐
-    │  ProviderRouter → Provider    │  ← 按配置路由到 GoogleImageProvider
-    │  调用 Gemini API 生成图片      │
-    └───────────────────────────────┘
+| 环境 | 版本 |
+|------|------|
+| JDK | 17+ |
+| Maven | 3.8+ |
+| Node.js | 20+  |
+| pnpm | 8.8+ |
+| MySQL | 8.x |
+| Redis | 6.x+ |
+
+## 1. 克隆项目
+
+```bash
+git clone git@github.com:anjing-le/agent-aigc.git
+cd agent-aigc
 ```
 
-**设计要点：**
-- 意图分析用便宜的 gpt-4o-mini，内容生成才用 Google GenAI，控制成本
-- Provider 接口抽象（Image / Video / Audio），新增模型只需实现接口
-- 异步任务 + 前端轮询，适配 AI 生成的长耗时场景
-
-## 功能
-
-| 能力 | 模型 | 说明 |
-|------|------|------|
-| 文生图 | Gemini 2.5 Flash / 3 Pro | 支持多风格、多比例，最高 4K |
-| 图生图 | Gemini | 基于参考图片风格迁移 |
-| 文生视频 | Veo 3.1 | 4-8 秒视频，含音频 |
-| 图生视频 | Veo 3.1 | 静态图片变动态视频 |
-| 语音合成 | Gemini TTS | 5 种预设语音 |
-
-## 技术栈
-
-**后端**：Spring Boot 3.4.5 / Java 17 / JPA / MySQL / Redis / OkHttp
-
-**前端**：Vue 3.5 / TypeScript / Vite 7 / Element Plus / TailwindCSS
-
-## 快速开始
-
-### 环境要求
-
-- JDK 17+、Node.js 20+（pnpm）、MySQL 8.x、Redis
-
-### 1. 创建数据库
+## 2. 创建数据库
 
 ```sql
 CREATE DATABASE agent_aigc DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-表结构由 JPA 自动创建。
+表结构由 JPA 自动创建（`ddl-auto: update`），无需手动建表。
 
-### 2. 配置 API Key
+## 3. 配置 API Key
 
 ```bash
 cp backend/src/main/resources/application-local.yml.example \
    backend/src/main/resources/application-local.yml
 ```
 
-编辑 `application-local.yml`，填入：
+编辑 `application-local.yml`，填入以下配置：
 
 ```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/agent_aigc?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: your_mysql_password        # 改成你的 MySQL 密码
+
 aigc:
   providers:
     google:
-      api-key: <your_google_api_key>       # https://aistudio.google.com/apikey
-      # proxy-host: 127.0.0.1              # 如需代理
+      api-key: your_google_api_key       # Google GenAI API Key
+      # proxy-host: 127.0.0.1            # 如需代理访问 Google API，取消注释
       # proxy-port: 7897
     onerouter:
-      api-key: <your_onerouter_api_key>    # https://onerouter.pro
+      api-key: your_onerouter_api_key    # OneRouter API Key
 ```
 
-### 3. 启动后端
+**API Key 获取方式：**
+- Google API Key：https://aistudio.google.com/apikey
+- OneRouter API Key：https://onerouter.pro
+
+## 4. 启动后端
 
 ```bash
 cd backend
 mvn spring-boot:run
-# 端口 10003
 ```
 
-看到以下日志说明成功：
+看到以下日志说明启动成功：
+
 ```
 ✅ Google Image Provider (Nano Banana) 初始化成功
 ✅ Google Video Provider (Veo) 初始化成功
 ✅ Google Audio Provider (TTS) 初始化成功
 ```
 
-### 4. 启动前端
+后端运行在 http://localhost:10003
+
+## 5. 启动前端
 
 ```bash
 cd frontend
 pnpm install
 pnpm dev
-# 端口 5173，自动打开浏览器
 ```
 
-### 5. 验证
+前端运行在 http://localhost:5173，自动打开浏览器。
+
+## 6. 验证
+
+### 方式一：命令行验证
 
 ```bash
+# 发送生成请求
 curl -X POST http://localhost:10003/api/aigc/generate \
   -H "Content-Type: application/json" \
   -d '{"prompt": "一只猫在星空下跳舞"}'
+
+# 正常返回示例：
+# {
+#   "code": 200,
+#   "data": {
+#     "taskId": "xxx",
+#     "status": "PENDING",
+#     "agentAnalysis": {
+#       "intent": "text_to_image",
+#       "contentType": "IMAGE",
+#       "selectedModel": "gemini-2.5-flash-image"
+#     }
+#   }
+# }
+
+# 查询任务状态（用上面返回的 taskId）
+curl http://localhost:10003/api/aigc/task/{taskId}
 ```
 
-## 项目结构
+### 方式二：前端验证
 
-```
-backend/src/main/java/com/anjing/aigc/
-├── agent/                          # 智能路由核心
-│   ├── IntentAnalyzer.java         # 意图分析（调用 gpt-4o-mini）
-│   ├── RoutingAgent.java           # 路由决策 + 模型选择
-│   └── PromptEnhancer.java         # 提示词增强
-├── provider/                       # 内容生成
-│   ├── ContentProvider.java        # 基接口
-│   ├── ProviderRouter.java         # 按配置路由到对应 Provider
-│   └── google/
-│       ├── GoogleImageProvider.java    # Gemini 图片
-│       ├── GoogleVideoProvider.java    # Veo 视频（异步轮询）
-│       └── GoogleAudioProvider.java    # TTS 语音
-├── controller/AigcController.java  # REST API
-├── service/impl/AigcServiceImpl.java   # 异步任务调度
-└── model/                          # Entity / DTO / Enum
+1. 打开 http://localhost:5173，进入创作工作台
+2. 输入"画一只猫在跳舞"
+3. 等待 Agent 分析 → 模型生成 → 图片展示
 
-frontend/src/views/aigc/
-├── studio/     # 创作工作台（输入 + 轮询 + 展示）
-├── gallery/    # 灵感广场（提示词库）
-└── assets/     # 我的资产（生成历史）
-```
+## 常见问题
 
-## API
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/aigc/generate` | 智能生成入口 |
-| GET | `/api/aigc/task/{taskId}` | 查询任务状态（轮询） |
-| GET | `/api/aigc/gallery` | 灵感广场 |
-| GET | `/api/aigc/assets` | 我的资产 |
+| 问题 | 解决方案 |
+|------|---------|
+| Google API 调用超时 | 检查代理配置，取消 `proxy-host` 和 `proxy-port` 的注释 |
+| OneRouter 调用失败 | 检查 API Key 和余额：https://onerouter.pro |
+| 数据库连接失败 | 确认 MySQL 已启动，密码配置正确 |
+| 前端 API 404 | 确保后端在 10003 端口运行 |
+| 视频生成耗时长 | 正常现象，Veo 生成需要 1-5 分钟 |
+| Redis 连接失败 | 确认 Redis 已启动，默认端口 6379 |
 
 ## 许可证
 
