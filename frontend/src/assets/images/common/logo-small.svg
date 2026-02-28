@@ -1,0 +1,13 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 蝴蝶图标 - 单只居中 -->
+  <g transform="translate(2, 3) scale(0.14)">
+    <!-- 左翅膀 -->
+    <path d="M100,80.591c0,0-24.126-31.23-38.144-30.581c-14.019,0.65-10.061,44.132-6.358,48.744c3.702,4.612,18.98,9.799,18.98,9.799s-11.659,4.718-11.659,14.9c0,10.182,10.364,21.673,22.793,8.9c12.43-12.773,13.273-25.411,13.273-25.411" fill="#26BBEC" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- 右翅膀 -->
+    <path d="M100,80.591c0,0,24.126-31.23,38.144-30.581c14.019,0.65,10.061,44.132,6.358,48.744c-3.702,4.612-18.98,9.799-18.98,9.799s11.659,4.718,11.659,14.9c0,10.182-10.364,21.673-22.793,8.9c-12.43-12.773-13.273-25.411-13.273-25.411" fill="#ED5481" stroke="#1a1a2e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- 头 -->
+    <circle cx="100" cy="70" r="4" fill="#FBAD4A" stroke="#1a1a2e" stroke-width="5"/>
+    <!-- 身体 -->
+    <ellipse cx="100" cy="92" rx="4" ry="22" fill="#FBAD4A" stroke="#1a1a2e" stroke-width="5"/>
+  </g>
+</svg>
