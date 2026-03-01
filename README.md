@@ -98,7 +98,7 @@ redis-cli ping
 cd backend
 
 mvn clean compile -DskipTests
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.profiles=local
 ```
 
 **启动成功标志**：
