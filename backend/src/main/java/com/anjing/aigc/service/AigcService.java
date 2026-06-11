@@ -6,7 +6,7 @@ import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
-import com.anjing.model.response.PageResponse;
+import com.anjing.model.response.PageResult;
 
 /**
  * AIGC 服务接口
@@ -50,7 +50,7 @@ public interface AigcService {
      * @param keyword 关键词
      * @return 分页列表
      */
-    PageResponse<GalleryDTO> getGalleryList(Integer current, Integer size, String contentType, String model, String keyword);
+    PageResult<GalleryDTO> getGalleryList(Integer current, Integer size, String contentType, String model, String keyword);
 
     /**
      * 保存作品到灵感广场
@@ -67,7 +67,7 @@ public interface AigcService {
      * @param contentType 内容类型
      * @return 分页列表
      */
-    PageResponse<AssetDTO> getAssetList(Integer current, Integer size, String contentType);
+    PageResult<AssetDTO> getAssetList(Integer current, Integer size, String contentType);
 
     /**
      * 删除资产
@@ -76,4 +76,3 @@ public interface AigcService {
      */
     void deleteAsset(String assetId);
 }
-

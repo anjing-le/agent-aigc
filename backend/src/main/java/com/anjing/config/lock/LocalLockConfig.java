@@ -49,6 +49,18 @@ public class LocalLockConfig {
     public static class LocalLockManager {
         
         private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<>();
+
+        /**
+         * 获取本地锁，直到成功为止。
+         *
+         * @param lockKey 锁键
+         * @param expireTime 过期时间（秒，本地锁忽略此参数）
+         */
+        public void lock(String lockKey, long expireTime) {
+            ReentrantLock lock = locks.computeIfAbsent(lockKey, k -> new ReentrantLock());
+            lock.lock();
+            log.debug("🔒 本地锁获取成功: {}", lockKey);
+        }
         
         /**
          * 获取锁

@@ -2,6 +2,7 @@ package com.anjing.aigc.model.entity;
 
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.util.DateUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -102,8 +103,8 @@ public class AigcTask {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdAt = DateUtils.nowLocalDateTime();
+        updatedAt = DateUtils.nowLocalDateTime();
         if (progress == null) {
             progress = 0;
         }
@@ -111,6 +112,6 @@ public class AigcTask {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = DateUtils.nowLocalDateTime();
     }
 }

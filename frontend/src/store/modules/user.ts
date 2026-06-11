@@ -78,8 +78,24 @@ export const useUserStore = defineStore(
      * 设置用户信息
      * @param newInfo 新的用户信息
      */
-    const setUserInfo = (newInfo: Api.Auth.UserInfo) => {
-      info.value = newInfo
+    const setUserInfo = (newInfo: Partial<Api.Auth.UserInfo>) => {
+      const permissions = newInfo.permissions || newInfo.buttons || []
+      info.value = {
+        ...newInfo,
+        buttons: newInfo.buttons || permissions,
+        permissions,
+        roles: newInfo.roles || [],
+        userId: newInfo.userId || 0,
+        userName: newInfo.userName || newInfo.nickName || '',
+        email: newInfo.email || ''
+      }
+    }
+
+    const initUserInfo = async () => {
+      const { fetchGetUserInfo } = await import('@/api/auth')
+      const userInfo = await fetchGetUserInfo()
+      setUserInfo(userInfo)
+      checkAndClearWorktabs()
     }
 
     /**
@@ -216,6 +232,7 @@ export const useUserStore = defineStore(
       getSettingState,
       getWorktabState,
       setUserInfo,
+      initUserInfo,
       setLoginStatus,
       setLanguage,
       setSearchHistory,

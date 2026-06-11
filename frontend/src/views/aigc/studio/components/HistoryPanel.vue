@@ -108,6 +108,7 @@ import {
 import { ElMessageBox, ElMessage } from 'element-plus'
 import type { AssetItem, ContentType } from '@/api/model/aigcModel'
 import { fetchSaveToGallery, fetchDeleteAsset } from '@/api/aigc'
+import { formatDate } from '@/utils/time'
 
 interface Props {
   items: AssetItem[]
@@ -132,12 +133,12 @@ const isVideo = (type: ContentType) => type?.toUpperCase() === 'VIDEO'
 /** 获取内容类型标签 */
 const getContentTypeTag = (type: ContentType) => {
   const typeUpper = type?.toUpperCase()
-  const map: Record<string, '' | 'success' | 'warning' | 'info'> = {
+  const map: Record<string, 'success' | 'warning' | 'info'> = {
     IMAGE: 'success',
     VIDEO: 'warning',
     AUDIO: 'info'
   }
-  return map[typeUpper] || ''
+  return map[typeUpper]
 }
 
 /** 获取内容类型文本 */
@@ -162,7 +163,7 @@ const formatTime = (time: string) => {
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
   if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
 
-  return date.toLocaleDateString()
+  return formatDate(time)
 }
 
 /** 处理选择 */
@@ -343,4 +344,3 @@ const handleDelete = async (item: AssetItem) => {
   }
 }
 </style>
-

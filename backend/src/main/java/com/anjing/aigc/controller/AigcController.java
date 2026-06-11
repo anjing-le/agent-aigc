@@ -1,14 +1,18 @@
 package com.anjing.aigc.controller;
 
 import com.anjing.aigc.model.request.GenerateRequest;
+import com.anjing.aigc.model.request.SaveToGalleryRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.service.AigcService;
+import com.anjing.model.constants.ApiConstants;
 import com.anjing.model.response.APIResponse;
-import com.anjing.model.response.PageResponse;
+import com.anjing.model.response.PageResult;
 import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -31,9 +35,10 @@ import jakarta.validation.Valid;
  * @author AIGC Team
  */
 @RestController
-@RequestMapping("/api/aigc")
+@RequestMapping(ApiConstants.Aigc.BASE)
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "AIGC Creation", description = "AIGC 创作、任务、资产和灵感广场接口")
 public class AigcController {
 
     private final AigcService aigcService;
@@ -52,7 +57,8 @@ public class AigcController {
      * @param request 生成请求
      * @return 生成响应，包含任务ID和Agent分析结果
      */
-    @PostMapping("/generate")
+    @PostMapping(ApiConstants.Aigc.GENERATE)
+    @Operation(summary = "创建 AIGC 生成任务")
     public APIResponse<GenerateResponse> generate(@Valid @RequestBody GenerateRequest request) {
         log.info("接收到生成请求: prompt={}", request.getPrompt());
         GenerateResponse response = aigcService.generate(request);
@@ -65,7 +71,8 @@ public class AigcController {
      * @param taskId 任务ID
      * @return 任务状态信息
      */
-    @GetMapping("/task/{taskId}")
+    @GetMapping(ApiConstants.Aigc.TASK_STATUS)
+    @Operation(summary = "查询 AIGC 任务状态")
     public APIResponse<TaskStatusResponse> getTaskStatus(@PathVariable String taskId) {
         TaskStatusResponse status = aigcService.getTaskStatus(taskId);
         return APIResponse.success(status);
@@ -76,7 +83,8 @@ public class AigcController {
      *
      * @return 模型列表，按类型分组
      */
-    @GetMapping("/models")
+    @GetMapping(ApiConstants.Aigc.MODELS)
+    @Operation(summary = "获取可用模型列表")
     public APIResponse<ModelListResponse> getModels() {
         ModelListResponse models = aigcService.getAvailableModels();
         return APIResponse.success(models);
@@ -92,14 +100,15 @@ public class AigcController {
      * @param keyword 关键词搜索
      * @return 作品分页列表
      */
-    @GetMapping("/gallery")
-    public APIResponse<PageResponse<GalleryDTO>> getGalleryList(
+    @GetMapping(ApiConstants.Aigc.GALLERY)
+    @Operation(summary = "获取灵感广场作品列表")
+    public APIResponse<PageResult<GalleryDTO>> getGalleryList(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) String contentType,
             @RequestParam(required = false) String model,
             @RequestParam(required = false) String keyword) {
-        PageResponse<GalleryDTO> gallery = aigcService.getGalleryList(current, size, contentType, model, keyword);
+        PageResult<GalleryDTO> gallery = aigcService.getGalleryList(current, size, contentType, model, keyword);
         return APIResponse.success(gallery);
     }
 
@@ -109,13 +118,10 @@ public class AigcController {
      * @param body 请求体，包含 assetId
      * @return 操作结果
      */
-    @PostMapping("/gallery/save")
-    public APIResponse<Void> saveToGallery(@RequestBody java.util.Map<String, String> body) {
-        String assetId = body.get("assetId");
-        if (assetId == null || assetId.isBlank()) {
-            throw new IllegalArgumentException("assetId 不能为空");
-        }
-        aigcService.saveToGallery(assetId);
+    @PostMapping(ApiConstants.Aigc.GALLERY_SAVE)
+    @Operation(summary = "保存作品到灵感广场")
+    public APIResponse<Void> saveToGallery(@Valid @RequestBody SaveToGalleryRequest request) {
+        aigcService.saveToGallery(request.getAssetId());
         return APIResponse.success(null);
     }
 
@@ -127,12 +133,13 @@ public class AigcController {
      * @param contentType 内容类型筛选
      * @return 资产分页列表
      */
-    @GetMapping("/assets")
-    public APIResponse<PageResponse<AssetDTO>> getAssetList(
+    @GetMapping(ApiConstants.Aigc.ASSETS)
+    @Operation(summary = "获取我的资产列表")
+    public APIResponse<PageResult<AssetDTO>> getAssetList(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "20") Integer size,
             @RequestParam(required = false) String contentType) {
-        PageResponse<AssetDTO> assets = aigcService.getAssetList(current, size, contentType);
+        PageResult<AssetDTO> assets = aigcService.getAssetList(current, size, contentType);
         return APIResponse.success(assets);
     }
 
@@ -142,10 +149,10 @@ public class AigcController {
      * @param assetId 资产ID
      * @return 操作结果
      */
-    @DeleteMapping("/assets/{assetId}")
+    @DeleteMapping(ApiConstants.Aigc.ASSET_DETAIL)
+    @Operation(summary = "删除资产")
     public APIResponse<Void> deleteAsset(@PathVariable String assetId) {
         aigcService.deleteAsset(assetId);
         return APIResponse.success(null);
     }
 }
-

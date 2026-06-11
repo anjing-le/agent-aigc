@@ -1,5 +1,10 @@
 package com.anjing.aspect;
 
+import com.anjing.context.GlobalRequestContextHolder;
+import com.anjing.model.errorcode.ErrorCode;
+import com.anjing.model.exception.BizException;
+import com.anjing.model.exception.SystemException;
+import com.anjing.model.response.APIResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,51 +49,8 @@ public class ControllerLogAspect
     /**
      * 定义切点：Controller包下的所有方法
      */
-    @Pointcut("execution(public * com.anjing.controller..*.*(..))")
+    @Pointcut("execution(public * com.anjing.controller..*.*(..)) || execution(public * com.anjing.aigc.controller..*.*(..))")
     public void controllerMethod() {}
-
-    /**
-     * 前置通知：记录请求信息和参数
-     */
-    @Before("controllerMethod()")
-    public void beforeMethod(JoinPoint joinPoint)
-    {
-        try
-        {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes == null) {return;}
-
-            HttpServletRequest request = attributes.getRequest();
-            
-            // 创建请求上下文
-            RequestContext context = new RequestContext();
-            context.setStartTime(System.currentTimeMillis());
-            context.setRequestId(generateRequestId());
-            context.setUrl(request.getRequestURL().toString());
-            context.setMethod(request.getMethod());
-            context.setIp(getClientIp(request));
-            context.setUserAgent(request.getHeader("User-Agent"));
-            context.setClassName(joinPoint.getSignature().getDeclaringTypeName());
-            context.setMethodName(joinPoint.getSignature().getName());
-            context.setArgs(joinPoint.getArgs());
-            
-            requestContextHolder.set(context);
-
-            // 记录请求日志
-            log.info("🚀 API请求开始 | RequestId: {} | IP: {} | {} {} | Method: {}.{} | Args: {}",
-                    context.getRequestId(),
-                    context.getIp(),
-                    context.getMethod(),
-                    context.getUrl(),
-                    getSimpleClassName(context.getClassName()),
-                    context.getMethodName(),
-                    formatArgs(context.getArgs()));
-
-        } catch (Exception e)
-        {
-            log.error("记录请求日志失败", e);
-        }
-    }
 
     /**
      * 环绕通知：记录执行时间和返回结果
@@ -96,72 +58,83 @@ public class ControllerLogAspect
     @Around("controllerMethod()")
     public Object aroundMethod(ProceedingJoinPoint joinPoint) throws Throwable
     {
-        RequestContext context = requestContextHolder.get();
-        if (context == null)
-        {
+        RequestContext context = createRequestContext(joinPoint);
+        if (context == null) {
             return joinPoint.proceed();
         }
 
+        requestContextHolder.set(context);
+        logRequestStart(context);
+
         try {
-            // 执行方法
             Object result = joinPoint.proceed();
-            
-            // 计算执行时间
             long executionTime = System.currentTimeMillis() - context.getStartTime();
-            
-            // 记录成功日志
-            log.info("✅ API请求成功 | RequestId: {} | Method: {}.{} | 执行时间: {}ms | Result: {}",
+
+            log.info("API_REQUEST_END | requestId={} | path={} | httpMethod={} | controller={} | action={} | durationMs={} | errorCode={} | result={}",
                     context.getRequestId(),
+                    context.getPath(),
+                    context.getMethod(),
                     getSimpleClassName(context.getClassName()),
                     context.getMethodName(),
                     executionTime,
+                    resolveResultCode(result),
                     formatResult(result));
-            
+
             return result;
-            
-        } catch (Exception e) {
-            // 计算执行时间
+        } catch (Throwable e) {
             long executionTime = System.currentTimeMillis() - context.getStartTime();
-            
-            // 记录异常日志
-            log.error("❌ API请求异常 | RequestId: {} | Method: {}.{} | 执行时间: {}ms | Error: {}",
+
+            log.error("API_REQUEST_ERROR | requestId={} | path={} | httpMethod={} | controller={} | action={} | durationMs={} | errorCode={} | error={}",
                     context.getRequestId(),
+                    context.getPath(),
+                    context.getMethod(),
                     getSimpleClassName(context.getClassName()),
                     context.getMethodName(),
                     executionTime,
+                    resolveExceptionCode(e),
                     e.getMessage(), e);
-            
+
             throw e;
         } finally {
-            // 清理线程本地变量
             requestContextHolder.remove();
         }
     }
 
-    /**
-     * 后置通知：清理资源
-     */
-    @After("controllerMethod()")
-    public void afterMethod() {
-        requestContextHolder.remove();
+    private RequestContext createRequestContext(JoinPoint joinPoint) {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes == null) {
+                return null;
+            }
+
+            HttpServletRequest request = attributes.getRequest();
+            RequestContext context = new RequestContext();
+            context.setStartTime(System.currentTimeMillis());
+            context.setRequestId(resolveRequestId());
+            context.setPath(request.getRequestURI());
+            context.setUrl(request.getRequestURL().toString());
+            context.setMethod(request.getMethod());
+            context.setIp(getClientIp(request));
+            context.setUserAgent(request.getHeader("User-Agent"));
+            context.setClassName(joinPoint.getSignature().getDeclaringTypeName());
+            context.setMethodName(joinPoint.getSignature().getName());
+            context.setArgs(joinPoint.getArgs());
+            return context;
+        } catch (Exception e) {
+            log.error("记录请求日志失败", e);
+            return null;
+        }
     }
 
-    /**
-     * 异常通知：记录异常信息
-     */
-    @AfterThrowing(pointcut = "controllerMethod()", throwing = "exception")
-    public void afterThrowing(JoinPoint joinPoint, Exception exception) {
-        RequestContext context = requestContextHolder.get();
-        if (context != null) {
-            long executionTime = System.currentTimeMillis() - context.getStartTime();
-            
-            log.error("💥 API异常通知 | RequestId: {} | Method: {}.{} | 执行时间: {}ms | Exception: {}",
-                    context.getRequestId(),
-                    getSimpleClassName(context.getClassName()),
-                    context.getMethodName(),
-                    executionTime,
-                    exception.getClass().getSimpleName() + ": " + exception.getMessage());
-        }
+    private void logRequestStart(RequestContext context) {
+        log.info("API_REQUEST_START | requestId={} | path={} | httpMethod={} | controller={} | action={} | clientIp={} | args={}",
+                context.getRequestId(),
+                context.getPath(),
+                context.getMethod(),
+                getSimpleClassName(context.getClassName()),
+                context.getMethodName(),
+                context.getIp(),
+                formatArgs(context.getArgs()));
     }
 
     /**
@@ -198,10 +171,36 @@ public class ControllerLogAspect
     }
 
     /**
-     * 生成请求ID
+     * Resolve the request id created by RequestContextFilter.
      */
-    private String generateRequestId() {
-        return System.currentTimeMillis() + "-" + Thread.currentThread().getId();
+    private String resolveRequestId() {
+        String requestId = GlobalRequestContextHolder.requestIdOrEmpty();
+        return requestId.isEmpty() ? "unknown" : requestId;
+    }
+
+    private String resolveResultCode(Object result) {
+        if (result instanceof APIResponse) {
+            return normalizeCode(((APIResponse<?>) result).getCode());
+        }
+        return "unknown";
+    }
+
+    private String resolveExceptionCode(Throwable exception) {
+        if (exception instanceof BizException) {
+            return resolveErrorCode(((BizException) exception).getErrorCode());
+        }
+        if (exception instanceof SystemException) {
+            return resolveErrorCode(((SystemException) exception).getErrorCode());
+        }
+        return "unknown";
+    }
+
+    private String resolveErrorCode(ErrorCode errorCode) {
+        return errorCode == null ? "unknown" : normalizeCode(errorCode.getCode());
+    }
+
+    private String normalizeCode(String code) {
+        return code == null || code.trim().isEmpty() ? "unknown" : code;
     }
 
     /**
@@ -289,6 +288,7 @@ public class ControllerLogAspect
     private static class RequestContext {
         private long startTime;
         private String requestId;
+        private String path;
         private String url;
         private String method;
         private String ip;
@@ -303,6 +303,9 @@ public class ControllerLogAspect
         
         public String getRequestId() { return requestId; }
         public void setRequestId(String requestId) { this.requestId = requestId; }
+
+        public String getPath() { return path; }
+        public void setPath(String path) { this.path = path; }
         
         public String getUrl() { return url; }
         public void setUrl(String url) { this.url = url; }

@@ -3,6 +3,8 @@ package com.anjing.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,15 +19,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class JsonUtils {
 
-    private static ObjectMapper objectMapper;
+    private static ObjectMapper objectMapper = createDefaultObjectMapper();
 
     @Autowired
     public void setObjectMapper(ObjectMapper objectMapper) {
-        JsonUtils.objectMapper = objectMapper;
+        JsonUtils.objectMapper = objectMapper == null ? createDefaultObjectMapper() : objectMapper;
     }
 
     private JsonUtils() {
         // 工具类，禁止实例化
+    }
+
+    private static ObjectMapper createDefaultObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 
     /**

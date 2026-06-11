@@ -1,30 +1,47 @@
-import request from '@/utils/http'
-import type { LoginParams, LoginResponse, UserInfo } from './model/authModel'
+import { openApiRequest } from './openapiClient'
+import type { LoginParams, LoginResponse, RefreshTokenParams, UserInfo } from './model/authModel'
+
+const normalizeLoginResponse = (data: Omit<LoginResponse, 'token'> & { token?: string }): LoginResponse => ({
+  ...data,
+  token: data.token || data.accessToken
+})
+
+const normalizeUserInfo = (data: Omit<UserInfo, 'buttons'> & { buttons?: string[] }): UserInfo => ({
+  ...data,
+  roles: data.roles || [],
+  permissions: data.permissions || [],
+  buttons: data.buttons || data.permissions || []
+})
 
 /**
  * 登录
  * @param params 登录参数
  * @returns 登录响应
  */
-export function fetchLogin(params: LoginParams) {
-  return request.post<LoginResponse>({
-    url: '/api/auth/login',
-    params
-    // showSuccessMessage: true // 显示成功消息
-    // showErrorMessage: false // 不显示错误消息
+export async function fetchLogin(params: LoginParams): Promise<LoginResponse> {
+  const data = await openApiRequest('login', {
+    body: params
   })
+  return normalizeLoginResponse(data)
 }
 
 /**
  * 获取用户信息
  * @returns 用户信息
  */
-export function fetchGetUserInfo() {
-  return request.get<UserInfo>({
-    url: '/api/user/info'
-    // 自定义请求头
-    // headers: {
-    //   'X-Custom-Header': 'your-custom-value'
-    // }
+export async function fetchGetUserInfo(): Promise<UserInfo> {
+  const data = await openApiRequest('getCurrentUser')
+  return normalizeUserInfo(data)
+}
+
+/**
+ * 刷新 Token
+ * @param params refresh token 参数
+ * @returns 登录响应
+ */
+export async function fetchRefreshToken(params: RefreshTokenParams): Promise<LoginResponse> {
+  const data = await openApiRequest('refreshToken', {
+    body: params
   })
+  return normalizeLoginResponse(data)
 }

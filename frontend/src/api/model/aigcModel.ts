@@ -3,10 +3,10 @@ import type { PaginatedResponse, CommonSearchParams } from '@/types/common/respo
 /** ==================== 生成相关类型 ==================== */
 
 /** 内容类型 */
-export type ContentType = 'image' | 'video' | 'audio'
+export type ContentType = 'IMAGE' | 'VIDEO' | 'AUDIO'
 
 /** 任务状态 */
-export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed'
+export type TaskStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
 
 /**
  * 生成请求参数
@@ -179,4 +179,3 @@ export interface ModelListResponse {
   /** 音频生成模型（预留） */
   audioModels: ModelInfo[]
 }
-

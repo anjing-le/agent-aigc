@@ -5,8 +5,11 @@
  */
 
 import request from '@/utils/http'
-import { BaseResult } from '@/types/axios'
-import type { UserInfo } from '@/types/store'
+import { openApiRequest } from './openapiClient'
+import { fetchGetUserInfo, fetchLogin } from './auth'
+import { ApiLegacyPaths } from './paths'
+import type { BaseResult } from '@/types/common/response'
+import type { LoginResponse as AuthLoginResponse, UserInfo } from './model/authModel'
 import type {
   LoginParams,
   LoginResponse,
@@ -29,23 +32,18 @@ export class UserService {
   /**
    * 用户名密码登录
    * @param {LoginParams} data - 登录请求参数
-   * @returns {Promise<BaseResult<LoginResponse>>} 登录结果
+   * @returns 登录结果
    */
-  static login(data: LoginParams): Promise<BaseResult<LoginResponse>> {
-    return request.post<BaseResult<LoginResponse>>({
-      url: '/api/auth/login',
-      data
-    })
+  static login(data: LoginParams): Promise<AuthLoginResponse> {
+    return fetchLogin(data)
   }
 
   /**
    * 退出登录
-   * @returns {Promise<BaseResult<null>>} 退出结果
+   * @returns 退出结果
    */
-  static logout(): Promise<BaseResult<null>> {
-    return request.post<BaseResult<null>>({
-      url: '/api/auth/logout'
-    })
+  static logout(): Promise<unknown> {
+    return openApiRequest('logout')
   }
 
   /**
@@ -55,7 +53,7 @@ export class UserService {
    */
   static verify2FA(data: Verify2FAParams): Promise<BaseResult<LoginResponse>> {
     return request.post<BaseResult<LoginResponse>>({
-      url: '/auth/login/verify-2fa',
+      url: ApiLegacyPaths.auth.verify2FA,
       data
     })
   }
@@ -67,7 +65,7 @@ export class UserService {
    */
   static sendOtp(data: SendOtpParams): Promise<BaseResult<null>> {
     return request.post<BaseResult<null>>({
-      url: '/auth/otp/send',
+      url: ApiLegacyPaths.auth.sendOtp,
       data
     })
   }
@@ -79,7 +77,7 @@ export class UserService {
    */
   static smsLogin(data: SmsLoginParams): Promise<BaseResult<LoginResponse>> {
     return request.post<BaseResult<LoginResponse>>({
-      url: '/auth/login/verify-2fa',
+      url: ApiLegacyPaths.auth.verify2FA,
       data
     })
   }
@@ -90,7 +88,7 @@ export class UserService {
    */
   static unbindStore(): Promise<BaseResult<null>> {
     return request.del<BaseResult<null>>({
-      url: '/auth/binding'
+      url: ApiLegacyPaths.auth.binding
     })
   }
 
@@ -101,7 +99,7 @@ export class UserService {
    */
   static bindStore(storeNo: string): Promise<BaseResult<BindStoreResponse>> {
     return request.put<BaseResult<BindStoreResponse>>({
-      url: `/auth/binding/${storeNo}`
+      url: ApiLegacyPaths.auth.bindStore(storeNo)
     })
   }
 
@@ -111,7 +109,7 @@ export class UserService {
    */
   static getTenantMemberList(): Promise<BaseResult<TenantMember[]>> {
     return request.get<BaseResult<TenantMember[]>>({
-      url: '/auth/tenant/account/list'
+      url: ApiLegacyPaths.auth.tenantMembers
     })
   }
 
@@ -121,7 +119,7 @@ export class UserService {
    */
   static getUserInfo(): Promise<BaseResult<UserInfo>> {
     return request.get<BaseResult<UserInfo>>({
-      url: '/auth/user/info'
+      url: ApiLegacyPaths.auth.userInfo
     })
   }
 
@@ -133,18 +131,16 @@ export class UserService {
     BaseResult<{ isLogin: boolean; userId?: string; tokenTimeout?: number }>
   > {
     return request.get<BaseResult<{ isLogin: boolean; userId?: string; tokenTimeout?: number }>>({
-      url: '/api/auth/verify'
+      url: ApiLegacyPaths.auth.verify
     })
   }
 
   /**
    * 获取当前登录用户信息
-   * @returns {Promise<BaseResult<UserInfo>>} 当前用户信息
+   * @returns 当前用户信息
    */
-  static getCurrentUser(): Promise<BaseResult<UserInfo>> {
-    return request.get<BaseResult<UserInfo>>({
-      url: '/api/auth/current-user'
-    })
+  static getCurrentUser(): Promise<UserInfo> {
+    return fetchGetUserInfo()
   }
   /**
    * 用户注册
@@ -153,7 +149,7 @@ export class UserService {
    */
   static register(params: UserRegisterParams): Promise<BaseResult<string>> {
     return request.post<BaseResult<string>>({
-      url: '/auth/register',
+      url: ApiLegacyPaths.auth.register,
       data: params
     })
   }
@@ -165,7 +161,7 @@ export class UserService {
    */
   static updatePassword(data: UpdatePasswordParams): Promise<BaseResult<null>> {
     return request.put<BaseResult<null>>({
-      url: '/auth/user/password',
+      url: ApiLegacyPaths.auth.updatePassword,
       data
     })
   }
@@ -175,7 +171,7 @@ export class UserService {
    */
   static getUserBasic(): Promise<BaseResult<UserBasic>> {
     return request.get<BaseResult<UserBasic>>({
-      url: '/auth/user/basic'
+      url: ApiLegacyPaths.auth.userBasic
     })
   }
 
@@ -186,7 +182,7 @@ export class UserService {
    */
   static updateUserBasic(params: UserBasicUpdateParams): Promise<BaseResult<string>> {
     return request.put<BaseResult<string>>({
-      url: '/auth/user/basic',
+      url: ApiLegacyPaths.auth.userBasic,
       data: params
     })
   }
@@ -198,7 +194,7 @@ export class UserService {
    */
   static getAvatarUploadSign(params: AvatarUploadParams): Promise<BaseResult<string>> {
     return request.post<BaseResult<string>>({
-      url: '/auth/user/avatar',
+      url: ApiLegacyPaths.auth.avatarUpload,
       data: params
     })
   }

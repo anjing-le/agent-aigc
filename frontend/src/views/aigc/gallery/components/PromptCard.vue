@@ -80,9 +80,9 @@ const emit = defineEmits<Emits>()
 /** 获取内容类型标签 */
 const getTypeLabel = (type: ContentType) => {
   const map: Record<ContentType, string> = {
-    image: '图片',
-    video: '视频',
-    audio: '音频'
+    IMAGE: '图片',
+    VIDEO: '视频',
+    AUDIO: '音频'
   }
   return map[type] || type
 }
@@ -230,4 +230,3 @@ const handleCopy = () => {
   }
 }
 </style>
-

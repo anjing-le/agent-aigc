@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "applicationId": "agent-aigc",
+  "apiPrefix": "/api",
+  "boundaries": [
+    {
+      "id": "auth",
+      "name": "Authentication",
+      "kind": "runtime",
+      "owner": "infra-auth",
+      "currentHost": "agent-aigc",
+      "basePath": "/api/auth",
+      "apiConstantsClass": "Auth",
+      "apiPathsKey": "auth",
+      "controller": "backend/src/main/java/com/anjing/controller/AuthController.java",
+      "openapi": true,
+      "copyAction": "replace with real auth center or database-backed auth",
+      "routes": [
+        { "name": "login", "backendConstant": "LOGIN_FULL", "frontendKey": "login", "path": "/api/auth/login", "methods": ["POST"] },
+        { "name": "logout", "backendConstant": "LOGOUT_FULL", "frontendKey": "logout", "path": "/api/auth/logout", "methods": ["POST"] },
+        { "name": "currentUser", "backendConstant": "ME_FULL", "frontendKey": "me", "path": "/api/auth/me", "methods": ["GET"] },
+        { "name": "refreshToken", "backendConstant": "REFRESH_FULL", "frontendKey": "refresh", "path": "/api/auth/refresh", "methods": ["POST"] }
+      ]
+    },
+    {
+      "id": "test",
+      "name": "Scaffold Test",
+      "kind": "sample",
+      "owner": "agent-aigc",
+      "currentHost": "agent-aigc",
+      "basePath": "/api/test",
+      "apiConstantsClass": "Test",
+      "apiPathsKey": "test",
+      "controller": "backend/src/main/java/com/anjing/controller/TestController.java",
+      "openapi": true,
+      "copyAction": "delete or replace after the copied project has its own health and sample strategy",
+      "routes": [
+        { "name": "health", "backendConstant": "HEALTH_FULL", "frontendKey": "health", "path": "/api/test/health", "methods": ["GET"] },
+        { "name": "features", "backendConstant": "FEATURES_FULL", "frontendKey": "features", "path": "/api/test/features", "methods": ["GET"] },
+        { "name": "ping", "backendConstant": "PING_FULL", "frontendKey": "ping", "path": "/api/test/ping", "methods": ["GET"] },
+        { "name": "bizException", "backendConstant": "EXCEPTION_BIZ_FULL", "frontendKey": "bizException", "path": "/api/test/exception/biz", "methods": ["GET"] },
+        { "name": "systemException", "backendConstant": "EXCEPTION_SYSTEM_FULL", "frontendKey": "systemException", "path": "/api/test/exception/system", "methods": ["GET"] },
+        { "name": "items", "backendConstant": "ITEMS_FULL", "frontendKey": "items", "path": "/api/test/items", "methods": ["GET", "POST"] },
+        { "name": "itemDetail", "backendConstant": "ITEM_DETAIL_FULL", "frontendKey": "itemDetail", "path": "/api/test/items/{id}", "methods": ["GET", "PUT", "DELETE"] }
+      ]
+    },
+    {
+      "id": "common",
+      "name": "Common Platform",
+      "kind": "reserved-runtime",
+      "owner": "infra-common",
+      "currentHost": "agent-aigc",
+      "basePath": "/api/common",
+      "apiConstantsClass": "Common",
+      "apiPathsKey": "common",
+      "openapi": false,
+      "copyAction": "keep only endpoints implemented by the copied project",
+      "routes": [
+        { "name": "upload", "backendConstant": "UPLOAD_FILE_FULL", "frontendKey": "upload", "path": "/api/common/upload", "methods": ["POST"] },
+        { "name": "uploadImage", "backendConstant": "UPLOAD_IMAGE_FULL", "frontendKey": "uploadImage", "path": "/api/common/upload/image", "methods": ["POST"] },
+        { "name": "uploadWangEditor", "backendConstant": "UPLOAD_WANG_EDITOR_FULL", "frontendKey": "uploadWangEditor", "path": "/api/common/upload/wangeditor", "methods": ["POST"] },
+        { "name": "download", "backendConstant": "DOWNLOAD_FILE_FULL", "frontendKey": "download", "path": "/api/common/download/{fileId}", "methods": ["GET"] },
+        { "name": "deleteFile", "backendConstant": "DELETE_FILE_FULL", "frontendKey": "deleteFile", "path": "/api/common/files/{fileId}", "methods": ["DELETE"] }
+      ]
+    },
+    {
+      "id": "aigc",
+      "name": "AIGC Creation",
+      "kind": "runtime",
+      "owner": "agent-aigc",
+      "currentHost": "agent-aigc",
+      "basePath": "/api/aigc",
+      "apiConstantsClass": "Aigc",
+      "apiPathsKey": "aigc",
+      "controller": "backend/src/main/java/com/anjing/aigc/controller/AigcController.java",
+      "openapi": true,
+      "copyAction": "core business boundary for multimodal generation, assets, gallery, and model metadata",
+      "routes": [
+        { "name": "generate", "backendConstant": "GENERATE_FULL", "frontendKey": "generate", "path": "/api/aigc/generate", "methods": ["POST"] },
+        { "name": "taskStatus", "backendConstant": "TASK_STATUS_FULL", "frontendKey": "taskStatus", "path": "/api/aigc/task/{taskId}", "methods": ["GET"] },
+        { "name": "models", "backendConstant": "MODELS_FULL", "frontendKey": "models", "path": "/api/aigc/models", "methods": ["GET"] },
+        { "name": "gallery", "backendConstant": "GALLERY_FULL", "frontendKey": "gallery", "path": "/api/aigc/gallery", "methods": ["GET"] },
+        { "name": "gallerySave", "backendConstant": "GALLERY_SAVE_FULL", "frontendKey": "gallerySave", "path": "/api/aigc/gallery/save", "methods": ["POST"] },
+        { "name": "assets", "backendConstant": "ASSETS_FULL", "frontendKey": "assets", "path": "/api/aigc/assets", "methods": ["GET"] },
+        { "name": "assetDetail", "backendConstant": "ASSET_DETAIL_FULL", "frontendKey": "assetDetail", "path": "/api/aigc/assets/{assetId}", "methods": ["DELETE"] }
+      ]
+    },
+    {
+      "id": "user",
+      "name": "User Management",
+      "kind": "reserved",
+      "owner": "infra-auth",
+      "currentHost": "future-service",
+      "basePath": "/api/users",
+      "apiConstantsClass": "User",
+      "openapi": false,
+      "copyAction": "use when the copied project implements real user management",
+      "routes": []
+    },
+    {
+      "id": "admin",
+      "name": "Admin Operations",
+      "kind": "reserved",
+      "owner": "infra-admin",
+      "currentHost": "future-service",
+      "basePath": "/api/admin",
+      "apiConstantsClass": "Admin",
+      "openapi": false,
+      "copyAction": "use for operations dashboards, logs, and platform admin APIs",
+      "routes": []
+    },
+    {
+      "id": "integration",
+      "name": "External Integration",
+      "kind": "reserved",
+      "owner": "infra-integration",
+      "currentHost": "future-service",
+      "basePath": "/api/integration",
+      "apiConstantsClass": "Integration",
+      "openapi": false,
+      "copyAction": "use for OSS, payment, notification, LLM provider, and other external adapters",
+      "routes": []
+    }
+  ]
+}

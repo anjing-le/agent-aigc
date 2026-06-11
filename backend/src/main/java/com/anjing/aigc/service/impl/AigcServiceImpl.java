@@ -18,7 +18,8 @@ import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.exception.AigcException;
-import com.anjing.model.response.PageResponse;
+import com.anjing.model.response.PageResult;
+import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,8 +67,8 @@ public class AigcServiceImpl implements AigcService {
         task.setModel(analysis.getSelectedModel());
         task.setStatus(TaskStatus.PENDING);
         task.setProgress(0);
-        task.setCreatedAt(LocalDateTime.now());
-        task.setUpdatedAt(LocalDateTime.now());
+        task.setCreatedAt(DateUtils.nowLocalDateTime());
+        task.setUpdatedAt(DateUtils.nowLocalDateTime());
         taskRepository.save(task);
 
         // 3. 异步执行生成任务
@@ -95,7 +95,7 @@ public class AigcServiceImpl implements AigcService {
             // 更新状态为处理中
             task.setStatus(TaskStatus.PROCESSING);
             task.setProgress(10);
-            task.setUpdatedAt(LocalDateTime.now());
+            task.setUpdatedAt(DateUtils.nowLocalDateTime());
             taskRepository.save(task);
 
             // 调用对应的模型生成
@@ -108,7 +108,7 @@ public class AigcServiceImpl implements AigcService {
                         taskId, result.getErrorCode(), result.getErrorMessage());
                 task.setStatus(TaskStatus.FAILED);
                 task.setErrorMessage(result.getErrorMessage());
-                task.setUpdatedAt(LocalDateTime.now());
+                task.setUpdatedAt(DateUtils.nowLocalDateTime());
                 taskRepository.save(task);
                 return;
             }
@@ -122,14 +122,14 @@ public class AigcServiceImpl implements AigcService {
             asset.setPrompt(task.getPrompt());
             asset.setModel(task.getModel());
             asset.setIsPublished(false);
-            asset.setCreatedAt(LocalDateTime.now());
+            asset.setCreatedAt(DateUtils.nowLocalDateTime());
             assetRepository.save(asset);
 
             // 更新任务状态为完成
             task.setStatus(TaskStatus.COMPLETED);
             task.setProgress(100);
             task.setAssetId(asset.getAssetId());
-            task.setUpdatedAt(LocalDateTime.now());
+            task.setUpdatedAt(DateUtils.nowLocalDateTime());
             taskRepository.save(task);
 
             log.info("任务完成: taskId={}, assetId={}", taskId, asset.getAssetId());
@@ -139,7 +139,7 @@ public class AigcServiceImpl implements AigcService {
             taskRepository.findByTaskId(taskId).ifPresent(task -> {
                 task.setStatus(TaskStatus.FAILED);
                 task.setErrorMessage(e.getMessage());
-                task.setUpdatedAt(LocalDateTime.now());
+                task.setUpdatedAt(DateUtils.nowLocalDateTime());
                 taskRepository.save(task);
             });
         }
@@ -213,7 +213,7 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
-    public PageResponse<GalleryDTO> getGalleryList(Integer current, Integer size, String contentType, String model, String keyword) {
+    public PageResult<GalleryDTO> getGalleryList(Integer current, Integer size, String contentType, String model, String keyword) {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
         Page<AigcAsset> page = assetRepository.findByIsPublishedTrue(pageRequest);
@@ -222,12 +222,7 @@ public class AigcServiceImpl implements AigcService {
                 .map(this::toGalleryDTO)
                 .collect(Collectors.toList());
 
-        return PageResponse.<GalleryDTO>builder()
-                .records(records)
-                .current(current)
-                .size(size)
-                .total(page.getTotalElements())
-                .build();
+        return PageResult.of(records, page.getTotalElements(), current, size);
     }
 
     @Override
@@ -241,7 +236,7 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
-    public PageResponse<AssetDTO> getAssetList(Integer current, Integer size, String contentType) {
+    public PageResult<AssetDTO> getAssetList(Integer current, Integer size, String contentType) {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
         Page<AigcAsset> page;
@@ -255,12 +250,7 @@ public class AigcServiceImpl implements AigcService {
                 .map(this::toAssetDTO)
                 .collect(Collectors.toList());
 
-        return PageResponse.<AssetDTO>builder()
-                .records(records)
-                .current(current)
-                .size(size)
-                .total(page.getTotalElements())
-                .build();
+        return PageResult.of(records, page.getTotalElements(), current, size);
     }
 
     @Override
@@ -315,4 +305,3 @@ public class AigcServiceImpl implements AigcService {
                 .build();
     }
 }
-

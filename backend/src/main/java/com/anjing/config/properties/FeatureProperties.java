@@ -1,5 +1,6 @@
 package com.anjing.config.properties;
 
+import com.anjing.model.constants.ServiceBoundaryConstants;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -214,7 +215,7 @@ public class FeatureProperties {
         public static class KafkaConfig {
             private boolean enabled = false;
             private String bootstrapServers = "localhost:9092";
-            private String groupId = "agent-dev-scaffolding";
+            private String groupId = ServiceBoundaryConstants.APPLICATION_ID;
         }
 
         @Data

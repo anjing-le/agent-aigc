@@ -71,6 +71,7 @@ import {
   Delete
 } from '@element-plus/icons-vue'
 import type { AssetItem, ContentType } from '@/api/model/aigcModel'
+import { formatDateTime } from '@/utils/time'
 
 interface Props {
   item: AssetItem
@@ -91,12 +92,12 @@ const isVideo = computed(() => props.item.contentType?.toUpperCase() === 'VIDEO'
 /** 获取内容类型标签 */
 const getContentTypeTag = (type: ContentType) => {
   const typeUpper = type?.toUpperCase()
-  const map: Record<string, '' | 'success' | 'warning' | 'info'> = {
+  const map: Record<string, 'success' | 'warning' | 'info'> = {
     IMAGE: 'success',
     VIDEO: 'warning',
     AUDIO: 'info'
   }
-  return map[typeUpper] || ''
+  return map[typeUpper]
 }
 
 /** 获取内容类型文本 */
@@ -111,10 +112,7 @@ const getContentTypeLabel = (type: ContentType) => {
 }
 
 /** 格式化时间 */
-const formatTime = (time: string) => {
-  const date = new Date(time)
-  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
-}
+const formatTime = (time: string) => formatDateTime(time)
 </script>
 
 <style lang="scss" scoped>
@@ -203,4 +201,3 @@ const formatTime = (time: string) => {
   }
 }
 </style>
-

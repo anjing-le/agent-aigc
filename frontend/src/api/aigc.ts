@@ -1,4 +1,5 @@
 import request from '@/utils/http'
+import { ApiPaths } from './paths'
 import type {
   GenerateRequest,
   GenerateResponse,
@@ -21,7 +22,7 @@ import type {
  */
 export function fetchGenerate(data: GenerateRequest) {
   return request.post<GenerateResponse>({
-    url: '/api/aigc/generate',
+    url: ApiPaths.aigc.generate,
     data
   })
 }
@@ -33,7 +34,7 @@ export function fetchGenerate(data: GenerateRequest) {
  */
 export function fetchGetTaskStatus(taskId: string) {
   return request.get<TaskStatusResponse>({
-    url: `/api/aigc/task/${taskId}`
+    url: ApiPaths.aigc.taskStatus(taskId)
   })
 }
 
@@ -43,7 +44,7 @@ export function fetchGetTaskStatus(taskId: string) {
  */
 export function fetchGetGalleryList(params: GallerySearchParams) {
   return request.get<GalleryListResponse>({
-    url: '/api/aigc/gallery',
+    url: ApiPaths.aigc.gallery,
     params
   })
 }
@@ -54,7 +55,7 @@ export function fetchGetGalleryList(params: GallerySearchParams) {
  */
 export function fetchGetAssetList(params: AssetSearchParams) {
   return request.get<AssetListResponse>({
-    url: '/api/aigc/assets',
+    url: ApiPaths.aigc.assets,
     params
   })
 }
@@ -68,7 +69,7 @@ export function fetchGetAssetList(params: AssetSearchParams) {
  */
 export function fetchSaveToGallery(assetId: string) {
   return request.post<void>({
-    url: '/api/aigc/gallery/save',
+    url: ApiPaths.aigc.gallerySave,
     data: { assetId }
   })
 }
@@ -79,7 +80,6 @@ export function fetchSaveToGallery(assetId: string) {
  */
 export function fetchDeleteAsset(assetId: string) {
   return request.del<void>({
-    url: `/api/aigc/assets/${assetId}`
+    url: ApiPaths.aigc.assetDetail(assetId)
   })
 }
-

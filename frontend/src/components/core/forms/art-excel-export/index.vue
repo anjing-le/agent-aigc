@@ -25,6 +25,7 @@
   import { Loading } from '@element-plus/icons-vue'
   import type { ButtonType } from 'element-plus'
   import { useThrottleFn } from '@vueuse/core'
+  import { formatDate, formatDateKey, formatFilenameTimestamp, nowDate } from '@/utils/time'
 
   defineOptions({ name: 'ArtExcelExport' })
 
@@ -91,7 +92,7 @@
   }
 
   const props = withDefaults(defineProps<ExportOptions>(), {
-    filename: () => `export_${new Date().toISOString().slice(0, 10)}`,
+    filename: () => `export_${formatDateKey()}`,
     sheetName: 'Sheet1',
     type: 'primary',
     size: 'default',
@@ -169,7 +170,7 @@
     }
 
     if (value instanceof Date) {
-      return value.toLocaleDateString('zh-CN')
+      return formatDate(value)
     }
 
     if (typeof value === 'boolean') {
@@ -257,14 +258,14 @@
         workbook.Props = {
           Title: filename,
           Subject: '数据导出',
-          Author: props.workbookOptions.creator || 'Art Design Pro',
+          Author: props.workbookOptions.creator || 'Anjing',
           Manager: props.workbookOptions.lastModifiedBy || '',
           Company: '系统导出',
           Category: '数据',
           Keywords: 'excel,export,data',
           Comments: '由系统自动生成',
-          CreatedDate: props.workbookOptions.created || new Date(),
-          ModifiedDate: props.workbookOptions.modified || new Date()
+          CreatedDate: props.workbookOptions.created || nowDate(),
+          ModifiedDate: props.workbookOptions.modified || nowDate()
         }
       }
 
@@ -298,7 +299,7 @@
       emit('export-progress', 95)
 
       // 使用时间戳确保文件名唯一
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const timestamp = formatFilenameTimestamp()
       const finalFilename = `${filename}_${timestamp}.xlsx`
 
       FileSaver.saveAs(blob, finalFilename)

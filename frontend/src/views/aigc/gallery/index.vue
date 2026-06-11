@@ -14,7 +14,7 @@
       <el-tag
         v-for="tag in categoryTags"
         :key="tag.value"
-        :type="activeTag === tag.value ? '' : 'info'"
+        :type="activeTag === tag.value ? 'primary' : 'info'"
         :effect="activeTag === tag.value ? 'dark' : 'plain'"
         class="prompt-gallery__tag"
         @click="handleTagClick(tag.value)"
@@ -139,8 +139,7 @@ const loadFromApi = async (append = false) => {
     const res = await fetchGetGalleryList({
       current: currentPage.value,
       size: pageSize.value,
-      keyword: searchKeyword.value || undefined,
-      contentType: activeTag.value !== 'all' ? (activeTag.value as any) : undefined
+      keyword: searchKeyword.value || undefined
     })
 
     const records = (res?.records || []).map((item: any) => ({
@@ -193,7 +192,7 @@ const loadStaticPrompts = async () => {
     const data = await response.json()
     staticPrompts.value = data.map((item: any) => ({
       ...item,
-      contentType: item.contentType || 'image',
+      contentType: (item.contentType || 'IMAGE').toUpperCase(),
       likeCount: Math.floor(Math.random() * 100) + 10,
       url: item.thumbnailUrl || '',
       isPublished: true
@@ -378,4 +377,3 @@ onMounted(() => {
   transform: translateX(-50%) translateY(20px);
 }
 </style>
-

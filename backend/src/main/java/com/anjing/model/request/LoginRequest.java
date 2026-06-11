@@ -1,5 +1,6 @@
 package com.anjing.model.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -14,6 +15,7 @@ import jakarta.validation.constraints.Size;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Schema(description = "Login request")
 public class LoginRequest extends BaseRequest
 {
 
@@ -22,6 +24,7 @@ public class LoginRequest extends BaseRequest
      */
     @NotBlank(message = "用户名不能为空")
     @Size(max = 100, message = "用户名长度不能超过100个字符")
+    @Schema(description = "Username or email", example = "admin", requiredMode = Schema.RequiredMode.REQUIRED)
     private String username;
 
     /**
@@ -29,15 +32,18 @@ public class LoginRequest extends BaseRequest
      */
     @NotBlank(message = "密码不能为空")
     @Size(max = 32, message = "密码长度不能超过32个字符")
+    @Schema(description = "Password", example = "admin123", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
     /**
      * 验证码（可选）
      */
+    @Schema(description = "Captcha code when enabled")
     private String captcha;
 
     /**
      * 记住我（可选）
      */
+    @Schema(description = "Whether to keep the session longer")
     private Boolean rememberMe = false;
 }

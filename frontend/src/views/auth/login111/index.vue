@@ -128,6 +128,7 @@ import { ElNotification } from 'element-plus'
 import { useUserStore } from '@/store/modules/user'
 import { useRouter } from 'vue-router'
 import { ApiStatus } from '@/utils/http/status'
+import { isSuccessCode } from '@/utils/http/response'
 // import { getCssVariable } from '@/utils/colors'
 // import { languageOptions } from '@/language'
 // import { LanguageEnum, SystemThemeEnum } from '@/enums/appEnum'
@@ -318,7 +319,16 @@ const handleSubmit = async () => {
             password: formData.password
           }
           console.log('🔍 [前端调试] 发送登录请求:', loginParams)
-          res = await UserService.login(loginParams)
+          const loginResult = await UserService.login(loginParams)
+          res = {
+            code: ApiStatus.success,
+            data: {
+              ...loginResult,
+              username: formData.account,
+              nickname: formData.account,
+              avatar: null
+            }
+          }
           console.log('🔍 [前端调试] 登录响应:', res)
         }
 
@@ -330,7 +340,7 @@ const handleSubmit = async () => {
           '是否相等:',
           res.code === ApiStatus.success
         )
-        if (res.code === ApiStatus.success) {
+        if (isSuccessCode(res.code)) {
           const {
             token,
             tokenType,
@@ -441,8 +451,8 @@ const handleMobileVerificationSuccess = async (otpCode: string) => {
 
     const res = await UserService.verify2FA(params)
 
-    if (res.code === ApiStatus.success) {
-      const { token } = res.data
+    if (isSuccessCode(res.code)) {
+      const token = res.data?.token
 
       if (token) {
         userStore.setToken(token)

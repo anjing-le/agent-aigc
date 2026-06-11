@@ -24,15 +24,24 @@
 import { AxiosError } from 'axios'
 import { ApiStatus } from './status'
 import { $t } from '@/locales'
+import { extractResponseMessage } from './response'
+import { nowIsoString } from '@/utils/time'
+import { REQUEST_HEADERS } from '@/contracts/platform-contract'
 
 // 错误响应接口
 export interface ErrorResponse {
   /** 错误状态码 */
-  code: number
-  /** 错误消息 */
-  msg: string
+  code: number | string
+  /** 错误消息（标准字段） */
+  message?: string
+  /** @deprecated 使用 message；仅用于旧 mock / 第三方接口过渡 */
+  msg?: string
   /** 错误附加数据 */
   data?: unknown
+  /** 请求 ID */
+  requestId?: string
+  /** Trace ID */
+  traceId?: string
 }
 
 // 错误日志数据接口
@@ -51,6 +60,10 @@ export interface ErrorLogData {
   method?: string
   /** 错误堆栈信息 */
   stack?: string
+  /** 请求 ID */
+  requestId?: string
+  /** Trace ID */
+  traceId?: string
 }
 
 // 自定义 HttpError 类
@@ -60,6 +73,8 @@ export class HttpError extends Error {
   public readonly timestamp: string
   public readonly url?: string
   public readonly method?: string
+  public readonly requestId?: string
+  public readonly traceId?: string
 
   constructor(
     message: string,
@@ -68,15 +83,19 @@ export class HttpError extends Error {
       data?: unknown
       url?: string
       method?: string
+      requestId?: string
+      traceId?: string
     }
   ) {
     super(message)
     this.name = 'HttpError'
     this.code = code
     this.data = options?.data
-    this.timestamp = new Date().toISOString()
+    this.timestamp = nowIsoString()
     this.url = options?.url
     this.method = options?.method
+    this.requestId = options?.requestId
+    this.traceId = options?.traceId
   }
 
   public toLogData(): ErrorLogData {
@@ -87,8 +106,72 @@ export class HttpError extends Error {
       timestamp: this.timestamp,
       url: this.url,
       method: this.method,
+      requestId: this.requestId,
+      traceId: this.traceId,
       stack: this.stack
     }
+  }
+}
+
+interface HeaderGetter {
+  get(name: string): unknown
+}
+
+export interface HttpErrorContext {
+  data?: unknown
+  url?: string
+  method?: string
+  requestId?: string
+  traceId?: string
+}
+
+const normalizeHeaderValue = (value: unknown): string | undefined => {
+  if (Array.isArray(value)) return normalizeHeaderValue(value[0])
+  if (typeof value !== 'string') return undefined
+
+  const text = value.trim()
+  return text || undefined
+}
+
+export const readHttpHeader = (headers: unknown, name: string): string | undefined => {
+  if (!headers) return undefined
+
+  const maybeGetter = (headers as Partial<HeaderGetter>).get
+  if (typeof maybeGetter === 'function') {
+    return (
+      normalizeHeaderValue(maybeGetter.call(headers, name)) ||
+      normalizeHeaderValue(maybeGetter.call(headers, name.toLowerCase()))
+    )
+  }
+
+  const record = headers as Record<string, unknown>
+  const directValue = normalizeHeaderValue(record[name]) || normalizeHeaderValue(record[name.toLowerCase()])
+  if (directValue) return directValue
+
+  const expectedName = name.toLowerCase()
+  const actualKey = Object.keys(record).find((key) => key.toLowerCase() === expectedName)
+  return actualKey ? normalizeHeaderValue(record[actualKey]) : undefined
+}
+
+export const buildHttpErrorContext = (options: {
+  data?: ErrorResponse | null
+  responseHeaders?: unknown
+  requestHeaders?: unknown
+  url?: string
+  method?: string
+}): HttpErrorContext => {
+  return {
+    data: options.data || undefined,
+    url: options.url,
+    method: options.method?.toUpperCase(),
+    requestId:
+      options.data?.requestId ||
+      readHttpHeader(options.responseHeaders, REQUEST_HEADERS.requestId) ||
+      readHttpHeader(options.requestHeaders, REQUEST_HEADERS.requestId),
+    traceId:
+      options.data?.traceId ||
+      readHttpHeader(options.responseHeaders, REQUEST_HEADERS.traceId) ||
+      readHttpHeader(options.requestHeaders, REQUEST_HEADERS.traceId)
   }
 }
 
@@ -119,21 +202,37 @@ const getErrorMessage = (status: number): string => {
  * @returns 错误对象
  */
 export function handleError(error: AxiosError<ErrorResponse>): never {
+  const requestConfig = error.config
+
   // 处理取消的请求
   if (error.code === 'ERR_CANCELED') {
     console.warn('Request cancelled:', error.message)
-    throw new HttpError($t('httpMsg.requestCancelled'), ApiStatus.error)
+    throw new HttpError(
+      $t('httpMsg.requestCancelled'),
+      ApiStatus.error,
+      buildHttpErrorContext({
+        requestHeaders: requestConfig?.headers,
+        url: requestConfig?.url,
+        method: requestConfig?.method
+      })
+    )
   }
 
   const statusCode = error.response?.status
-  const errorMessage = error.response?.data?.message || error.message
-  const requestConfig = error.config
+  const errorMessage = extractResponseMessage(error.response?.data) || error.message
+  const context = buildHttpErrorContext({
+    data: error.response?.data,
+    responseHeaders: error.response?.headers,
+    requestHeaders: requestConfig?.headers,
+    url: requestConfig?.url,
+    method: requestConfig?.method
+  })
 
   // 处理网络错误
   if (!error.response) {
     throw new HttpError($t('httpMsg.networkError'), ApiStatus.error, {
-      url: requestConfig?.url,
-      method: requestConfig?.method?.toUpperCase()
+      ...context,
+      data: undefined
     })
   }
 
@@ -142,9 +241,8 @@ export function handleError(error: AxiosError<ErrorResponse>): never {
     ? getErrorMessage(statusCode)
     : errorMessage || $t('httpMsg.requestFailed')
   throw new HttpError(message, statusCode || ApiStatus.error, {
-    data: error.response.data,
-    url: requestConfig?.url,
-    method: requestConfig?.method?.toUpperCase()
+    ...context,
+    data: error.response.data
   })
 }
 

@@ -18,9 +18,9 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 
 /**
- * 🚀 Backend Template 启动类
+ * Agent AIGC backend application entry.
  * 
- * <p>企业级Spring Boot脚手架应用入口</p>
+ * <p>AIGC creation platform backend entry.</p>
  * 
  * <h3>🎯 核心功能：</h3>
  * <ul>
@@ -32,7 +32,7 @@ import java.util.Arrays;
  *   <li>🌐 Servlet组件扫描 - Filter、Listener等</li>
  * </ul>
  * 
- * @author Backend Template Team
+ * @author Agent AIGC Team
  * @version 1.0
  */
 @SpringBootApplication
@@ -80,15 +80,13 @@ public class Application
                 "🚀  {} 启动成功！\n" +
                 "🌍  本地访问地址:     http://localhost:{}{}\n" +
                 "🌐  外部访问地址:     http://{}:{}{}\n" +
-                "📚  Swagger文档:     http://{}:{}{}/swagger-ui/index.html\n" +
-                "📋  OpenAPI文档:     http://{}:{}{}/v3/api-docs\n" +
+                "📋  OpenAPI JSON:    http://{}:{}{}/v3/api-docs\n" +
                 "💾  Druid监控:       http://{}:{}{}/druid/index.html (admin/admin123)\n" +
                 "🔧  运行环境:         {}\n" +
                 "⏱️  启动耗时:         {} 秒\n" +
                 "🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉",
                 applicationName,
                 port, contextPath,
-                ip, port, contextPath,
                 ip, port, contextPath,
                 ip, port, contextPath,
                 ip, port, contextPath,

@@ -91,6 +91,7 @@
 <script setup lang="ts">
   import { Picture, Paperclip, Close } from '@element-plus/icons-vue'
   import { mittBus } from '@/utils/sys'
+  import { formatTime, nowDate } from '@/utils/time'
   import meAvatar from '@/assets/images/avatar/avatar5.webp'
   import aiAvatar from '@/assets/images/avatar/avatar10.webp'
 
@@ -205,7 +206,7 @@
 
   // 工具函数
   const formatCurrentTime = (): string => {
-    return new Date().toLocaleTimeString([], {
+    return formatTime(nowDate(), {
       hour: '2-digit',
       minute: '2-digit'
     })

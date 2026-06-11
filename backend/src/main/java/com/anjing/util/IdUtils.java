@@ -3,7 +3,6 @@ package com.anjing.util;
 import lombok.extern.slf4j.Slf4j;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -108,7 +107,7 @@ public class IdUtils {
      * @return 时间戳ID
      */
     public static String timestampId() {
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        String timestamp = DateUtils.nowLocalDateTime().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         long sequence = SEQUENCE_GENERATOR.getAndIncrement() % 1000;
         return timestamp + String.format("%03d", sequence);
     }

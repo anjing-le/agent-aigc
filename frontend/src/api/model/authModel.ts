@@ -4,25 +4,23 @@
  * @module api/model/authModel
  */
 
-/** 登录参数 */
-export interface LoginParams {
-  userName: string
-  password: string
-}
+import type {
+  OpenApiOperationData,
+  OpenApiOperationRequest
+} from '@/contracts/openapi/operations'
 
-/** 登录响应 */
-export interface LoginResponse {
+/** 登录参数 */
+export type LoginParams = OpenApiOperationRequest<'login'>
+
+/** 登录响应（兼容后端 accessToken/refreshToken 字段） */
+export type LoginResponse = OpenApiOperationData<'login'> & {
   token: string
-  refreshToken: string
 }
 
 /** 用户信息 */
-export interface UserInfo {
+export type UserInfo = OpenApiOperationData<'getCurrentUser'> & {
   buttons: string[]
-  roles: string[]
-  userId: number
-  userName: string
-  email: string
-  avatar?: string
 }
 
+/** 刷新 Token 参数 */
+export type RefreshTokenParams = OpenApiOperationRequest<'refreshToken'>

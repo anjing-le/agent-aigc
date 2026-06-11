@@ -247,12 +247,12 @@ public class FacadeAspect {
         
         // 如果返回类型是APIResponse，直接返回错误响应
         if (APIResponse.class.isAssignableFrom(returnType)) {
-            return APIResponse.error(parseErrorCode(e.getErrorCode().getCode()), e.getErrorCode().getMessage());
+            return APIResponse.error(e.getErrorCode());
         }
         
         // 如果返回类型是泛型APIResponse，尝试构造
         if (isGenericAPIResponse(method)) {
-            return APIResponse.error(parseErrorCode(e.getErrorCode().getCode()), e.getErrorCode().getMessage());
+            return APIResponse.error(e.getErrorCode());
         }
         
         // 其他情况重新抛出异常，让GlobalExceptionHandler处理
@@ -266,7 +266,7 @@ public class FacadeAspect {
         Class<?> returnType = method.getReturnType();
         
         if (APIResponse.class.isAssignableFrom(returnType) || isGenericAPIResponse(method)) {
-            return APIResponse.error(parseErrorCode(e.getErrorCode().getCode()), e.getErrorCode().getMessage());
+            return APIResponse.error(e.getErrorCode());
         }
         
         throw e;
@@ -279,7 +279,7 @@ public class FacadeAspect {
         Class<?> returnType = method.getReturnType();
         
         if (APIResponse.class.isAssignableFrom(returnType) || isGenericAPIResponse(method)) {
-            return APIResponse.error(500, "系统内部错误，请稍后重试");
+            return APIResponse.error(CommonErrorCode.SYSTEM_ERROR);
         }
         
         // 包装为Exception重新抛出
@@ -290,17 +290,6 @@ public class FacadeAspect {
         }
     }
     
-    /**
-     * 将字符串错误码解析为整数
-     */
-    private int parseErrorCode(String code) {
-        try {
-            return Integer.parseInt(code);
-        } catch (NumberFormatException e) {
-            return 400;
-        }
-    }
-
     /**
      * 判断方法返回类型是否为泛型APIResponse
      */

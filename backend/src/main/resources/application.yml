@@ -1,5 +1,5 @@
-# 🚀 Agent Dev Scaffolding 配置文件
-# 企业级Spring Boot脚手架 - 条件化配置版本
+# Agent AIGC 配置文件
+# Anjing AIGC 创作平台 - 条件化配置版本
 
 # 基础配置
 server:
@@ -11,17 +11,20 @@ server:
 spring:
   application:
     name: agent-aigc
+
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
   
   # 环境配置
-  # 启用 local profile 来加载敏感配置
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   
   # 数据源配置
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/agent_aigc?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8&useSSL=false&allowPublicKeyRetrieval=true}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/anjing?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    password: ${DB_PASSWORD:your_password_here}
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     
@@ -64,9 +67,9 @@ spring:
         # 设置白名单，不填则允许所有访问
         allow: 127.0.0.1,192.168.0.0/16
         url-pattern: "/druid/*"
-        # 控制台管理用户名和密码
+        # 控制台管理用户名和密码（建议生产环境通过环境变量配置）
         login-username: ${DRUID_USERNAME:admin}
-        login-password: ${DRUID_PASSWORD:admin}
+        login-password: ${DRUID_PASSWORD:change_me}
       filter:
         stat:
           enabled: true
@@ -96,11 +99,11 @@ spring:
   # Redis配置
   data:
     redis:
-      host: localhost
-      port: 6379
-      password:
-      database: 0
-      timeout: 5000
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:5000}
       lettuce:
         pool:
           max-active: 8
@@ -110,8 +113,8 @@ spring:
   
   # Jackson配置
   jackson:
-    time-zone: Asia/Shanghai
-    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: ${APP_TIME_ZONE:UTC}
+    date-format: yyyy-MM-dd'T'HH:mm:ssXXX
     serialization:
       write-dates-as-timestamps: false
     deserialization:
@@ -141,9 +144,9 @@ logging:
     org.apache.http: WARN
   pattern:
     # 控制台格式由logback-spring.xml统一管理
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [rid=%X{requestId} tid=%X{traceId} tenant=%X{tenantId} user=%X{userId}] %logger{36} - %msg%n"
     # 文件格式由logback-spring.xml统一管理
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [rid=%X{requestId} tid=%X{traceId} tenant=%X{tenantId} user=%X{userId}] %logger{40} - %msg%n"
 
 # 🔥 自定义日志配置
 anjing:
@@ -174,8 +177,78 @@ management:
     health:
       show-details: when-authorized
 
+# OpenAPI contract endpoint.
+# Dev/test expose it for frontend type generation and integration checks; prod disables it by default.
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_API_DOCS_ENABLED:true}
+    path: /v3/api-docs
+  packages-to-scan: com.anjing.controller,com.anjing.aigc.controller
+  paths-to-match: /api/**
+
+# AIGC 默认配置。
+# dev/test 默认不要求外部 API Key；真实生成能力通过 application-local.yml 或环境变量开启。
+aigc:
+  providers:
+    google:
+      enabled: ${AIGC_GOOGLE_ENABLED:false}
+      api-key: ${AIGC_GOOGLE_API_KEY:}
+      base-url: ${AIGC_GOOGLE_BASE_URL:https://generativelanguage.googleapis.com}
+      proxy-host: ${AIGC_GOOGLE_PROXY_HOST:}
+      proxy-port: ${AIGC_GOOGLE_PROXY_PORT:}
+    onerouter:
+      enabled: ${AIGC_ONEROUTER_ENABLED:false}
+      api-key: ${AIGC_ONEROUTER_API_KEY:}
+      api-url: ${AIGC_ONEROUTER_API_URL:https://llm.onerouter.pro/v1}
+      model: ${AIGC_ONEROUTER_MODEL:gpt-4o-mini}
+      timeout: ${AIGC_ONEROUTER_TIMEOUT_MS:30000}
+      temperature: ${AIGC_ONEROUTER_TEMPERATURE:0.1}
+  image:
+    active-provider: ${AIGC_IMAGE_ACTIVE_PROVIDER:google}
+  video:
+    active-provider: ${AIGC_VIDEO_ACTIVE_PROVIDER:google}
+  audio:
+    active-provider: ${AIGC_AUDIO_ACTIVE_PROVIDER:google}
+  storage:
+    local:
+      enabled: true
+      base-path: ${AIGC_LOCAL_STORAGE_PATH:./uploads}
+      url-prefix: ${AIGC_LOCAL_STORAGE_URL_PREFIX:http://localhost:10003/files}
+
+storage:
+  oss:
+    enabled: ${STORAGE_OSS_ENABLED:false}
+
 # 🎛️ 功能特性配置 - 条件化启用各种功能
 app:
+  # 异步执行器：@Async、后台任务和未来 adapter 统一走这里，自动传播请求上下文和 MDC
+  async:
+    core-pool-size: ${APP_ASYNC_CORE_POOL_SIZE:4}
+    max-pool-size: ${APP_ASYNC_MAX_POOL_SIZE:16}
+    queue-capacity: ${APP_ASYNC_QUEUE_CAPACITY:200}
+    keep-alive-seconds: ${APP_ASYNC_KEEP_ALIVE_SECONDS:60}
+    thread-name-prefix: ${APP_ASYNC_THREAD_NAME_PREFIX:anjing-async-}
+    wait-for-tasks-to-complete-on-shutdown: ${APP_ASYNC_WAIT_FOR_TASKS_ON_SHUTDOWN:true}
+    await-termination-seconds: ${APP_ASYNC_AWAIT_TERMINATION_SECONDS:30}
+
+  # 远程 HTTP 调用默认配置：用于未来服务间调用或外部 API 适配
+  remote-http:
+    default-caller-id: ${APP_REMOTE_CALLER_ID:agent-aigc}
+    connect-timeout-ms: ${REMOTE_HTTP_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${REMOTE_HTTP_READ_TIMEOUT_MS:5000}
+    default-retry-count: ${REMOTE_HTTP_DEFAULT_RETRY_COUNT:0}
+    default-retry-interval-ms: ${REMOTE_HTTP_DEFAULT_RETRY_INTERVAL_MS:1000}
+    policy:
+      enabled: ${REMOTE_HTTP_POLICY_ENABLED:false}
+      blocked-service-ids: ${REMOTE_HTTP_POLICY_BLOCKED_SERVICE_IDS:}
+      allowed-caller-ids: ${REMOTE_HTTP_POLICY_ALLOWED_CALLER_IDS:}
+      allowed-caller-ids-by-service: {}
+    service-base-urls:
+      agent-aigc: ${APP_SELF_BASE_URL:http://localhost:10003}
+      infra-auth: ${INFRA_AUTH_BASE_URL:}
+      infra-api-gateway: ${INFRA_API_GATEWAY_BASE_URL:}
+      infra-skill-hub: ${INFRA_SKILL_HUB_BASE_URL:}
+
   features:
     # Redis功能配置
     redis:
@@ -212,24 +285,24 @@ app:
       kafka:
         enabled: false                # 是否启用Kafka
         bootstrap-servers: localhost:9092
-        group-id: agent-dev-scaffolding
+        group-id: agent-aigc
       
       # MinIO对象存储
       minio:
         enabled: false                # 是否启用MinIO
-        endpoint: http://localhost:9000
-        access-key: ""
-        secret-key: ""
-        bucket-name: default
+        endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+        access-key: ${MINIO_ACCESS_KEY:}
+        secret-key: ${MINIO_SECRET_KEY:}
+        bucket-name: ${MINIO_BUCKET:default}
       
       # OSS云存储
       oss:
         enabled: false                # 是否启用OSS
         provider: aliyun              # 提供商: aliyun/tencent/aws
-        endpoint: ""
-        access-key: ""
-        secret-key: ""
-        bucket-name: ""
+        endpoint: ${OSS_ENDPOINT:}
+        access-key: ${OSS_ACCESS_KEY:}
+        secret-key: ${OSS_SECRET_KEY:}
+        bucket-name: ${OSS_BUCKET:}
     
     # 监控功能配置
     monitoring:
@@ -237,4 +310,3 @@ app:
       enable-performance: true        # 是否启用性能监控
       enable-health-check: true       # 是否启用健康检查
       enable-metrics: true            # 是否启用指标收集
-

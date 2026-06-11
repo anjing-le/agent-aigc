@@ -40,12 +40,13 @@
  * @author Art Design Pro Team
  */
 
-import { useTimeoutFn, useIntervalFn, useDateFormat } from '@vueuse/core'
+import { useTimeoutFn, useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useSettingStore } from '@/store/modules/setting'
 import { mittBus } from '@/utils/sys'
 import { festivalConfigList } from '@/config/modules/festival'
+import { formatDateKey, nowDate } from '@/utils/time'
 
 /**
  * 节日庆祝配置常量
@@ -99,7 +100,7 @@ export function useCeremony() {
    * 获取当前日期对应的节日数据
    */
   const currentFestivalData = computed(() => {
-    const currentDate = useDateFormat(new Date(), 'YYYY-MM-DD').value
+    const currentDate = formatDateKey(nowDate())
     return festivalConfigList.find((item) => isDateInRange(currentDate, item.date, item.endDate))
   })
 

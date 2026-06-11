@@ -1,5 +1,6 @@
 package com.anjing.config.http;
 
+import com.anjing.model.constants.RequestHeaderConstants;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -23,6 +24,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
+                .exposedHeaders(
+                        RequestHeaderConstants.REQUEST_ID,
+                        RequestHeaderConstants.TRACE_ID
+                )
                 .allowCredentials(true)
                 .maxAge(3600);
     }

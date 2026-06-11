@@ -1,6 +1,7 @@
 package com.anjing.aspect;
 
 import com.anjing.annotation.DistributeLock;
+import com.anjing.config.lock.LocalLockConfig.LocalLockManager;
 import com.anjing.model.exception.SystemException;
 import com.anjing.model.errorcode.LockErrorCode;
 import com.anjing.model.constants.DistributeLockConstant;
@@ -12,7 +13,10 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.StandardReflectionParameterNameDiscoverer;
 import org.springframework.core.annotation.Order;
 import org.springframework.expression.EvaluationContext;
@@ -42,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 @Aspect
 @Component
 @ConditionalOnClass({RedissonClient.class, RLock.class})
+@ConditionalOnProperty(name = "app.features.distributed-lock.enabled", havingValue = "true", matchIfMissing = true)
 /**
  * 🚀 切面执行优先级设计分析
  * 
@@ -147,17 +152,24 @@ import java.util.concurrent.TimeUnit;
 public class DistributeLockAspect
 {
 
-    private RedissonClient redissonClient;
+    private final RedissonClient redissonClient;
+    private final LocalLockManager localLockManager;
+    private final String lockProvider;
 
-    public DistributeLockAspect(RedissonClient redissonClient) {
-        this.redissonClient = redissonClient;
+    public DistributeLockAspect(
+            ObjectProvider<RedissonClient> redissonClientProvider,
+            ObjectProvider<LocalLockManager> localLockManagerProvider,
+            @Value("${app.features.distributed-lock.provider:redisson}") String lockProvider
+    ) {
+        this.redissonClient = redissonClientProvider.getIfAvailable();
+        this.localLockManager = localLockManagerProvider.getIfAvailable();
+        this.lockProvider = lockProvider;
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(DistributeLockAspect.class);
 
     @Around("@annotation(com.anjing.annotation.DistributeLock)")
     public Object process(ProceedingJoinPoint pjp) throws Exception {
-        Object response = null;
         Method method = ((MethodSignature) pjp.getSignature()).getMethod();
         DistributeLock distributeLock = method.getAnnotation(DistributeLock.class);
 
@@ -200,8 +212,32 @@ public class DistributeLockAspect
 
         long expireTime = distributeLock.expireTime();
         long waitTime = distributeLock.waitTime();
+
+        if ("local".equalsIgnoreCase(lockProvider)) {
+            return processWithLocalLock(pjp, lockKey, expireTime, waitTime);
+        }
+        if ("redisson".equalsIgnoreCase(lockProvider)) {
+            return processWithRedissonLock(pjp, lockKey, expireTime, waitTime);
+        }
+
+        LOG.error("Unsupported distributed lock provider: {}", lockProvider);
+        throw new SystemException(LockErrorCode.LOCK_CONFIG_ERROR);
+    }
+
+    private Object processWithRedissonLock(
+            ProceedingJoinPoint pjp,
+            String lockKey,
+            long expireTime,
+            long waitTime
+    ) throws Exception {
+        if (redissonClient == null) {
+            LOG.error("Redisson lock provider is selected but RedissonClient is not available");
+            throw new SystemException(LockErrorCode.LOCK_CONFIG_ERROR);
+        }
+
         RLock rLock = redissonClient.getLock(lockKey);
         boolean lockResult = false;
+        Object response = null;
         
         try {
             if (waitTime == DistributeLockConstant.DEFAULT_WAIT_TIME) {
@@ -253,5 +289,52 @@ public class DistributeLockAspect
             }
         }
         return response;
+    }
+
+    private Object processWithLocalLock(
+            ProceedingJoinPoint pjp,
+            String lockKey,
+            long expireTime,
+            long waitTime
+    ) throws Exception {
+        if (localLockManager == null) {
+            LOG.error("Local lock provider is selected but LocalLockManager is not available");
+            throw new SystemException(LockErrorCode.LOCK_CONFIG_ERROR);
+        }
+
+        boolean lockResult = false;
+
+        try {
+            if (waitTime == DistributeLockConstant.DEFAULT_WAIT_TIME) {
+                LOG.info(String.format("local lock for key : %s", lockKey));
+                localLockManager.lock(lockKey, expireTime);
+                lockResult = true;
+            } else {
+                LOG.info(String.format("try local lock for key : %s , wait : %s", lockKey, waitTime));
+                lockResult = localLockManager.tryLock(lockKey, waitTime, expireTime);
+            }
+        } catch (Exception e) {
+            LOG.error("Local lock error for key: {}", lockKey, e);
+            throw new SystemException(LockErrorCode.LOCK_CONFIG_ERROR);
+        }
+
+        if (!lockResult) {
+            LOG.warn(String.format("local lock failed for key : %s , expire : %s", lockKey, expireTime));
+            throw new SystemException(LockErrorCode.LOCK_ACQUIRE_FAILED);
+        }
+
+        try {
+            LOG.info(String.format("local lock success for key : %s , expire : %s", lockKey, expireTime));
+            return pjp.proceed();
+        } catch (Throwable e) {
+            throw new Exception(e);
+        } finally {
+            try {
+                localLockManager.unlock(lockKey);
+                LOG.info(String.format("local unlock for key : %s , expire : %s", lockKey, expireTime));
+            } catch (Exception e) {
+                LOG.error("Failed to release local lock for key: {}", lockKey, e);
+            }
+        }
     }
 }

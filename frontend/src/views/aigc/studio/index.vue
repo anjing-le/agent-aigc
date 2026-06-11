@@ -49,6 +49,7 @@ import type {
   TaskStatusResponse,
   AssetItem
 } from '@/api/model/aigcModel'
+import { nowIsoString } from '@/utils/time'
 
 defineOptions({ name: 'AIGCStudio' })
 
@@ -112,8 +113,8 @@ const handleCreate = async () => {
       status: response.status,
       progress: 0,
       agentAnalysis: response.agentAnalysis,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: nowIsoString(),
+      updatedAt: nowIsoString()
     }
 
     // 开始轮询任务状态
@@ -242,4 +243,3 @@ onMounted(() => {
   }
 }
 </style>
-

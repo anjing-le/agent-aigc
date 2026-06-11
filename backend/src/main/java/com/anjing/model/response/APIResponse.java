@@ -1,17 +1,13 @@
 package com.anjing.model.response;
 
+import com.anjing.context.GlobalRequestContextHolder;
+import com.anjing.model.constants.PlatformContractConstants;
+import com.anjing.model.errorcode.ErrorCode;
+import com.anjing.util.DateUtils;
 import lombok.Data;
 
 /**
  * 统一API响应结果
- * 
- * <p>前后端约定响应格式：</p>
- * <ul>
- *   <li>code: 200 表示成功，其他表示失败</li>
- *   <li>message: 响应消息</li>
- *   <li>data: 响应数据</li>
- *   <li>timestamp: 时间戳</li>
- * </ul>
  */
 @Data
 public class APIResponse<T>
@@ -20,27 +16,22 @@ public class APIResponse<T>
     /**
      * 成功状态码
      */
-    public static final int SUCCESS_CODE = 200;
+    public static final String SUCCESS_CODE = PlatformContractConstants.Response.SUCCESS_CODE;
 
     /**
-     * 通用错误状态码
+     * 默认成功消息
      */
-    public static final int ERROR_CODE = 400;
-    
+    public static final String SUCCESS_MESSAGE = "操作成功";
+
     /**
-     * 未授权状态码
+     * 失败状态码
      */
-    public static final int UNAUTHORIZED_CODE = 401;
-    
-    /**
-     * 服务器错误状态码
-     */
-    public static final int SERVER_ERROR_CODE = 500;
+    public static final String ERROR_CODE = "-1";
 
     /**
      * 响应码
      */
-    private int code;
+    private String code;
 
     /**
      * 响应消息
@@ -57,21 +48,29 @@ public class APIResponse<T>
      */
     private Long timestamp;
 
+    /**
+     * Request id for frontend and log correlation.
+     */
+    private String requestId;
+
     public APIResponse() {
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = DateUtils.nowEpochMilli();
+        this.requestId = GlobalRequestContextHolder.requestIdOrNull();
     }
 
-    public APIResponse(int code, String message, T data) {
+    public APIResponse(String code, String message, T data) {
         this.code = code;
         this.message = message;
         this.data = data;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = DateUtils.nowEpochMilli();
+        this.requestId = GlobalRequestContextHolder.requestIdOrNull();
     }
 
-    public APIResponse(int code, String message) {
+    public APIResponse(String code, String message) {
         this.code = code;
         this.message = message;
-        this.timestamp = System.currentTimeMillis();
+        this.timestamp = DateUtils.nowEpochMilli();
+        this.requestId = GlobalRequestContextHolder.requestIdOrNull();
     }
 
     /**
@@ -80,7 +79,7 @@ public class APIResponse<T>
      * @return 是否成功
      */
     public boolean isSuccess() {
-        return SUCCESS_CODE == code;
+        return SUCCESS_CODE.equals(code);
     }
 
     /**
@@ -91,7 +90,18 @@ public class APIResponse<T>
      * @return 响应结果
      */
     public static <T> APIResponse<T> success(T data) {
-        return new APIResponse<>(SUCCESS_CODE, "操作成功", data);
+        return new APIResponse<>(SUCCESS_CODE, SUCCESS_MESSAGE, data);
+    }
+
+    /**
+     * 成功响应，明确表示参数是数据。用于 String 等容易和消息重载混淆的场景。
+     *
+     * @param data 数据
+     * @param <T>  数据类型
+     * @return 响应结果
+     */
+    public static <T> APIResponse<T> successData(T data) {
+        return success(data);
     }
 
     /**
@@ -112,7 +122,7 @@ public class APIResponse<T>
      * @return 响应结果
      */
     public static <T> APIResponse<T> success() {
-        return new APIResponse<>(SUCCESS_CODE, "操作成功", null);
+        return new APIResponse<>(SUCCESS_CODE, SUCCESS_MESSAGE, null);
     }
 
     /**
@@ -121,8 +131,20 @@ public class APIResponse<T>
      * @param message 消息
      * @return 响应结果
      */
-    public static <T> APIResponse<T> success(String message) {
+    public static <T> APIResponse<T> successMessage(String message) {
         return new APIResponse<>(SUCCESS_CODE, message, null);
+    }
+
+    /**
+     * 成功响应（无数据）
+     *
+     * @param message 消息
+     * @return 响应结果
+     * @deprecated 使用 {@link #successMessage(String)}，避免和 {@link #success(Object)} 的 String 数据场景混淆。
+     */
+    @Deprecated(since = "1.1.0", forRemoval = false)
+    public static <T> APIResponse<T> success(String message) {
+        return successMessage(message);
     }
 
     /**
@@ -138,13 +160,36 @@ public class APIResponse<T>
 
     /**
      * 错误响应
+     *
+     * @param errorCode 错误码
+     * @param <T>       数据类型
+     * @return 响应结果
+     */
+    public static <T> APIResponse<T> error(ErrorCode errorCode) {
+        return new APIResponse<>(errorCode.getCode(), errorCode.getMessage());
+    }
+
+    /**
+     * 错误响应
+     *
+     * @param errorCode 错误码
+     * @param data      附加数据
+     * @param <T>       数据类型
+     * @return 响应结果
+     */
+    public static <T> APIResponse<T> error(ErrorCode errorCode, T data) {
+        return new APIResponse<>(errorCode.getCode(), errorCode.getMessage(), data);
+    }
+
+    /**
+     * 错误响应
      * 
      * @param code    错误码
      * @param message 错误消息
      * @param <T>     数据类型
      * @return 响应结果
      */
-    public static <T> APIResponse<T> error(int code, String message) {
+    public static <T> APIResponse<T> error(String code, String message) {
         return new APIResponse<>(code, message);
     }
 
@@ -157,29 +202,7 @@ public class APIResponse<T>
      * @param <T>     数据类型
      * @return 响应结果
      */
-    public static <T> APIResponse<T> error(int code, String message, T data) {
+    public static <T> APIResponse<T> error(String code, String message, T data) {
         return new APIResponse<>(code, message, data);
-    }
-    
-    /**
-     * 未授权响应
-     * 
-     * @param message 错误消息
-     * @param <T>     数据类型
-     * @return 响应结果
-     */
-    public static <T> APIResponse<T> unauthorized(String message) {
-        return new APIResponse<>(UNAUTHORIZED_CODE, message);
-    }
-    
-    /**
-     * 服务器错误响应
-     * 
-     * @param message 错误消息
-     * @param <T>     数据类型
-     * @return 响应结果
-     */
-    public static <T> APIResponse<T> serverError(String message) {
-        return new APIResponse<>(SERVER_ERROR_CODE, message);
     }
 }

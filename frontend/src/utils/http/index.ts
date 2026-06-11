@@ -14,10 +14,24 @@
  * @author Art Design Pro Team
  */
 
-import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { useUserStore } from '@/store/modules/user'
 import { ApiStatus } from './status'
-import { HttpError, handleError, showError, showSuccess } from './error'
+import {
+  HttpError,
+  buildHttpErrorContext,
+  handleError,
+  showError,
+  showSuccess,
+  type HttpErrorContext
+} from './error'
+import { applyRequestContextHeaders } from './context'
+import {
+  extractResponseMessage,
+  isSuccessCode,
+  isUnauthorizedCode,
+  normalizeErrorCode
+} from './response'
 import { $t } from '@/locales'
 import { BaseResponse } from '@/types'
 
@@ -64,8 +78,9 @@ const axiosInstance = axios.create({
 /** 请求拦截器 */
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
-    const { accessToken } = useUserStore()
+    const { accessToken, language } = useUserStore()
     if (accessToken) request.headers.set('Authorization', accessToken)
+    applyRequestContextHeaders(request.headers, language)
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -83,25 +98,53 @@ axiosInstance.interceptors.request.use(
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse<BaseResponse>) => {
-    const { code, message } = response.data
-    if (code === ApiStatus.success) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(message)
-    throw createHttpError(message || $t('httpMsg.requestFailed'), code)
+    const { code } = response.data
+    const message = extractResponseMessage(response.data)
+    if (isSuccessCode(code)) return response
+    const context = buildResponseErrorContext(response)
+    if (isUnauthorizedCode(code)) handleUnauthorizedError(message, context)
+    throw createHttpError(message || $t('httpMsg.requestFailed'), normalizeErrorCode(code), context)
   },
   (error) => {
-    if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
+    if (error.response?.status === ApiStatus.unauthorized) {
+      handleUnauthorizedError(undefined, buildAxiosErrorContext(error))
+    }
     return Promise.reject(handleError(error))
   }
 )
 
 /** 统一创建HttpError */
-function createHttpError(message: string, code: number) {
-  return new HttpError(message, code)
+function createHttpError(message: string, code: number, context?: HttpErrorContext) {
+  return new HttpError(message, code, context)
+}
+
+function buildResponseErrorContext(response: AxiosResponse<BaseResponse>): HttpErrorContext {
+  return buildHttpErrorContext({
+    data: response.data,
+    responseHeaders: response.headers,
+    requestHeaders: response.config.headers,
+    url: response.config.url,
+    method: response.config.method
+  })
+}
+
+function buildAxiosErrorContext(error: AxiosError<BaseResponse>): HttpErrorContext {
+  return buildHttpErrorContext({
+    data: error.response?.data,
+    responseHeaders: error.response?.headers,
+    requestHeaders: error.config?.headers,
+    url: error.config?.url,
+    method: error.config?.method
+  })
 }
 
 /** 处理401错误（带防抖） */
-function handleUnauthorizedError(message?: string): never {
-  const error = createHttpError(message || $t('httpMsg.unauthorized'), ApiStatus.unauthorized)
+function handleUnauthorizedError(message?: string, context?: HttpErrorContext): never {
+  const error = createHttpError(
+    message || $t('httpMsg.unauthorized'),
+    ApiStatus.unauthorized,
+    context
+  )
 
   if (!isUnauthorizedErrorShown) {
     isUnauthorizedErrorShown = true

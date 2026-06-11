@@ -1,12 +1,22 @@
 package com.anjing.example;
 
+import com.anjing.annotation.ScaffoldSample;
+import com.anjing.client.RemoteHttpClient;
+import com.anjing.client.RemoteHttpRequest;
+import com.anjing.model.constants.ApiConstants;
+import com.anjing.model.constants.ServiceBoundaryConstants;
 import com.anjing.model.request.BaseRequest;
 import com.anjing.model.response.APIResponse;
 import com.anjing.util.RemoteCallWrapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 /**
  * 🌐 远程调用包装工具使用示例
@@ -25,9 +35,13 @@ import org.springframework.stereotype.Service;
  * @version 1.0
  * @since 1.0.0
  */
+@ScaffoldSample("远程调用包装工具示例")
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class RemoteCallExampleService {
+
+    private final RemoteHttpClient remoteHttpClient;
 
     // ==================== 模拟的远程服务接口 ====================
     
@@ -151,15 +165,45 @@ public class RemoteCallExampleService {
             false  // 不校验响应状态
         );
         
-        return APIResponse.success("通知发送完成");
+        return APIResponse.successData("通知发送完成");
     }
 
     /**
-     * 示例6: 复杂业务场景 - 组合多个远程调用
+     * 示例6: 服务间调用上下文请求头
+     * 场景：HTTP/WebClient/Feign 调用下游服务前，统一透传链路、租户、用户、语言和时区
+     */
+    public APIResponse<Map<String, String>> serviceCallHeadersExample() {
+        log.info("=== 示例6: 服务间调用上下文请求头 ===");
+
+        Map<String, String> headers = RemoteCallWrapper.serviceCallHeaders(ServiceBoundaryConstants.APPLICATION_ID);
+        return APIResponse.success(headers, "服务调用请求头生成成功");
+    }
+
+    /**
+     * 示例7: 统一 HTTP 远程调用适配器
+     * 场景：用统一 adapter 调用下游 HTTP 服务，并自动透传上下文请求头
+     */
+    public APIResponse<String> remoteHttpClientExample() {
+        log.info("=== 示例7: 统一 HTTP 远程调用适配器 ===");
+
+        RemoteHttpRequest request = RemoteHttpRequest.builder()
+                .method(HttpMethod.GET)
+                .serviceId(ServiceBoundaryConstants.APPLICATION_ID)
+                .path(ApiConstants.Test.PING_FULL)
+                .callerId(ServiceBoundaryConstants.APPLICATION_ID)
+                .checkResponse(true)
+                .build();
+
+        return remoteHttpClient.exchange(request, new ParameterizedTypeReference<APIResponse<String>>() {
+        });
+    }
+
+    /**
+     * 示例8: 复杂业务场景 - 组合多个远程调用
      * 场景：下单流程（用户验证 -> 库存检查 -> 创建订单 -> 发送通知）
      */
     public APIResponse<OrderVO> complexOrderProcessExample() {
-        log.info("=== 示例6: 复杂业务场景 - 组合多个远程调用 ===");
+        log.info("=== 示例8: 复杂业务场景 - 组合多个远程调用 ===");
         
         Long userId = 12345L;
         Long productId = 67890L;

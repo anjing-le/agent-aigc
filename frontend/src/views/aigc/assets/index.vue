@@ -94,6 +94,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import AssetCard from './components/AssetCard.vue'
 import { fetchGetAssetList, fetchDeleteAsset } from '@/api/aigc'
 import type { AssetItem, ContentType } from '@/api/model/aigcModel'
+import { formatDateTime } from '@/utils/time'
 
 defineOptions({ name: 'AIGCAssets' })
 
@@ -166,9 +167,7 @@ const handleDelete = async (item: AssetItem) => {
 }
 
 /** 格式化时间 */
-const formatTime = (time: string) => {
-  return new Date(time).toLocaleString()
-}
+const formatTime = (time: string) => formatDateTime(time)
 
 // ==================== 生命周期 ====================
 onMounted(() => {
@@ -250,4 +249,3 @@ onMounted(() => {
   }
 }
 </style>
-
