@@ -1,0 +1,195 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {
+      "id": "title",
+      "type": "text",
+      "x": 100,
+      "y": 30,
+      "width": 800,
+      "height": 45,
+      "text": "20260308（周日晚8:00）- AIGC项目 - 第二次课程",
+      "fontSize": 36,
+      "fontFamily": 3,
+      "textAlign": "center",
+      "strokeColor": "#1971c2"
+    },
+
+    {
+      "id": "container",
+      "type": "rectangle",
+      "x": 100,
+      "y": 100,
+      "width": 270,
+      "height": 310,
+      "strokeColor": "#868e96",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roundness": { "type": 3 },
+      "opacity": 30
+    },
+
+    {
+      "id": "block-1",
+      "type": "rectangle",
+      "x": 120,
+      "y": 120,
+      "width": 230,
+      "height": 70,
+      "strokeColor": "#c92a2a",
+      "backgroundColor": "#fcd5ce",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "roundness": { "type": 3 }
+    },
+    {
+      "id": "block-1-text",
+      "type": "text",
+      "x": 140,
+      "y": 140,
+      "width": 190,
+      "height": 30,
+      "text": "1. 核心设计讲解",
+      "fontSize": 22,
+      "fontFamily": 3,
+      "textAlign": "center",
+      "strokeColor": "#333333"
+    },
+
+    {
+      "id": "block-2",
+      "type": "rectangle",
+      "x": 120,
+      "y": 220,
+      "width": 230,
+      "height": 70,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#b8d8f8",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "roundness": { "type": 3 }
+    },
+    {
+      "id": "block-2-text",
+      "type": "text",
+      "x": 140,
+      "y": 240,
+      "width": 190,
+      "height": 30,
+      "text": "2. 知识导航",
+      "fontSize": 22,
+      "fontFamily": 3,
+      "textAlign": "center",
+      "strokeColor": "#333333"
+    },
+
+    {
+      "id": "block-3",
+      "type": "rectangle",
+      "x": 120,
+      "y": 320,
+      "width": 230,
+      "height": 70,
+      "strokeColor": "#2f9e44",
+      "backgroundColor": "#c1e7c1",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "roundness": { "type": 3 }
+    },
+    {
+      "id": "block-3-text",
+      "type": "text",
+      "x": 140,
+      "y": 340,
+      "width": 190,
+      "height": 30,
+      "text": "3. 答疑",
+      "fontSize": 22,
+      "fontFamily": 3,
+      "textAlign": "center",
+      "strokeColor": "#333333"
+    },
+
+    {
+      "id": "arrow-1",
+      "type": "text",
+      "x": 390,
+      "y": 130,
+      "width": 30,
+      "height": 20,
+      "text": "←",
+      "fontSize": 20,
+      "fontFamily": 3,
+      "strokeColor": "#1971c2"
+    },
+    {
+      "id": "desc-1",
+      "type": "text",
+      "x": 420,
+      "y": 128,
+      "width": 500,
+      "height": 50,
+      "text": "Agent 四层管道 ｜ 意图分析 ｜ 智能路由\nProvider 抽象 ｜ 异步任务 + 轮询机制",
+      "fontSize": 18,
+      "fontFamily": 3,
+      "strokeColor": "#555555"
+    },
+
+    {
+      "id": "arrow-2",
+      "type": "text",
+      "x": 390,
+      "y": 230,
+      "width": 30,
+      "height": 20,
+      "text": "←",
+      "fontSize": 20,
+      "fontFamily": 3,
+      "strokeColor": "#1971c2"
+    },
+    {
+      "id": "desc-2",
+      "type": "text",
+      "x": 420,
+      "y": 228,
+      "width": 500,
+      "height": 50,
+      "text": "面试叙事导航图\n复试 + 求职双场景 ｜ 一棵树搞定面试",
+      "fontSize": 18,
+      "fontFamily": 3,
+      "strokeColor": "#555555"
+    },
+
+    {
+      "id": "arrow-3",
+      "type": "text",
+      "x": 390,
+      "y": 340,
+      "width": 30,
+      "height": 20,
+      "text": "←",
+      "fontSize": 20,
+      "fontFamily": 3,
+      "strokeColor": "#1971c2"
+    },
+    {
+      "id": "desc-3",
+      "type": "text",
+      "x": 420,
+      "y": 340,
+      "width": 300,
+      "height": 30,
+      "text": "有问题随时提问",
+      "fontSize": 18,
+      "fontFamily": 3,
+      "strokeColor": "#555555"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  }
+}

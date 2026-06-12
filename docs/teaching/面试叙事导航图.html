@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>面试叙事导航图 — 全模态AI创作平台</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #232733;
+  --surface3: #2a2e3b;
+  --border: #333849;
+  --text: #e4e6ed;
+  --text2: #9ba1b0;
+  --text3: #6b7280;
+  --accent: #6c8cff;
+  --accent2: #818cf8;
+  --accent-glow: rgba(108,140,255,0.12);
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.08);
+  --orange: #fb923c;
+  --orange-bg: rgba(251,146,60,0.08);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.08);
+  --purple: #a78bfa;
+  --purple-bg: rgba(167,139,250,0.08);
+  --yellow: #fbbf24;
+  --yellow-bg: rgba(251,191,36,0.08);
+  --cyan: #22d3ee;
+  --cyan-bg: rgba(34,211,238,0.08);
+  --pink: #f472b6;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.top-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(15,17,23,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand { font-size: 18px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.nav-brand .icon { font-size: 24px; }
+
+.nav-tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; }
+.nav-tab {
+  padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;
+  color: var(--text2); transition: var(--transition); border: none; background: none; white-space: nowrap;
+}
+.nav-tab:hover { color: var(--text); background: var(--surface2); }
+.nav-tab.active { color: #fff; background: var(--accent); }
+
+.nav-hint { font-size: 13px; color: var(--text3); }
+
+.app { display: flex; margin-top: 64px; }
+
+.sidebar {
+  position: fixed; top: 64px; left: 0; bottom: 0; width: 260px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 16px 0; z-index: 50; transition: transform 0.3s ease;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.sidebar-section { padding: 8px 16px; margin-bottom: 4px; }
+.sidebar-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 8px; }
+.sidebar-link {
+  display: block; padding: 7px 16px; color: var(--text2); text-decoration: none; font-size: 13px;
+  border-radius: 6px; transition: var(--transition); cursor: pointer;
+}
+.sidebar-link:hover { background: var(--surface2); color: var(--text); }
+.sidebar-link.active { background: var(--accent-glow); color: var(--accent); }
+
+.main { margin-left: 260px; flex: 1; padding: 40px 48px 120px; max-width: 960px; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.section { margin-bottom: 56px; animation: fadeUp 0.4s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+.section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.section-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.section-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.section-header .subtitle { font-size: 14px; color: var(--text2); margin-top: 2px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 16px; transition: var(--transition);
+}
+.card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(108,140,255,0.08); }
+
+.card-label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+.label-recommend { background: var(--green-bg); color: var(--green); }
+.label-alt { background: var(--purple-bg); color: var(--purple); }
+.label-alt2 { background: var(--orange-bg); color: var(--orange); }
+
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+.quote {
+  background: var(--surface2); border-left: 3px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 16px 20px; color: var(--text); font-size: 14.5px; line-height: 1.8; margin: 12px 0;
+}
+.quote-note { margin-top: 10px; font-size: 13px; color: var(--text2); font-style: italic; }
+
+.tree-path { display: flex; align-items: center; gap: 8px; margin: 20px 0; flex-wrap: wrap; }
+.tree-node { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.tree-arrow { color: var(--text3); font-size: 18px; }
+
+.table-wrap { overflow-x: auto; margin: 16px 0; border-radius: var(--radius); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+thead { background: var(--surface2); }
+th { padding: 12px 16px; text-align: left; font-weight: 600; color: var(--text2); font-size: 13px; white-space: nowrap; }
+td { padding: 12px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+tr:hover td { background: var(--surface2); }
+
+.deep-dive { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; transition: var(--transition); }
+.deep-dive:hover { border-color: rgba(108,140,255,0.3); }
+
+.dd-header { display: flex; align-items: center; gap: 12px; padding: 18px 24px; cursor: pointer; user-select: none; transition: var(--transition); }
+.dd-header:hover { background: var(--surface2); }
+
+.dd-num { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.dd-title { flex: 1; font-size: 16px; font-weight: 600; }
+.dd-toggle { width: 28px; height: 28px; border-radius: 6px; background: var(--surface2); display: flex; align-items: center; justify-content: center; transition: var(--transition); font-size: 14px; color: var(--text3); }
+.deep-dive.open .dd-toggle { transform: rotate(180deg); color: var(--accent); }
+
+.dd-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.deep-dive.open .dd-body { max-height: 5000px; }
+.dd-content { padding: 0 24px 24px; }
+.dd-block { margin-bottom: 20px; }
+.dd-block-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.dd-block p, .dd-block .quote { font-size: 14px; }
+.dd-block p { color: var(--text2); line-height: 1.8; }
+
+.qa-item { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 8px; }
+.qa-q { font-weight: 600; font-size: 13px; color: var(--orange); margin-bottom: 6px; }
+.qa-a { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+.thunder-bad { color: var(--red); font-weight: 500; }
+.thunder-good { color: var(--green); }
+
+.template-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 16px 20px; margin-bottom: 12px; border-left: 3px solid var(--accent); }
+.template-label { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+.template-text { font-size: 14px; color: var(--text); line-height: 1.8; }
+
+.story-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+.story-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.difficulty-tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--red-bg); color: var(--red); margin-bottom: 12px; }
+
+.star-note {
+  background: var(--yellow-bg); border: 1px solid rgba(251,191,36,0.2); border-radius: var(--radius-sm);
+  padding: 12px 16px; margin-top: 12px; font-size: 13px; color: var(--yellow);
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.star-note .star { font-size: 16px; flex-shrink: 0; }
+
+.key-point {
+  background: linear-gradient(135deg, rgba(108,140,255,0.08), rgba(167,139,250,0.08));
+  border: 1px solid rgba(108,140,255,0.2); border-radius: var(--radius);
+  padding: 20px 24px; margin: 20px 0;
+}
+.key-point-title { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+
+.direction-cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.direction-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 16px 20px; border-left: 3px solid; }
+.direction-card.nlp { border-left-color: var(--accent); }
+.direction-card.se { border-left-color: var(--green); }
+.direction-card.db { border-left-color: var(--purple); }
+.direction-label { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+
+.intro-banner {
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 32px; margin-bottom: 40px; position: relative; overflow: hidden;
+}
+.intro-banner::after {
+  content: ''; position: absolute; top: -50%; right: -20%; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(108,140,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.intro-banner h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+.intro-banner .intro-sub { color: var(--text2); font-size: 15px; margin-bottom: 20px; }
+.intro-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.intro-tag { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(108,140,255,0.15); }
+
+.expand-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+  font-size: 13px; cursor: pointer; transition: var(--transition); margin-bottom: 16px;
+}
+.expand-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.highlight-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 16px; border-left: 4px solid var(--accent);
+  transition: var(--transition);
+}
+.highlight-card:hover { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(108,140,255,0.08); }
+.highlight-card .hl-number { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accent-glow); color: var(--accent); font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.highlight-card h4 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.highlight-card .hook { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+.highlight-card .detail { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+.back-top {
+  position: fixed; bottom: 32px; right: 32px; width: 44px; height: 44px; border-radius: 12px;
+  background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer; box-shadow: var(--shadow);
+  opacity: 0; transform: translateY(20px); transition: var(--transition); z-index: 90; border: none;
+}
+.back-top.show { opacity: 1; transform: translateY(0); }
+.back-top:hover { background: var(--accent2); transform: translateY(-2px); }
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 24px 16px 80px; }
+  .nav-hint { display: none; }
+  .top-nav { padding: 0 16px; }
+  .tree-path { gap: 4px; }
+  .tree-node { padding: 6px 10px; font-size: 12px; }
+}
+@media (max-width: 600px) {
+  .nav-tabs { gap: 2px; padding: 3px; }
+  .nav-tab { padding: 6px 12px; font-size: 13px; }
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-brand"><span class="icon">🗺️</span><span>面试叙事导航图</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('grad')">🎓 复试面试版</button>
+    <button class="nav-tab" onclick="switchTab('job')">💼 求职面试版</button>
+  </div>
+  <span class="nav-hint">全模态AI创作平台</span>
+</nav>
+
+<div class="app">
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main">
+
+<!-- ============================================================ -->
+<!--                   TAB 1: 复试面试版                           -->
+<!-- ============================================================ -->
+<div class="tab-panel active" id="panel-grad">
+
+<div class="intro-banner">
+  <h1>🎓 复试面试版</h1>
+  <p class="intro-sub">目标：打动导师的心 — 展现好奇心、研究深度、学术探究精神与动手能力</p>
+  <div class="intro-tags">
+    <span class="intro-tag">3种开场锚点</span>
+    <span class="intro-tag">3条主线路径</span>
+    <span class="intro-tag">8个深潜知识点</span>
+    <span class="intro-tag">防雷指南</span>
+    <span class="intro-tag">故事线自洽包</span>
+  </div>
+</div>
+
+<!-- Section 1: 开场锚点 -->
+<div class="section" id="g-anchor">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--green-bg);color:var(--green);">🎤</div>
+    <div>
+      <h2>开场锚点</h2>
+      <div class="subtitle">30秒，三选一，一句话抓住注意力</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-label label-recommend">⭐ 推荐</span>
+    <div class="card-title">风格A：好奇驱动型</div>
+    <div class="quote">
+      "我之前做了一个全模态 AI 创作平台。起因是我在用各种AI工具生成图片、视频的时候，发现一个很有意思的问题——用户其实不关心用的是什么模型，他只想说一句话就拿到结果。所以我就想，能不能让 AI 自己来理解用户要什么、自己选最合适的模型？这其实就是一个 Agent 的设计问题。我围绕这个想法做了一个完整的系统，支持文生图、文生视频、语音合成这些多模态能力。"
+      <div class="quote-note">💡 老师听到"有意思的问题"会觉得你有好奇心，听到"Agent的设计问题"会觉得你有抽象思考能力。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-label label-alt">备选</span>
+    <div class="card-title">风格B：问题驱动型</div>
+    <div class="quote">
+      "我做了一个 AI 创作平台，要解决的核心问题是：现在的 AI 生成工具门槛太高了，用户得自己选模型、调参数、写英文提示词。我就想，能不能设计一个智能 Agent，让用户说一句中文，系统自动完成从意图理解到模型选择到内容生成的全流程？这个过程中我深入学习了 Agent 架构设计、多模态 API 对接、异步任务管理这些技术。"
+      <div class="quote-note">💡 开头直接点出"要解决的问题"，老师知道你有目标感，不是盲目做项目。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-label label-alt2">备选</span>
+    <div class="card-title">风格C：技术趋势型</div>
+    <div class="quote">
+      "我关注到 Google 发布 Gemini 多模态能力、Veo 视频生成之后，就很想亲手试试怎么把这些前沿能力整合成一个真正可用的产品。所以我设计了一个全模态 AI 创作平台，核心做了一个 Agent，它能自动分析用户的自然语言需求，路由到最合适的生成模型。这个过程让我对 Agent 系统设计、提示词工程、多模态技术都有了比较深入的理解。"
+      <div class="quote-note">💡 展示你对前沿技术的敏感度，暗示你有持续学习的习惯。</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: 主线路径 -->
+<div class="section" id="g-paths">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--accent-glow);color:var(--accent);">🌳</div>
+    <div>
+      <h2>主线路径</h2>
+      <div class="subtitle">三条路线，根据问题灵活切入</div>
+    </div>
+  </div>
+
+  <!-- 路线A -->
+  <div class="card">
+    <div class="card-title">路线A：从"我想解决什么问题"出发</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:16px;">适合被问："介绍一下你的项目"</p>
+    <div class="tree-path">
+      <span class="tree-node">A1 痛点</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A2 方案</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A3 Agent四层</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A4 能力</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A5 收获</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>节点</th><th>说什么</th><th>面试官心理</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A1 痛点</strong></td><td>"现在的AI工具要求用户自己选模型、写英文提示词、调参数，普通人根本用不起来。"</td><td>老师在判断你是否理解"需求"，有没有用户视角</td></tr>
+          <tr><td><strong>A2 方案</strong></td><td>"我的思路是做一个智能Agent，用户说中文就行，Agent自动理解意图、选模型、优化提示词、生成内容。"</td><td>老师在判断你有没有独立思考的解决方案</td></tr>
+          <tr><td><strong>A3 Agent四层</strong></td><td>"Agent分四层——意图分析用LLM提取结构化信息，路由决策根据参数选最优模型，提示词增强自动加质量修饰，最后路由到Provider执行生成。"</td><td>核心技术点，在判断你对系统设计有没有思考</td></tr>
+          <tr><td><strong>A4 能力</strong></td><td>"支持五种生成能力：文生图、图生图、文生视频、图生视频、语音合成。前端有创作工作台、灵感广场、我的资产三个模块。"</td><td>在判断项目完整性，你不是只做了一个demo</td></tr>
+          <tr><td><strong>A5 收获</strong></td><td>"做这个项目最大的收获是理解了AI应用和传统应用的区别——要拥抱不确定性，在架构上做弹性设计。"</td><td>在判断你有没有反思和总结的习惯</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 路线B -->
+  <div class="card">
+    <div class="card-title">路线B：从 Agent 设计思想出发</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:16px;">适合被追问技术深度</p>
+    <div class="tree-path">
+      <span class="tree-node">B1 Agent本质</span><span class="tree-arrow">→</span>
+      <span class="tree-node">B2 意图分析</span><span class="tree-arrow">→</span>
+      <span class="tree-node">B3 路由决策</span><span class="tree-arrow">→</span>
+      <span class="tree-node">B4 成本意识</span><span class="tree-arrow">→</span>
+      <span class="tree-node">B5 可扩展性</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>节点</th><th>说什么</th><th>面试官心理</th></tr></thead>
+        <tbody>
+          <tr><td><strong>B1 Agent本质</strong></td><td>"Agent和普通API调用最大的区别是——它有决策能力。普通调用是写死的，Agent是根据输入动态决定下一步做什么。"</td><td>在判断你是否真正理解Agent概念，不只是用了这个词</td></tr>
+          <tr><td><strong>B2 意图分析</strong></td><td>"我用gpt-4o-mini做意图分析。设计了一套系统提示词，让LLM从自然语言中提取出内容类型、意图场景、技术参数。temperature设0.1保证解析结果稳定。"</td><td>Prompt Engineering能力，对LLM参数的理解</td></tr>
+          <tr><td><strong>B3 路由决策</strong></td><td>"RoutingAgent根据分析结果动态选模型。比如用户要4K图片，自动升级到Gemini 3 Pro；用户说'快一点'，自动切到fast模型。"</td><td>在判断你是否理解"策略"和"动态决策"的思想</td></tr>
+          <tr><td><strong>B4 成本意识</strong></td><td>"一个关键设计决策：意图分析用便宜的gpt-4o-mini，0.15美元/百万token；内容生成才用贵的模型。分析成本几乎可以忽略。"</td><td>有工程思维和经济意识，不只是会写代码</td></tr>
+          <tr><td><strong>B5 可扩展性</strong></td><td>"Provider抽象让系统很容易扩展。要接新模型，只需实现接口、加注解、改配置，不动现有代码。这是开闭原则的实际应用。"</td><td>有设计原则意识，不是copy-paste写代码</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 路线C -->
+  <div class="card">
+    <div class="card-title">路线C：从多模态技术前沿出发</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:16px;">适合展现学术视野</p>
+    <div class="tree-path">
+      <span class="tree-node">C1 多模态趋势</span><span class="tree-arrow">→</span>
+      <span class="tree-node">C2 实践切入点</span><span class="tree-arrow">→</span>
+      <span class="tree-node">C3 Diffusion</span><span class="tree-arrow">→</span>
+      <span class="tree-node">C4 LLM决策</span><span class="tree-arrow">→</span>
+      <span class="tree-node">C5 未来延伸</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>节点</th><th>说什么</th><th>面试官心理</th></tr></thead>
+        <tbody>
+          <tr><td><strong>C1 多模态趋势</strong></td><td>"从GPT-4V到Gemini到Sora，AI正在从单模态走向多模态。以前模型只能处理文本，现在能同时理解和生成文本、图片、视频、音频。"</td><td>在判断你对领域的宏观认知</td></tr>
+          <tr><td><strong>C2 实践切入点</strong></td><td>"我选择从应用层切入，去理解多模态能力怎么被整合到一个统一的系统中。核心挑战是：不同模态的API协议完全不同。"</td><td>有具体的技术观察和思考，不是空谈趋势</td></tr>
+          <tr><td><strong>C3 Diffusion</strong></td><td>"图片生成的底层原理是扩散模型——训练时往图片加噪声，生成时从噪声出发、在文本引导下逐步去噪。我觉得这个'逆过程'的思想很优雅。"</td><td>有没有了解过底层原理，是否有学术好奇心</td></tr>
+          <tr><td><strong>C4 LLM决策</strong></td><td>"我项目里有个设计我觉得很有意思——不是用LLM来生成内容，而是用它来做决策。LLM理解自然语言的能力被用来做意图解析，这比规则引擎灵活太多。"</td><td>有自己的技术洞察，不是照搬别人的方案</td></tr>
+          <tr><td><strong>C5 未来延伸</strong></td><td>"如果继续深入，我特别想探索两个方向：一是多模态融合生成，一次输入同时产出图文视频；二是Agent的自主规划能力。"</td><td>和读研方向的关联性，有没有长期思考</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: 深潜知识点 -->
+<div class="section" id="g-deep">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--purple-bg);color:var(--purple);">🔬</div>
+    <div>
+      <h2>深潜知识点</h2>
+      <div class="subtitle">每个概念四层递进：比喻→技术本质→我的理解→可能追问</div>
+    </div>
+  </div>
+
+  <button class="expand-btn" onclick="toggleAllDeepDives('panel-grad')"><span>📂</span> 全部展开 / 收起</button>
+
+  <div class="deep-dive" id="g-dd-agent">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--accent-glow);color:var(--accent);">1</div>
+      <div class="dd-title">Agent（智能代理）</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>Agent 就像一个聪明的前台接待。你去酒店说"我想要一间安静的房间"，前台不会让你自己翻房间列表，他会理解你的需求、查系统、给你推荐最合适的房间。Agent 做的就是同样的事——理解需求、做决策、安排执行。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>Agent 是一个具备"感知→推理→行动"能力的智能系统。与硬编码逻辑不同，Agent 使用 LLM 作为推理引擎，能处理模糊的、非结构化的输入，动态决定执行路径。在本项目中，Agent 包含意图分析、路由决策、提示词增强三个核心组件，形成四层处理管道。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解（第一人称）</div>
+        <div class="quote">"我觉得 Agent 最核心的价值不是'它能做事'，而是'它能帮用户做决定'。传统系统是把决策权交给用户——你选模型、你写提示词、你调参数。Agent 是把这个决策负担从用户身上拿走。我做这个项目的过程中越来越觉得，好的 Agent 设计不是让 AI 做更多事，而是让用户做更少决定。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"Agent 和普通的 if-else 判断有什么区别？"</div>
+          <div class="qa-a">→ if-else 是穷举式的，要预想所有情况；Agent 用 LLM 做推理，能处理意料之外的输入。比如用户说"帮我搞个动图"，规则引擎很难判断是图片还是视频，但 LLM 能理解语义。</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q">"你的 Agent 能自主学习吗？"</div>
+          <div class="qa-a">→ 目前不能，是基于预设规则和 LLM 推理的。但如果加入用户反馈循环，可以逐步优化 Prompt 策略。这也是想在研究生阶段深入探索的方向。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="g-dd-intent">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--green-bg);color:var(--green);">2</div>
+      <div class="dd-title">意图分析 / 意图识别</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>就像餐厅服务员听你说"来个不辣的"，他不只是听到了"不辣"这个词，还得判断你要菜还是汤、几个人吃、大概什么价位。意图分析就是从用户的一句话里"读出"他到底想干什么。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>IntentAnalyzer 通过精心设计的 System Prompt 引导 gpt-4o-mini，从用户输入中提取四类信息：内容类型（IMAGE/VIDEO/AUDIO）、意图场景（text_to_image 等）、技术参数（宽高比、时长、分辨率）、清洗后的纯创意提示词。输出严格 JSON 格式，通过 Jackson 反序列化为 AnalyzedIntent 对象。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"意图分析这块我踩了一些坑。最开始考虑过用正则和关键词匹配，但用户说的话千变万化——'帮我搞个动画'、'让这张图动起来'、'做个短片'，规则引擎根本cover不住。用 LLM 之后又有新问题：返回的 JSON 有时候被 Markdown 代码块包裹。所以我做了一层清洗逻辑，这让我意识到，用 LLM 做工程化的事情，容错和 robustness 非常重要。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"LLM 做意图分析的准确率怎么保证？"</div>
+          <div class="qa-a">→ 三个手段：Prompt 详细枚举所有合法值和示例；temperature 设 0.1 降低随机性；有参考图片时做规则修正（强制 image_to_image）。</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q">"为什么不用传统 NLU 模型？"</div>
+          <div class="qa-a">→ 传统 NLU 需要标注数据和训练，成本高周期长。LLM 的零样本能力通过 Prompt 就能定义解析规则，迭代非常快，性价比最高。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="g-dd-multimodal">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--orange-bg);color:var(--orange);">3</div>
+      <div class="dd-title">多模态（Multimodal）</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>人类天生就是"多模态"的——能同时看图、听声音、读文字、说话。早期的 AI 是"偏科生"，一个模型只能处理一种数据。现在的多模态 AI 更像一个"全能选手"，能同时理解和生成文字、图片、视频、声音。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>多模态指模型能够处理和生成不同类型（模态）的数据。Gemini 可以接收文本+图片输入，输出文本或图片；Veo 可以接收文本或文本+图片输入，输出视频。技术上，多模态模型通常在统一的表示空间中对齐不同模态的特征，使跨模态的理解和生成成为可能。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"做这个项目之后我对多模态最深的感受是——从应用层来看，不同模态之间的 API 协议差异巨大。图片是同步的，视频是异步的，音频又不一样。所以多模态不只是模型层面的挑战，在工程层面也需要一个好的抽象来统一处理差异，这就是我做 Provider 抽象体系的原因。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"不同模态的数据在模型内部是怎么融合的？"</div>
+          <div class="qa-a">→ 主流方法是把不同模态的数据都转换到共享的向量空间（embedding space），让文本和图像表示相互对齐。比如 CLIP 通过对比学习实现这一点。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="g-dd-diffusion">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--cyan-bg);color:var(--cyan);">4</div>
+      <div class="dd-title">Diffusion 扩散模型原理</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>想象你有一张清晰的照片，你一点一点往上面撒沙子，最后变成一堆沙子——这就是"加噪声"。扩散模型学会了一个本事：给它一堆沙子（纯噪声），它能根据你的描述（Prompt），一点一点把沙子扫掉，还原出匹配描述的图片。它不是"画画"，而是"从混沌中恢复秩序"。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>前向过程：对训练图片逐步添加高斯噪声，经过 T 步变成纯噪声。反向过程：训练去噪网络（通常 U-Net），学习每步如何恢复信号。生成时从纯噪声出发，通过文本 Prompt 的条件引导（Classifier-Free Guidance）逐步去噪得到目标图片。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"我觉得扩散模型最反直觉的地方是——它不是像人一样'从白纸上画画'，而是'从一团乱麻中雕刻'。从应用角度看，Diffusion 的好处是生成质量高、训练稳定，缺点是推理慢（多步去噪）。这也解释了为什么项目中图片生成需要 10-30 秒。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"Diffusion 和 GAN 有什么区别？"</div>
+          <div class="qa-a">→ GAN 是两个网络对抗，训练不稳定容易崩溃。Diffusion 是单一网络逐步去噪，训练更稳定，质量更高，但推理速度慢。目前趋势是 Diffusion 逐渐替代 GAN。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="g-dd-prompt">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--yellow-bg);color:var(--yellow);">5</div>
+      <div class="dd-title">Prompt Engineering（提示词工程）</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>就像你跟画师约稿。你说"画只猫"，画师可能画出各种猫。但你说"画一只橘色短毛猫，坐在窗台上，夕阳光照进来，水彩画风格"，画师就知道了。Prompt Engineering 就是学会怎么"精准描述需求"让 AI 输出你想要的结果。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>核心技巧包括：角色设定（System Prompt 定义 AI 身份）、结构化指令（定义输出格式和约束）、Few-shot 示例（提供参考样例）、参数控制（temperature 控制随机性）。项目中两处应用：IntentAnalyzer 的系统提示词设计，PromptEnhancer 自动增强创作描述。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"Prompt Engineering 看起来就是'写几句话'，但实际上它是一种'用自然语言编程'。我在设计 IntentAnalyzer 的 Prompt 时迭代了很多版本。最开始太简单，LLM 返回格式经常不对；后来加了详细的参数枚举、默认值规则、具体示例，稳定性才上来。我的体会是，好的 Prompt 像好的 API 文档——要定义清楚输入输出、边界情况和默认行为。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"Few-shot 和 Zero-shot 有什么区别？"</div>
+          <div class="qa-a">→ Zero-shot 不给例子直接让模型做；Few-shot 给几个输入-输出的例子让模型学。我的意图分析用 Zero-shot + 详细指令，因为清晰的格式定义比给例子更有效。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="g-dd-provider">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--purple-bg);color:var(--purple);">6</div>
+      <div class="dd-title">Provider 抽象与开闭原则</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>就像家里的插座——不管你插电视、电脑还是手机充电器，插座接口是一样的。Provider 抽象就是定义一个"标准接口"，不管背后是 Google 还是 OpenAI，只要"插上去"就能用。将来换新模型不需要拆电线，只要适配同样的插头。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>定义 ContentProvider 基接口和三个子接口（Image/Video/AudioGenerationProvider）。具体实现类通过 @Component 注册到 Spring 容器，ProviderRouter 通过依赖注入自动收集所有实现，根据配置文件的 active-provider 选择激活哪一个。对扩展开放，对修改关闭。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"一开始我把 Google API 的调用逻辑直接写在 Service 里，后来发现想加 DALL-E 就得改一大堆代码。抽出 Provider 接口之后，加新模型变成三步：写实现类、加注解、改配置文件。这个过程让我真正理解了'面向接口编程'不是课本上的口号，而是解决实际问题的工具。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"Spring 的依赖注入是怎么自动发现 Provider 的？"</div>
+          <div class="qa-a">→ Spring 启动时扫描所有 @Component 类，实现了 ImageGenerationProvider 的就被注入到 ProviderRouter 的 List 里。ProviderRouter 遍历匹配 active-provider 配置来选择。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="g-dd-async">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--red-bg);color:var(--red);">7</div>
+      <div class="dd-title">异步任务与轮询机制</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>就像去餐厅点菜。你不会站在厨房门口等——点完菜拿到号码牌，回座位等着，偶尔看看叫号屏。"异步任务+轮询"就是发一个请求拿到任务ID（号码牌），然后定期查状态（看叫号屏）。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>后端用 @Async 将生成任务放到独立线程池，主请求立即返回 taskId。前端每秒 GET /api/aigc/task/{taskId} 查询状态。任务经历 PENDING→PROCESSING→COMPLETED/FAILED。视频有"双重轮询"：前端轮询后端，后端内部每10秒轮询 Google Veo 的 operation 状态。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"异步任务是工程难度最大的部分。两个坑：@Async 方法不能在同类中直接调用（Spring AOP 代理只对外部调用生效）；异步线程异常不会抛到主线程，必须在 try-catch 里手动更新任务状态为 FAILED，不然任务会永远卡在 PROCESSING。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"轮询有什么缺点？有更好的方案吗？"</div>
+          <div class="qa-a">→ 缺点是浪费请求，180次轮询中可能170次拿到的都是 PROCESSING。更好的方案是 SSE（Server-Sent Events），服务端主动推送，用 SseEmitter 实现，比 WebSocket 轻量。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="g-dd-temp">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:rgba(244,114,182,0.08);color:var(--pink);">8</div>
+      <div class="dd-title">Temperature 参数</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>Temperature 就像"创意旋钮"。旋到最低（接近0），AI 像一丝不苟的会计，每次给最确定的回答；旋到最高，AI 像天马行空的诗人，回答更有创意但也更不可预测。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>Temperature 控制 LLM 输出的概率分布。低 temperature 让分布变"尖锐"，高概率 token 被选中概率更大，输出更确定；高 temperature 让分布变"平坦"，低概率 token 也有机会被选中，输出更多样。数学上是在 softmax 中除以 temperature 值再归一化。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"我的意图分析 temperature 设为 0.1——因为需要确定性的结构化输出。如果设高了，同一句'画一只猫'有时被解析成 IMAGE 有时被解析成 VIDEO，系统就不稳定了。但做创意生成的 Prompt，temperature 反而应该高一些。关键是理解场景需要确定性还是创造性。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"除了 temperature，还有什么参数影响输出？"</div>
+          <div class="qa-a">→ top_p（核采样，限制候选 token 累积概率）、top_k（限制候选 token 数量）、max_tokens（限制输出长度）。意图分析中主要依赖 temperature 和结构化 Prompt 来控制。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 4: 防雷指南 -->
+<div class="section" id="g-thunder">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--red-bg);color:var(--red);">⚡</div>
+    <div>
+      <h2>防雷指南</h2>
+      <div class="subtitle">面试不只考你懂多少，还考你"不踩哪些坑"</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">❌ 绝对不能说的话</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>雷区表达</th><th>为什么是雷</th><th>✅ 替换说法</th></tr></thead>
+        <tbody>
+          <tr><td class="thunder-bad">"这个是跟着教程做的"</td><td>老师觉得你没有自己的思考</td><td class="thunder-good">"我参考了一些技术方案，然后根据自己的理解做了架构设计"</td></tr>
+          <tr><td class="thunder-bad">"这是培训班的项目"</td><td>直接扣分</td><td class="thunder-good">"这是我自己找方向、设计和实现的一个项目"</td></tr>
+          <tr><td class="thunder-bad">"我只是调了API"</td><td>贬低了自己做的工程价值</td><td class="thunder-good">"我的核心工作是设计 Agent 决策层和 Provider 抽象架构"</td></tr>
+          <tr><td class="thunder-bad">"我用了xxx框架所以很简单"</td><td>老师觉得你没深入理解</td><td class="thunder-good">"框架解决了基础设施问题，我重点在 Agent 的决策逻辑"</td></tr>
+          <tr><td class="thunder-bad">"这个我背过…"</td><td>暴露背诵感</td><td class="thunder-good">直接说内容，不要加任何元描述</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⭐ 被问"这不就是调API吗"怎么回答</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px;">这个问题大概率会被问到。不要慌，按这个层次回答：</p>
+    <div class="template-card">
+      <div class="template-label">第一层</div>
+      <div class="template-text">"如果只是调 API 的话，确实几行代码就搞定了。但我做的核心工作不是调 API，而是设计 Agent 的决策层——怎么从用户的一句自然语言中自动识别出他要什么类型的内容、什么规格的参数、应该用哪个模型。这涉及到 Prompt Engineering、LLM 输出的结构化解析和容错处理。"</div>
+    </div>
+    <div class="template-card">
+      <div class="template-label">第二层</div>
+      <div class="template-text">"另外，架构设计也花了不少心思。Provider 抽象让系统能轻松扩展新模型，异步任务管理解决了 AI 生成耗时长的工程问题，成本控制策略用便宜的 LLM 做决策、贵的模型做生成。"</div>
+    </div>
+    <div class="template-card">
+      <div class="template-label">收尾</div>
+      <div class="template-text">"所以我觉得 AIGC 应用开发的难点不在'调 API'这一步，而在'怎么设计一个智能的、可扩展的、能处理不确定性的系统'。"</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎭 背诵感表达 → 自然表达</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>❌ 背诵感表达</th><th>✅ 自然表达</th></tr></thead>
+        <tbody>
+          <tr><td class="thunder-bad">"首先…其次…最后…再次…"</td><td class="thunder-good">"主要是几个方面。一个是…，还有一个是…"</td></tr>
+          <tr><td class="thunder-bad">"该项目采用了…技术"</td><td class="thunder-good">"我用了…"</td></tr>
+          <tr><td class="thunder-bad">"本系统实现了…"</td><td class="thunder-good">"这个系统能做到…"</td></tr>
+          <tr><td class="thunder-bad">"我认为Agent的优势在于其决策能力"</td><td class="thunder-good">"我觉得Agent最厉害的地方是它能自己做决定"</td></tr>
+          <tr><td class="thunder-bad">"综上所述"</td><td class="thunder-good">不需要总结词，直接说结论</td></tr>
+          <tr><td class="thunder-bad">语速突然加快、不停顿</td><td class="thunder-good">适当停顿，用"嗯…""我想想"争取思考时间</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🆘 被问到不会的怎么办</div>
+    <div class="template-card">
+      <div class="template-label">公式</div>
+      <div class="template-text">承认边界 → 说出已有理解 → 表达探索意愿</div>
+    </div>
+    <div class="template-card">
+      <div class="template-label">模板</div>
+      <div class="template-text">"这个方向我了解得还不够深入，但根据我目前的理解……如果有机会，我很想在研究生阶段深入研究。"</div>
+    </div>
+    <div class="star-note">
+      <span class="star">⭐</span>
+      <span>被问 Transformer 内部结构："Transformer 的细节我还在学习中。我目前的理解是它通过自注意力机制来捕捉序列中任意位置的依赖关系，这让它比 RNN 更擅长处理长文本。具体的多头注意力计算过程，我还需要更深入地学习。"</span>
+    </div>
+    <div class="star-note">
+      <span class="star">⭐</span>
+      <span>被问模型训练和微调："模型训练这块我还没有实际做过。我目前是在应用层通过 API 使用预训练模型。但我理解微调的基本思路是在预训练基础上，用领域数据继续训练来适配特定任务。这也是我想在研究生阶段实际动手做的事情。"</span>
+    </div>
+  </div>
+</div>
+
+<!-- Section 5: 故事线自洽包 -->
+<div class="section" id="g-story">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--yellow-bg);color:var(--yellow);">📖</div>
+    <div>
+      <h2>故事线自洽包</h2>
+      <div class="subtitle">这些问题看似随意，其实在考察你的故事是否真实连贯</div>
+    </div>
+  </div>
+
+  <div class="story-card">
+    <div class="story-title">💡 为什么选 AIGC 方向</div>
+    <div class="quote">"去年 Google 发布 Gemini 多模态能力、OpenAI 发布 Sora 的时候，我确实挺兴奋的。我就想，这些技术能力这么强，但普通人想用还得懂很多技术细节。能不能做一个'傻瓜式'的创作工具？这个想法驱动我开始了这个项目。做的过程中发现 Agent 设计、多模态整合确实非常有意思，也坚定了我想在 AI 方向深入读研的想法。"</div>
+  </div>
+
+  <div class="story-card">
+    <div class="story-title">🔧 做过程中的真实技术挑战</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">挑选2-3个准备好，按"遇到什么→怎么分析→怎么解决"讲：</p>
+    <div class="difficulty-tag">挑战1：意图分析的 JSON 解析容错</div>
+    <div class="quote">"LLM 返回的 JSON 有时被 Markdown 代码块包裹，直接用 Jackson 解析会报错。我写了一个清洗方法来提取有效 JSON。这让我意识到，用 LLM 做工程化的事情，输出格式的不确定性是必须处理的问题。"</div>
+    <div class="difficulty-tag">挑战2：视频的双重轮询机制</div>
+    <div class="quote">"前端每秒问后端，后端每10秒问 Google。两层轮询同时跑，一开始没处理好超时，任务会卡死。后来设了后端最多30次（5分钟），前端最多180次（3分钟），加上异常时自动更新失败状态，才稳定下来。"</div>
+    <div class="difficulty-tag">挑战3：图生图的参考图片传递</div>
+    <div class="quote">"Gemini 的图片接口和视频接口对参考图片的格式要求不一样——图片用 inlineData 字段，视频用 instances 里的 image 字段。我在 IntentAnalyzer 层感知到有参考图片后自动调整 intent，在不同 Provider 里分别处理格式差异。"</div>
+  </div>
+
+  <div class="story-card">
+    <div class="story-title">⭐ 被问"这代码是你写的吗"</div>
+    <div class="quote">"核心代码是我自己写的。Agent 的四层架构、Provider 的抽象体系、意图分析的 Prompt 设计、异步任务管理、前端的轮询交互，这些都是我自己设计和实现的。一些基础设施的代码比如 Spring Boot 配置、Axios 封装，我参考了官方文档和最佳实践。整个系统的架构思路和核心决策是我自己的。"</div>
+  </div>
+
+  <div class="story-card">
+    <div class="story-title">🔮 未来延伸（选择你的方向）</div>
+    <div class="direction-cards">
+      <div class="direction-card nlp">
+        <div class="direction-label" style="color:var(--accent);">如果读 AI / 机器学习</div>
+        <p style="font-size:14px;color:var(--text2);">"这个项目让我从应用层理解了多模态 AI 的能力和局限。研究生阶段我想从更底层去理解——比如多模态模型的对齐方法、Agent 的规划和推理能力。这个项目给了我很好的应用视角和问题意识。"</p>
+      </div>
+      <div class="direction-card se">
+        <div class="direction-label" style="color:var(--green);">如果读软件工程</div>
+        <p style="font-size:14px;color:var(--text2);">"这个项目让我意识到 AI 应用在架构设计上有根本的不同——要处理不确定性、高延迟、按量计费等挑战。我想系统学习大规模 AI 系统的工程化方法，比如模型推理优化、分布式任务调度。"</p>
+      </div>
+      <div class="direction-card db">
+        <div class="direction-label" style="color:var(--purple);">如果读计算机视觉</div>
+        <p style="font-size:14px;color:var(--text2);">"项目中用到了图片和视频生成能力，虽然是通过 API 调用，但激发了我对底层技术的好奇心——特别是 Diffusion 模型的去噪机制、跨模态的特征对齐。研究生阶段我希望深入到模型层面。"</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end panel-grad -->
+
+<!-- ============================================================ -->
+<!--                   TAB 2: 求职面试版                           -->
+<!-- ============================================================ -->
+<div class="tab-panel" id="panel-job">
+
+<div class="intro-banner">
+  <h1>💼 求职面试版</h1>
+  <p class="intro-sub">目标：展现工程实力 — 工程能力、问题解决、系统设计、基础扎实</p>
+  <div class="intro-tags">
+    <span class="intro-tag">3种开场锚点</span>
+    <span class="intro-tag">3条主线路径</span>
+    <span class="intro-tag">6+8个深潜知识点</span>
+    <span class="intro-tag">防雷指南+</span>
+    <span class="intro-tag">技术亮点速查卡</span>
+  </div>
+</div>
+
+<!-- Section 1: 开场锚点 -->
+<div class="section" id="j-anchor">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--green-bg);color:var(--green);">🎤</div>
+    <div>
+      <h2>开场锚点</h2>
+      <div class="subtitle">30秒，产品定位清晰、技术栈明确、有成本意识</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-label label-recommend">⭐ 推荐</span>
+    <div class="card-title">风格A：产品价值型</div>
+    <div class="quote">
+      "我做了一个全模态 AI 创作平台。用户输入一句中文，系统自动理解意图、选模型、优化提示词，生成图片、视频或音频。核心是一个智能路由 Agent，用 gpt-4o-mini 做意图分析来控制成本，Google Gemini 做内容生成保证质量。后端 Spring Boot 3 + Java 17，前端 Vue 3 + TypeScript，全链路异步任务管理。"
+      <div class="quote-note">💡 面试官30秒内就能判断：有产品思维、技术栈明确、有成本意识。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-label label-alt">备选</span>
+    <div class="card-title">风格B：系统设计型</div>
+    <div class="quote">
+      "我独立设计和开发了一个 AIGC 创作平台，核心亮点是 Agent 架构设计。系统分四层——意图分析层用 LLM 提取结构化信息、路由决策层动态选择最优模型、提示词增强层优化生成质量、Provider 执行层通过接口抽象实现可扩展。支持图片、视频、音频三种模态。"
+      <div class="quote-note">💡 直接展示架构设计能力，让面试官知道你不只是写代码。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="card-label label-alt2">备选</span>
+    <div class="card-title">风格C：问题解决型</div>
+    <div class="quote">
+      "我做了一个 AI 创作平台，解决的核心问题是：怎么让不懂 AI 的用户也能一句话生成高质量内容。技术上主要攻克了三个挑战：用 LLM 做自然语言到结构化参数的可靠解析、多模态 API 的统一抽象封装、以及长耗时生成任务的异步管理方案。"
+      <div class="quote-note">💡 直接量化挑战，面试官会对三个挑战产生好奇心。</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: 主线路径 -->
+<div class="section" id="j-paths">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--accent-glow);color:var(--accent);">🌳</div>
+    <div>
+      <h2>主线路径</h2>
+      <div class="subtitle">技术面试的追问更聚焦工程实现细节</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">路线A：从系统架构设计出发</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:16px;">适合被问："讲讲你的系统架构"</p>
+    <div class="tree-path">
+      <span class="tree-node">A1 整体分层</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A2 Agent四层</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A3 数据流向</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A4 异步方案</span><span class="tree-arrow">→</span>
+      <span class="tree-node">A5 扩展性</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>节点</th><th>说什么</th><th>面试官心理</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A1 整体分层</strong></td><td>"系统分三大层——前端交互层（Vue 3）、智能路由Agent层（核心决策）、Provider执行层（模型调用）。加上MySQL做持久化、Redis做缓存。"</td><td>在看你有没有清晰的分层意识</td></tr>
+          <tr><td><strong>A2 Agent四层</strong></td><td>"Agent内部分四层：IntentAnalyzer做意图分析、RoutingAgent做路由决策、PromptEnhancer做提示词增强、ProviderRouter做执行分发。每层单一职责、解耦清晰。"</td><td>在判断你的设计是否真的有层次</td></tr>
+          <tr><td><strong>A3 数据流向</strong></td><td>"请求链路：POST /generate → Agent分析（同步1-3秒）→ 创建任务记录 → @Async异步执行 → 返回taskId。前端拿taskId每秒轮询直到完成。"</td><td>在看你对完整链路是否清楚</td></tr>
+          <tr><td><strong>A4 异步方案</strong></td><td>"为什么不用WebSocket？轮询实现简单、和REST风格一致、客户端掉线自动恢复。如果优化可以用SSE做服务端推送，单向推送就够了。"</td><td>有没有做过方案对比</td></tr>
+          <tr><td><strong>A5 扩展性</strong></td><td>"架构预留了扩展点：加新模型实现Provider接口，加新内容类型在RoutingAgent的switch加分支，成本通过配置调整。"</td><td>有没有考虑过系统的演进</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">路线B：从技术选型决策出发</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:16px;">适合被问："为什么用xxx"</p>
+    <div class="tree-path">
+      <span class="tree-node">B1 后端选型</span><span class="tree-arrow">→</span>
+      <span class="tree-node">B2 LLM选型</span><span class="tree-arrow">→</span>
+      <span class="tree-node">B3 OkHttp</span><span class="tree-arrow">→</span>
+      <span class="tree-node">B4 前端选型</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>节点</th><th>说什么</th><th>面试官心理</th></tr></thead>
+        <tbody>
+          <tr><td><strong>B1 后端选型</strong></td><td>"Spring Boot 3 + Java 17，用了switch表达式、文本块、record等新特性。OkHttp调Google API（二进制+代理），RestTemplate调OneRouter（简单JSON交互）。"</td><td>选型是否有理由</td></tr>
+          <tr><td><strong>B2 LLM选型</strong></td><td>"意图分析用gpt-4o-mini而不是Gemini Pro，便宜46倍——$0.15 vs $7 每百万token。意图分析只需理解能力，不需要强生成能力，便宜模型足够。"</td><td>有成本意识</td></tr>
+          <tr><td><strong>B3 OkHttp</strong></td><td>"Google API用OkHttp：Base64二进制处理更灵活、代理配置builder.proxy()更简洁、超时控制更细粒度。OneRouter用RestTemplate：标准JSON交互足够。"</td><td>两种HTTP客户端各有合理解释</td></tr>
+          <tr><td><strong>B4 前端选型</strong></td><td>"Vue 3 + TypeScript + Element Plus + TailwindCSS。TypeScript保证API类型安全，Pinia做状态管理，Axios配置/api代理到后端10003端口。"</td><td>前端也了解，不是纯后端</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">路线C：从核心难点突破出发</div>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:16px;">适合被问："遇到什么技术难题"</p>
+    <div class="tree-path">
+      <span class="tree-node">C1 难点概述</span><span class="tree-arrow">→</span>
+      <span class="tree-node">C2 LLM容错</span><span class="tree-arrow">→</span>
+      <span class="tree-node">C3 双重轮询</span><span class="tree-arrow">→</span>
+      <span class="tree-node">C4 API差异</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>节点</th><th>说什么</th><th>面试官心理</th></tr></thead>
+        <tbody>
+          <tr><td><strong>C1 难点概述</strong></td><td>"三个核心难点：LLM输出的结构化解析与容错、多模态API的差异性封装、异步任务的状态管理。"</td><td>先看你能不能归纳问题</td></tr>
+          <tr><td><strong>C2 LLM容错</strong></td><td>"gpt-4o-mini返回的JSON有时被Markdown包裹、字段类型不对。我写了清洗方法+默认值兜底。AI应用和传统应用最大的区别就是——输出不确定。"</td><td>有没有真正处理过不确定性</td></tr>
+          <tr><td><strong>C3 双重轮询</strong></td><td>"两层轮询：前端每秒查后端，后端每10秒查Google。需处理超时（前端180次/后端30次）、异常状态更新、线程安全。"</td><td>异步编程和系统设计能力</td></tr>
+          <tr><td><strong>C4 API差异</strong></td><td>"图片用generateContent同步，视频用predictLongRunning异步，音频又不同。Provider抽象把差异封装在各自实现类里，上层完全感知不到。"</td><td>能不能用抽象屏蔽差异</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: 深潜知识点(工程向) -->
+<div class="section" id="j-deep">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--purple-bg);color:var(--purple);">🔬</div>
+    <div>
+      <h2>深潜知识点（工程向）</h2>
+      <div class="subtitle">技术面试重点追问的工程概念</div>
+    </div>
+  </div>
+
+  <button class="expand-btn" onclick="toggleAllDeepDives('panel-job')"><span>📂</span> 全部展开 / 收起</button>
+
+  <div class="key-point">
+    <div class="key-point-title">💡 提示</div>
+    <p style="font-size:14px;color:var(--text2);">复试版8个基础知识点（Agent、意图分析、多模态、Diffusion、Prompt Engineering、Provider抽象、异步任务、Temperature）请切换到"复试面试版"查看。以下是求职版额外需要准备的工程知识点。</p>
+  </div>
+
+  <div class="deep-dive" id="j-dd-async">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--green-bg);color:var(--green);">9</div>
+      <div class="dd-title">Spring Boot @Async 异步执行</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>@Async 就像你给员工一个任务说"你去处理这件事，完了更新到看板上，我先去做别的了"。主线程不等你，另起一个线程去干活。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 技术本质</div>
+        <p>Spring @Async 通过 AOP 代理实现。加了注解的方法被调用时提交到 TaskExecutor 线程池异步执行。需要 @EnableAsync 开启，返回值可以是 void 或 Future/CompletableFuture。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"踩了两个坑。第一，同类内部调用不生效——因为 AOP 是基于代理的，this 调用绕过了代理。第二，异步线程异常不会传播到调用者——必须在方法内部 try-catch，手动把错误状态写到数据库。"</div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">❓ 可能追问</div>
+        <div class="qa-item">
+          <div class="qa-q">"默认线程池有什么问题？"</div>
+          <div class="qa-a">→ SimpleAsyncTaskExecutor 每次新建线程没有复用，生产环境要换 ThreadPoolTaskExecutor 设置核心线程数、最大线程数、队列容量。</div>
+        </div>
+        <div class="qa-item">
+          <div class="qa-q">"异步方法的事务怎么处理？"</div>
+          <div class="qa-a">→ 异步方法在新线程执行，和调用者不共享事务上下文，需要独立的 @Transactional。</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="j-dd-okhttp">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--accent-glow);color:var(--accent);">10</div>
+      <div class="dd-title">OkHttp 调用外部 API</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>OkHttp 是一个专业的快递员——支持自动重连、连接池复用、代理中转，比邮局（RestTemplate）更灵活。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"选 OkHttp 不是因为'更好'，是因为场景匹配。Google API 返回 Base64 编码的二进制数据，OkHttp 的 ResponseBody.bytes() 更直接；代理配置一行 builder.proxy() 就搞定。RestTemplate 调 OneRouter 反而更合适，标准 JSON 交互没必要引入额外复杂度。"</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="j-dd-rest">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--orange-bg);color:var(--orange);">11</div>
+      <div class="dd-title">RESTful API 设计</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>REST 像图书馆——GET /books 是看书单，POST /books 是新进一本书，DELETE /books/123 是下架123号书。动词靠 HTTP 方法，名词靠 URL 路径。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"generate 用 POST 因为有副作用（创建任务记录）。task/{taskId} 用 GET 因为幂等，重复调用不改变状态——对前端轮询很重要，网络抖动导致重复请求不会出问题。"</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="j-dd-polling">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--cyan-bg);color:var(--cyan);">12</div>
+      <div class="dd-title">轮询 vs WebSocket vs SSE</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p><strong>轮询</strong>：你每分钟看一次手机有没有新消息<br><strong>WebSocket</strong>：你和朋友打电话，双方随时说话<br><strong>SSE</strong>：你订阅了新闻推送，有消息它主动推给你</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 对比</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>特性</th><th>轮询</th><th>WebSocket</th><th>SSE</th></tr></thead>
+            <tbody>
+              <tr><td>方向</td><td>客户端→服务端</td><td>双向</td><td>服务端→客户端</td></tr>
+              <tr><td>连接</td><td>短连接</td><td>长连接</td><td>长连接</td></tr>
+              <tr><td>开销</td><td>大量无效请求</td><td>维护连接状态</td><td>中等</td></tr>
+              <tr><td>复杂度</td><td>低</td><td>高</td><td>中</td></tr>
+              <tr><td>适用</td><td>状态查询</td><td>实时聊天</td><td>进度推送</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"我选轮询因为实现简单、和 REST 一致、断线自动恢复。如果优化，SSE 最合适——任务状态推送是单向的，不需要 WebSocket 的全双工。SSE 用 SseEmitter 就能实现，比 WebSocket 轻量。"</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="j-dd-pattern">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--yellow-bg);color:var(--yellow);">13</div>
+      <div class="dd-title">策略模式 / 工厂模式在 Provider 中的应用</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p><strong>策略模式</strong>：像导航软件——同样的目的地，"最快""最短""避开高速"用不同算法。<br><strong>工厂模式</strong>：像自动贩卖机——按图片按钮出图片生成器，你不需要知道里面怎么造的。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"我没刻意去'用设计模式'，而是在解决'怎么让代码好扩展'的问题时，最自然的解法就是这些模式。一开始图片和视频逻辑写在一起，每加一个模态就改很多地方。抽出接口后，加新模态就是'实现接口+注册'两步，自然就成了策略+工厂的结合。"</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="deep-dive" id="j-dd-error">
+    <div class="dd-header" onclick="toggleDD(this)">
+      <div class="dd-num" style="background:var(--red-bg);color:var(--red);">14</div>
+      <div class="dd-title">错误处理与降级</div>
+      <div class="dd-toggle">▼</div>
+    </div>
+    <div class="dd-body"><div class="dd-content">
+      <div class="dd-block">
+        <div class="dd-block-title">🎯 通俗比喻</div>
+        <p>就像飞机有两个引擎——一个挂了还能飞。好的系统不是"永远不出错"，而是"出错了还能体面地应对"。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">📖 三层错误处理</div>
+        <p><strong>Provider 层</strong>：generate() 内部 try-catch，失败返回 failure()，不抛异常。<br><strong>Service 层</strong>：检查 result.isSuccess()，失败更新 FAILED 状态。<br><strong>外层兜底</strong>：大 try-catch 防任何未预期异常导致任务卡在 PROCESSING。</p>
+      </div>
+      <div class="dd-block">
+        <div class="dd-block-title">💭 我的理解</div>
+        <div class="quote">"AI 应用的'错误'可能是模型触发安全过滤、结果质量差、API 超时。我的原则：可重试的自动重试，不可重试的快速失败并告知用户。如果继续优化，可加熔断器（Circuit Breaker），OneRouter 挂了自动降级到规则引擎做意图分析。"</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- Section 4: 防雷指南(求职版) -->
+<div class="section" id="j-thunder">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--red-bg);color:var(--red);">⚡</div>
+    <div>
+      <h2>防雷指南（求职版补充）</h2>
+      <div class="subtitle">技术面试中特有的高频雷区</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏗️ 被问"生产环境怎么部署"</div>
+    <div class="quote">"目前是本地开发环境。如果上生产，我的规划是：后端打 Docker 镜像用 Docker Compose 编排；前端 build 后放 Nginx 做静态资源服务和反向代理；数据库和 Redis 用云服务（RDS + ElastiCache）保证可用性；文件存储从本地磁盘迁移到 OSS；API Key 用环境变量注入。"</div>
+    <div class="star-note"><span class="star">⭐</span><span>即使没有真正部署过，也要展示你"知道应该怎么做"。</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 被问"性能瓶颈在哪"</div>
+    <div class="quote">"主要瓶颈在 AI 模型调用环节，图片10-30秒、视频1-5分钟，取决于模型提供商。我能优化的：第一，Prompt 精简到最小有效长度减少 token 消耗；第二，相似请求做缓存；第三，异步线程池设合理容量防止线程耗尽。数据库层面 taskId 做索引，轮询查询不是瓶颈。"</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👥 被问"你们团队几个人怎么分工"</div>
+    <div class="quote">"这个项目是我独立完成的——从需求分析、架构设计、后端开发、前端实现到测试都是自己做的。好处是对全链路理解很深。如果团队协作，可以按模块分工：一人负责 Agent 决策层，一人负责 Provider 对接层，一人负责前端，通过 API 契约解耦协作。"</div>
+    <div class="star-note"><span class="star">⭐</span><span>独立开发不丢人，重点展示"全栈能力"和"如果有团队你知道怎么分工"。</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔒 被问"安全性考虑"</div>
+    <div class="quote">"API Key 放在 application-local.yml 并加入 .gitignore，不会提交仓库。用户上传图片做了格式和大小校验。AI 生成内容有安全过滤风险，Google API 会拒绝不当内容，错误处理中做了对应提示。上生产还需要加 JWT 认证、接口限流（令牌桶）、输入内容审核。"</div>
+  </div>
+</div>
+
+<!-- Section 5: 故事线(求职版) -->
+<div class="section" id="j-story">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--yellow-bg);color:var(--yellow);">📖</div>
+    <div>
+      <h2>故事线自洽包</h2>
+      <div class="subtitle">工程视角的技术挑战故事和自圆其说话术</div>
+    </div>
+  </div>
+
+  <div class="story-card">
+    <div class="story-title">🔧 技术挑战（工程视角）</div>
+    <div class="difficulty-tag">挑战1：@Async 的事务和异常陷阱</div>
+    <div class="quote">"异步方法在新线程执行，不共享事务上下文。一开始在 generate() 里创建任务后调异步方法，异步方法查任务发现查不到——因为主线程事务还没提交。后来把创建和异步调用放在事务提交后执行才解决。"</div>
+    <div class="difficulty-tag">挑战2：OkHttp 超时配置</div>
+    <div class="quote">"调 Gemini 图片 API 默认10秒超时经常失败。调 Veo 视频 API 需要等几分钟。我给不同场景配了不同超时——图片 readTimeout 120秒，视频600秒。通过不同的 OkHttpClient 实例实现。"</div>
+  </div>
+
+  <div class="story-card">
+    <div class="story-title">☕ 被问"为什么用 Java 而不是 Python"</div>
+    <div class="quote">"AI 应用确实很多用 Python。但我选 Java 是因为：Spring Boot 的企业级特性（依赖注入、AOP、异步支持）让架构设计更规范；Java 类型系统对大项目可维护性更好；我也更熟悉 Java 生态。模型训练和微调 Python 更合适，但做 AI 应用的后端服务，Java 完全没问题。"</div>
+  </div>
+</div>
+
+<!-- Section 6: 技术亮点速查卡 -->
+<div class="section" id="j-highlights">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--accent-glow);color:var(--accent);">💡</div>
+    <div>
+      <h2>技术亮点速查卡</h2>
+      <div class="subtitle">面试时可以主动抛出的亮点</div>
+    </div>
+  </div>
+
+  <div class="highlight-card">
+    <div class="hl-number">1</div>
+    <h4>"LLM 当裁判，不当选手"</h4>
+    <div class="hook">一句话引出：</div>
+    <p>"我有一个架构设计可能比较有意思——我用 LLM 不是来生成内容的，而是来做路由决策的。"</p>
+    <div class="detail" style="margin-top:10px;">展开讲：大多数 AIGC 应用直接用 LLM 做生成，我的做法是用便宜的 gpt-4o-mini 做"裁判"，每次意图分析成本不到0.01美分，但生成质量不打折扣。</div>
+  </div>
+
+  <div class="highlight-card">
+    <div class="hl-number">2</div>
+    <h4>"三步扩展新模型"</h4>
+    <div class="hook">一句话引出：</div>
+    <p>"我的 Provider 架构做到了加一个新模型只需要三步。"</p>
+    <div class="detail" style="margin-top:10px;">展开讲：实现接口、加 @Component 注解、改配置文件。不动已有代码。ProviderRouter 通过 Spring 依赖注入自动发现新 Provider，完全不耦合。</div>
+  </div>
+
+  <div class="highlight-card">
+    <div class="hl-number">3</div>
+    <h4>"视频生成的双重轮询"</h4>
+    <div class="hook">一句话引出：</div>
+    <p>"视频生成有一个有意思的架构——双重轮询。"</p>
+    <div class="detail" style="margin-top:10px;">展开讲：前端每秒轮询后端，后端每10秒轮询 Google 的 operation 状态。两层各有超时控制，异常时自动更新失败状态，保证不会卡住。</div>
+  </div>
+
+  <div class="highlight-card">
+    <div class="hl-number">4</div>
+    <h4>"AI 输出的工程化处理"</h4>
+    <div class="hook">一句话引出：</div>
+    <p>"做 AI 应用和传统应用最不一样的地方是——AI 的输出是不确定的。"</p>
+    <div class="detail" style="margin-top:10px;">展开讲：LLM 返回的 JSON 可能被 Markdown 包裹、格式不对、被安全过滤拦截。做了三层容错：响应清洗、字段默认值兜底、异常状态自动更新。</div>
+  </div>
+
+  <div class="highlight-card">
+    <div class="hl-number">5</div>
+    <h4>"成本驱动的模型选择策略"</h4>
+    <div class="hook">一句话引出：</div>
+    <p>"我的模型选择不是写死的，而是根据用户需求动态调整的。"</p>
+    <div class="detail" style="margin-top:10px;">展开讲：普通图片用 Flash（快且便宜），4K自动升级到 Pro。视频"快一点"用 fast 模型（$0.15/秒），"高质量"用 standard（$0.40/秒）。配置驱动 + 智能升降级。</div>
+  </div>
+</div>
+
+</div><!-- end panel-job -->
+
+<!-- ===== Closing ===== -->
+<div class="section" style="text-align:center;padding:60px 0 40px;">
+  <div class="key-point" style="max-width:560px;margin:0 auto;text-align:left;">
+    <div class="key-point-title" style="text-align:center;font-size:16px;">🎯 记住三条核心原则</div>
+    <div style="margin-top:16px;">
+      <p style="font-size:15px;color:var(--text);margin-bottom:8px;"><strong>1. 用比喻开头</strong> — 让面试官知道你能讲明白</p>
+      <p style="font-size:15px;color:var(--text);margin-bottom:8px;"><strong>2. 用技术深入</strong> — 让面试官知道你真懂</p>
+      <p style="font-size:15px;color:var(--text);"><strong>3. 用第一人称收尾</strong> — 让面试官知道你有自己的思考</p>
+    </div>
+  </div>
+  <p style="margin-top:32px;color:var(--text3);font-size:14px;">祝面试顺利 🍀</p>
+</div>
+
+</main>
+</div>
+
+<!-- Back to Top -->
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0})">↑</button>
+
+<script>
+const sidebarData = {
+  grad: [
+    { title: '导航', items: [
+      { text: '🎤 开场锚点', target: 'g-anchor' },
+      { text: '🌳 主线路径', target: 'g-paths' },
+      { text: '🔬 深潜知识点', target: 'g-deep' },
+      { text: '⚡ 防雷指南', target: 'g-thunder' },
+      { text: '📖 故事线自洽包', target: 'g-story' },
+    ]},
+    { title: '深潜快跳', items: [
+      { text: '1. Agent', target: 'g-dd-agent' },
+      { text: '2. 意图分析', target: 'g-dd-intent' },
+      { text: '3. 多模态', target: 'g-dd-multimodal' },
+      { text: '4. Diffusion', target: 'g-dd-diffusion' },
+      { text: '5. Prompt Engineering', target: 'g-dd-prompt' },
+      { text: '6. Provider 抽象', target: 'g-dd-provider' },
+      { text: '7. 异步任务', target: 'g-dd-async' },
+      { text: '8. Temperature', target: 'g-dd-temp' },
+    ]}
+  ],
+  job: [
+    { title: '导航', items: [
+      { text: '🎤 开场锚点', target: 'j-anchor' },
+      { text: '🌳 主线路径', target: 'j-paths' },
+      { text: '🔬 深潜知识点', target: 'j-deep' },
+      { text: '⚡ 防雷指南', target: 'j-thunder' },
+      { text: '📖 故事线自洽包', target: 'j-story' },
+      { text: '💡 技术亮点速查卡', target: 'j-highlights' },
+    ]},
+    { title: '工程专项深潜', items: [
+      { text: '9. Spring @Async', target: 'j-dd-async' },
+      { text: '10. OkHttp', target: 'j-dd-okhttp' },
+      { text: '11. RESTful API', target: 'j-dd-rest' },
+      { text: '12. 轮询/WS/SSE', target: 'j-dd-polling' },
+      { text: '13. 策略/工厂模式', target: 'j-dd-pattern' },
+      { text: '14. 错误处理与降级', target: 'j-dd-error' },
+    ]}
+  ]
+};
+
+let currentTab = 'grad';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  if (tab === 'grad') {
+    document.querySelectorAll('.nav-tab')[0].classList.add('active');
+    document.getElementById('panel-grad').classList.add('active');
+  } else {
+    document.querySelectorAll('.nav-tab')[1].classList.add('active');
+    document.getElementById('panel-job').classList.add('active');
+  }
+
+  buildSidebar(tab);
+  window.scrollTo({ top: 0 });
+}
+
+function buildSidebar(tab) {
+  const sidebar = document.getElementById('sidebar');
+  let html = '';
+  const sections = sidebarData[tab];
+  sections.forEach(sec => {
+    html += `<div class="sidebar-section"><div class="sidebar-title">${sec.title}</div>`;
+    sec.items.forEach(item => {
+      html += `<a class="sidebar-link" onclick="scrollToEl('${item.target}')">${item.text}</a>`;
+    });
+    html += '</div>';
+  });
+  sidebar.innerHTML = html;
+}
+
+function scrollToEl(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (el.classList.contains('deep-dive') && !el.classList.contains('open')) {
+      el.classList.add('open');
+    }
+  }
+}
+
+function toggleDD(header) {
+  header.closest('.deep-dive').classList.toggle('open');
+}
+
+function toggleAllDeepDives(panelId) {
+  const panel = document.getElementById(panelId);
+  const dds = panel.querySelectorAll('.deep-dive');
+  const allOpen = Array.from(dds).every(dd => dd.classList.contains('open'));
+  dds.forEach(dd => {
+    if (allOpen) dd.classList.remove('open');
+    else dd.classList.add('open');
+  });
+}
+
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('backTop');
+  btn.classList.toggle('show', window.scrollY > 400);
+});
+
+buildSidebar('grad');
+</script>
+
+</body>
+</html>
