@@ -30,6 +30,9 @@ public class TaskStatusResponse {
     /** 进度百分比 0-100 */
     private Integer progress;
 
+    /** Agent 分析结果 */
+    private AgentAnalysis agentAnalysis;
+
     /** 生成结果（完成时返回） */
     private GenerationResult result;
 

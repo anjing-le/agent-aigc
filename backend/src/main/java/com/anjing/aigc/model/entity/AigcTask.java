@@ -2,6 +2,7 @@ package com.anjing.aigc.model.entity;
 
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.util.DateUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -97,6 +98,11 @@ public class AigcTask {
     /** 错误码 */
     @Column(name = "error_code", length = 64)
     private String errorCode;
+
+    /** Agent 分析快照 */
+    @Column(name = "agent_analysis", columnDefinition = "TEXT")
+    @Convert(converter = AgentAnalysisConverter.class)
+    private AgentAnalysis agentAnalysis;
 
     /** 耗时（毫秒） */
     @Column(name = "duration_ms")

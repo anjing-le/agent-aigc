@@ -87,6 +87,7 @@ public class AigcServiceImpl implements AigcService {
         task.setContentType(analysis.getContentType());
         task.setIntent(analysis.getIntent());
         task.setModel(analysis.getSelectedModel());
+        task.setAgentAnalysis(analysis);
         task.setStatus(TaskStatus.PENDING);
         task.setProgress(0);
         task.setCreatedAt(DateUtils.nowLocalDateTime());
@@ -150,6 +151,7 @@ public class AigcServiceImpl implements AigcService {
                 .taskId(task.getTaskId())
                 .status(task.getStatus())
                 .progress(task.getProgress())
+                .agentAnalysis(resolveAgentAnalysis(task))
                 .referenceMaterialIds(task.getReferenceMaterialIds())
                 .referenceMaterials(getReferenceMaterials(task.getReferenceMaterialIds()))
                 .errorMessage(task.getErrorMessage())
@@ -338,6 +340,22 @@ public class AigcServiceImpl implements AigcService {
             log.warn("资产本地文件删除失败，继续删除资产记录: assetId={}, field={}, url={}",
                     assetId, fieldName, url, e);
         }
+    }
+
+    private AgentAnalysis resolveAgentAnalysis(AigcTask task) {
+        if (task.getAgentAnalysis() != null) {
+            return task.getAgentAnalysis();
+        }
+        if (task.getIntent() == null && task.getContentType() == null && task.getOptimizedPrompt() == null) {
+            return null;
+        }
+        return AgentAnalysis.builder()
+                .intent(task.getIntent())
+                .contentType(task.getContentType())
+                .selectedModel(task.getModel())
+                .originalPrompt(task.getPrompt())
+                .optimizedPrompt(task.getOptimizedPrompt())
+                .build();
     }
 
     private List<MaterialDTO> getReferenceMaterials(List<String> materialIds) {

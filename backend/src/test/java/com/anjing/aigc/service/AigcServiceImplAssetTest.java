@@ -6,6 +6,7 @@ import com.anjing.aigc.model.entity.AigcAsset;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
@@ -75,6 +76,14 @@ class AigcServiceImplAssetTest {
         task.setContentType(ContentType.IMAGE);
         task.setStatus(TaskStatus.COMPLETED);
         task.setProgress(100);
+        task.setAgentAnalysis(AgentAnalysis.builder()
+                .intent("text_to_image")
+                .contentType(ContentType.IMAGE)
+                .selectedModel("mock-image-preview")
+                .cleanPrompt("clean prompt")
+                .optimizedPrompt("optimized prompt")
+                .confidence(0.8)
+                .build());
         task.setCreatedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
         when(taskRepository.findByAssetId("asset-0")).thenReturn(Optional.of(task));
@@ -84,6 +93,8 @@ class AigcServiceImplAssetTest {
         assertEquals("asset-0", detail.getAsset().getId());
         assertEquals("task-0", detail.getTask().getTaskId());
         assertEquals(TaskStatus.COMPLETED, detail.getTask().getStatus());
+        assertEquals("clean prompt", detail.getTask().getAgentAnalysis().getCleanPrompt());
+        assertEquals(0.8, detail.getTask().getAgentAnalysis().getConfidence());
     }
 
     @Test

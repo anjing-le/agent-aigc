@@ -43,6 +43,8 @@ export interface GenerateResponse {
     contentType: ContentType
     /** 选择的模型 */
     selectedModel: string
+    /** 原始提示词 */
+    originalPrompt?: string
     /** 清洗后的提示词 */
     cleanPrompt?: string
     /** 优化后的提示词 */
@@ -64,6 +66,8 @@ export interface AgentAnalysis {
   contentType: ContentType
   /** 选择的模型 */
   selectedModel: string
+  /** 原始提示词 */
+  originalPrompt?: string
   /** 清洗后的提示词 */
   cleanPrompt?: string
   /** 优化后的提示词 */

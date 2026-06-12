@@ -107,7 +107,30 @@
             <span>进度</span>
             <strong>{{ previewTask.progress }}%</strong>
           </div>
-          <div v-if="previewTask.result?.prompt" class="asset-preview__task-prompt">
+          <div v-if="previewTask.agentAnalysis" class="asset-preview__agent">
+            <div class="asset-preview__section-title">Agent 决策</div>
+            <div class="asset-preview__task-grid">
+              <span>意图</span>
+              <strong>{{ previewTask.agentAnalysis.intent }}</strong>
+              <span>模型</span>
+              <strong>{{ previewTask.agentAnalysis.selectedModel }}</strong>
+              <span>置信度</span>
+              <strong>{{ formatConfidence(previewTask.agentAnalysis.confidence) }}</strong>
+            </div>
+            <div v-if="previewTask.agentAnalysis.cleanPrompt" class="asset-preview__task-prompt">
+              <span>清洗 Prompt</span>
+              <p>{{ previewTask.agentAnalysis.cleanPrompt }}</p>
+            </div>
+            <div v-if="agentParamsText" class="asset-preview__task-prompt">
+              <span>参数摘要</span>
+              <p>{{ agentParamsText }}</p>
+            </div>
+            <div v-if="previewTask.agentAnalysis.optimizedPrompt" class="asset-preview__task-prompt">
+              <span>优化 Prompt</span>
+              <p>{{ previewTask.agentAnalysis.optimizedPrompt }}</p>
+            </div>
+          </div>
+          <div v-else-if="previewTask.result?.prompt" class="asset-preview__task-prompt">
             <span>原始 Prompt</span>
             <p>{{ previewTask.result.prompt }}</p>
           </div>
@@ -272,6 +295,48 @@ const isImageMaterial = (contentType: string) => contentType.startsWith('image/'
 const isVideoMaterial = (contentType: string) => contentType.startsWith('video/')
 const openUrl = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')
 
+const formatConfidence = (confidence?: number) => {
+  if (confidence === undefined || confidence === null) return '-'
+  return `${Math.round(confidence * 100)}%`
+}
+
+const agentParamsText = computed(() => {
+  const analysis = previewTask.value?.agentAnalysis
+  const intent = analysis?.analyzedIntent
+  if (!analysis || !intent) return ''
+
+  if (analysis.contentType === 'IMAGE' && intent.imageParams) {
+    return compactParams({
+      比例: intent.imageParams.aspectRatio,
+      尺寸: intent.imageParams.imageSize,
+      风格: intent.imageParams.style
+    })
+  }
+  if (analysis.contentType === 'VIDEO' && intent.videoParams) {
+    return compactParams({
+      比例: intent.videoParams.aspectRatio,
+      分辨率: intent.videoParams.resolution,
+      时长: intent.videoParams.duration ? `${intent.videoParams.duration}s` : '',
+      质量: intent.videoParams.quality
+    })
+  }
+  if (analysis.contentType === 'AUDIO' && intent.audioParams) {
+    return compactParams({
+      类型: intent.audioParams.type,
+      音色: intent.audioParams.voice,
+      情绪: intent.audioParams.mood
+    })
+  }
+  return ''
+})
+
+const compactParams = (params: Record<string, string | number | undefined>) => {
+  return Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(' · ')
+}
+
 // ==================== 生命周期 ====================
 onMounted(() => {
   loadData()
@@ -407,6 +472,10 @@ onMounted(() => {
   }
 
   &__materials {
+    margin-top: 16px;
+  }
+
+  &__agent {
     margin-top: 16px;
   }
 
