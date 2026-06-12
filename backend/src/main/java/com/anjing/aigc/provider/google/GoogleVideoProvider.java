@@ -6,6 +6,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.VideoGenerationProvider;
+import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 public class GoogleVideoProvider implements VideoGenerationProvider {
     
     private final AigcProperties aigcProperties;
+    private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     private static final String GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -436,19 +438,10 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
             byte[] videoBytes = response.body().bytes();
             log.info("视频下载完成, 大小: {} bytes", videoBytes.length);
             
-            // 保存到本地
-            String basePath = aigcProperties.getStorage().getLocal().getBasePath();
-            Path dirPath = Paths.get(basePath, "videos");
-            Files.createDirectories(dirPath);
-            
             String fileName = taskId + ".mp4";
-            Path filePath = dirPath.resolve(fileName);
-            Files.write(filePath, videoBytes);
-            
-            log.info("视频保存成功: {}", filePath);
-            
-            // 返回访问 URL
-            return aigcProperties.getStorage().getLocal().getUrlPrefix() + "/videos/" + fileName;
+            String url = localAigcStorageService.saveBytes("videos", fileName, videoBytes);
+            log.info("视频保存成功: {}", url);
+            return url;
         }
     }
     
@@ -459,14 +452,7 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
         byte[] videoBytes = Base64.getDecoder().decode(base64Data);
         
         String fileName = taskId + ".mp4";
-        Path outputDir = Paths.get("uploads", "videos");
-        Files.createDirectories(outputDir);
-        Path outputPath = outputDir.resolve(fileName);
-        
-        Files.write(outputPath, videoBytes);
-        log.debug("视频已保存: {}", outputPath);
-        
-        return "http://localhost:10003/files/videos/" + fileName;
+        return localAigcStorageService.saveBytes("videos", fileName, videoBytes);
     }
     
     private String truncate(String str, int maxLength) {

@@ -8,6 +8,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
+import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -48,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class GoogleImageProvider implements ImageGenerationProvider {
     
     private final AigcProperties aigcProperties;
+    private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     // API 端点会根据配置动态选择（直连 or 中转）
@@ -240,14 +242,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
             String extension = mimeType.contains("png") ? "png" : "jpg";
             String fileName = taskId + "." + extension;
             
-            Path outputDir = Path.of("uploads", "images");
-            Files.createDirectories(outputDir);
-            Path outputPath = outputDir.resolve(fileName);
-            
-            Files.write(outputPath, imageBytes);
-            log.debug("图片已保存: {}", outputPath);
-            
-            return "http://localhost:10003/files/images/" + fileName;
+            return localAigcStorageService.saveBytes("images", fileName, imageBytes);
         } catch (Exception e) {
             log.error("保存图片失败", e);
             return null;

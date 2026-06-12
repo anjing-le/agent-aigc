@@ -6,6 +6,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.AudioGenerationProvider;
 import com.anjing.aigc.provider.ContentProvider;
+import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -57,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 public class GoogleAudioProvider implements AudioGenerationProvider {
     
     private final AigcProperties aigcProperties;
+    private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     private static final String GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -296,14 +298,7 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
         String extension = getExtensionFromMimeType(mimeType);
         String fileName = taskId + "_tts." + extension;
         
-        Path outputDir = Paths.get("uploads", "audio");
-        Files.createDirectories(outputDir);
-        Path outputPath = outputDir.resolve(fileName);
-        
-        Files.write(outputPath, audioBytes);
-        log.debug("音频已保存: {}, 大小: {} bytes", outputPath, audioBytes.length);
-        
-        return "http://localhost:10003/files/audio/" + fileName;
+        return localAigcStorageService.saveBytes("audio", fileName, audioBytes);
     }
     
     /**
