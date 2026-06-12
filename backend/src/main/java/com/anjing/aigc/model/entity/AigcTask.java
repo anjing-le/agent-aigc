@@ -78,11 +78,11 @@ public class AigcTask {
     private String assetId;
 
     /** 生成的资源URL */
-    @Column(name = "result_url", length = 500)
+    @Column(name = "result_url", columnDefinition = "TEXT")
     private String resultUrl;
 
     /** 缩略图URL */
-    @Column(name = "thumbnail_url", length = 500)
+    @Column(name = "thumbnail_url", columnDefinition = "TEXT")
     private String thumbnailUrl;
 
     /** 错误信息 */

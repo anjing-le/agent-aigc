@@ -71,7 +71,7 @@ public class PromptEnhancer {
     private String enhanceImagePrompt(String prompt, boolean hasReference) {
         StringBuilder enhanced = new StringBuilder(prompt.trim());
         String lower = prompt.toLowerCase();
-        
+
         // 检查是否已有质量描述
         boolean hasQuality = containsAny(lower, 
                 "高质量", "high quality", "detailed", "精细", "8k", "4k", "hd", "高清");
@@ -84,7 +84,12 @@ public class PromptEnhancer {
         if (!hasQuality) {
             enhanced.append(", high quality, detailed");
         }
-        
+
+        if (!hasLighting) {
+            enhanced.append(", balanced lighting");
+        }
+
+
         // 图生图场景：保持原始构图
         if (hasReference) {
             if (!containsAny(lower, "保持", "maintain", "keep", "原始", "original")) {
@@ -164,4 +169,3 @@ public class PromptEnhancer {
         return str.length() <= maxLength ? str : str.substring(0, maxLength) + "...";
     }
 }
-

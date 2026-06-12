@@ -161,16 +161,14 @@ public class IntentAnalyzer {
      * 
      * @param userInput 用户原始输入
      * @param hasReferenceImages 是否有参考图片
-     * @return 结构化的意图分析结果
-     * @throws RuntimeException 如果 OneRouter 未配置或调用失败
+     * @return 结构化的意图分析结果；OneRouter 未配置或调用失败时使用规则降级
      */
     public AnalyzedIntent analyze(String userInput, boolean hasReferenceImages) {
         long startTime = System.currentTimeMillis();
         log.info("[IntentAnalyzer] 开始分析用户意图: {}", truncate(userInput, 100));
         
-        // 检查 OneRouter 是否配置 - 不降级，直接报错
         if (!aigcProperties.isOneRouterConfigured()) {
-            throw new RuntimeException("[IntentAnalyzer] OneRouter 未配置！请在 application-local.yml 中配置 aigc.providers.onerouter");
+            return createFallbackIntent(userInput, hasReferenceImages);
         }
         
         var oneRouterConfig = aigcProperties.getProviders().getOnerouter();
@@ -194,41 +192,52 @@ public class IntentAnalyzer {
         
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         
-        // 发送请求到 OneRouter - 不 try-catch，让异常直接抛出
         String apiUrl = oneRouterConfig.getApiUrl() + "/chat/completions";
-        ResponseEntity<Map> response = restTemplate.exchange(
-            apiUrl,
-            HttpMethod.POST,
-            entity,
-            Map.class
-        );
-        
-        // 解析响应
-        String jsonResponse = extractJsonFromResponse(response.getBody());
-        AnalyzedIntent intent;
         try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                apiUrl,
+                HttpMethod.POST,
+                entity,
+                Map.class
+            );
+
+            // 解析响应
+            String jsonResponse = extractJsonFromResponse(response.getBody());
+            AnalyzedIntent intent;
             intent = objectMapper.readValue(jsonResponse, AnalyzedIntent.class);
+            normalizeIntent(intent, userInput, hasReferenceImages);
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("[IntentAnalyzer] 意图分析完成, 耗时: {}ms, 模型: {}", duration, oneRouterConfig.getModel());
+            log.info("   contentType: {}", intent.getContentType());
+            log.info("   intent: {}", intent.getIntent());
+            log.info("   cleanPrompt: {}", truncate(intent.getCleanPrompt(), 50));
+            log.info("   confidence: {}", intent.getConfidence());
+
+            return intent;
         } catch (Exception e) {
-            throw new RuntimeException("[IntentAnalyzer] JSON 解析失败: " + jsonResponse, e);
+            log.warn("[IntentAnalyzer] OneRouter 调用失败，切换到规则降级: {}", e.getMessage());
+            return createFallbackIntent(userInput, hasReferenceImages);
         }
-        
-        // 补充上下文信息
+    }
+
+    private void normalizeIntent(AnalyzedIntent intent, String userInput, boolean hasReferenceImages) {
+        if (intent.getContentType() == null) {
+            intent.setContentType(ContentType.IMAGE);
+        }
+        if (intent.getCleanPrompt() == null || intent.getCleanPrompt().isBlank()) {
+            intent.setCleanPrompt(userInput);
+        }
+        if (intent.getConfidence() == null) {
+            intent.setConfidence(0.8);
+        }
+
         intent.setOriginalPrompt(userInput);
         intent.setHasReferenceImage(hasReferenceImages);
-        
-        // 根据是否有参考图片调整意图
+
         if (hasReferenceImages) {
             adjustIntentForReferenceImages(intent);
         }
-        
-        long duration = System.currentTimeMillis() - startTime;
-        log.info("[IntentAnalyzer] ✅ 意图分析完成, 耗时: {}ms, 模型: {}", duration, oneRouterConfig.getModel());
-        log.info("   contentType: {}", intent.getContentType());
-        log.info("   intent: {}", intent.getIntent());
-        log.info("   cleanPrompt: {}", truncate(intent.getCleanPrompt(), 50));
-        log.info("   confidence: {}", intent.getConfidence());
-        
-        return intent;
     }
     
     /**

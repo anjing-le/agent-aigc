@@ -17,6 +17,7 @@ import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcService;
+import com.anjing.aigc.service.AigcTaskExecutor;
 import com.anjing.aigc.exception.AigcException;
 import com.anjing.model.response.PageResult;
 import com.anjing.util.DateUtils;
@@ -26,9 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
 public class AigcServiceImpl implements AigcService {
 
     private final RoutingAgent routingAgent;
+    private final AigcTaskExecutor taskExecutor;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
 
@@ -64,6 +67,7 @@ public class AigcServiceImpl implements AigcService {
         task.setOptimizedPrompt(analysis.getOptimizedPrompt());
         task.setReferenceImages(request.getReferenceImages());
         task.setContentType(analysis.getContentType());
+        task.setIntent(analysis.getIntent());
         task.setModel(analysis.getSelectedModel());
         task.setStatus(TaskStatus.PENDING);
         task.setProgress(0);
@@ -72,7 +76,7 @@ public class AigcServiceImpl implements AigcService {
         taskRepository.save(task);
 
         // 3. 异步执行生成任务
-        executeGenerationAsync(task.getTaskId());
+        dispatchGenerationAfterCommit(task.getTaskId());
 
         // 4. 返回响应
         return GenerateResponse.builder()
@@ -81,68 +85,6 @@ public class AigcServiceImpl implements AigcService {
                 .agentAnalysis(analysis)
                 .estimatedTime(estimateTime(analysis.getContentType()))
                 .build();
-    }
-
-    /**
-     * 异步执行生成任务
-     */
-    @Async
-    public void executeGenerationAsync(String taskId) {
-        try {
-            AigcTask task = taskRepository.findByTaskId(taskId)
-                    .orElseThrow(() -> new AigcException("TASK_NOT_FOUND", "任务不存在"));
-
-            // 更新状态为处理中
-            task.setStatus(TaskStatus.PROCESSING);
-            task.setProgress(10);
-            task.setUpdatedAt(DateUtils.nowLocalDateTime());
-            taskRepository.save(task);
-
-            // 调用对应的模型生成
-            GenerationResult result = routingAgent.executeGeneration(task);
-
-            // 检查生成结果是否成功
-            if (!result.isSuccess()) {
-                // 生成失败，更新任务状态但不保存资产
-                log.warn("生成失败，不保存资产: taskId={}, errorCode={}, errorMessage={}", 
-                        taskId, result.getErrorCode(), result.getErrorMessage());
-                task.setStatus(TaskStatus.FAILED);
-                task.setErrorMessage(result.getErrorMessage());
-                task.setUpdatedAt(DateUtils.nowLocalDateTime());
-                taskRepository.save(task);
-                return;
-            }
-
-            // 只有成功时才保存资产
-            AigcAsset asset = new AigcAsset();
-            asset.setAssetId(IdUtils.uuid());
-            asset.setContentType(task.getContentType());
-            asset.setUrl(result.getUrl());
-            asset.setThumbnailUrl(result.getThumbnailUrl());
-            asset.setPrompt(task.getPrompt());
-            asset.setModel(task.getModel());
-            asset.setIsPublished(false);
-            asset.setCreatedAt(DateUtils.nowLocalDateTime());
-            assetRepository.save(asset);
-
-            // 更新任务状态为完成
-            task.setStatus(TaskStatus.COMPLETED);
-            task.setProgress(100);
-            task.setAssetId(asset.getAssetId());
-            task.setUpdatedAt(DateUtils.nowLocalDateTime());
-            taskRepository.save(task);
-
-            log.info("任务完成: taskId={}, assetId={}", taskId, asset.getAssetId());
-
-        } catch (Exception e) {
-            log.error("任务执行失败: taskId={}", taskId, e);
-            taskRepository.findByTaskId(taskId).ifPresent(task -> {
-                task.setStatus(TaskStatus.FAILED);
-                task.setErrorMessage(e.getMessage());
-                task.setUpdatedAt(DateUtils.nowLocalDateTime());
-                taskRepository.save(task);
-            });
-        }
     }
 
     @Override
@@ -215,8 +157,12 @@ public class AigcServiceImpl implements AigcService {
     @Override
     public PageResult<GalleryDTO> getGalleryList(Integer current, Integer size, String contentType, String model, String keyword) {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        
-        Page<AigcAsset> page = assetRepository.findByIsPublishedTrue(pageRequest);
+
+        Page<AigcAsset> page = assetRepository.searchPublished(
+                parseContentType(contentType),
+                normalizeFilter(model),
+                normalizeFilter(keyword),
+                pageRequest);
         
         List<GalleryDTO> records = page.getContent().stream()
                 .map(this::toGalleryDTO)
@@ -240,8 +186,8 @@ public class AigcServiceImpl implements AigcService {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
         Page<AigcAsset> page;
-        if (contentType != null && !contentType.isEmpty()) {
-            page = assetRepository.findByContentType(ContentType.valueOf(contentType.toUpperCase()), pageRequest);
+        if (normalizeFilter(contentType) != null) {
+            page = assetRepository.findByContentType(parseContentType(contentType), pageRequest);
         } else {
             page = assetRepository.findAll(pageRequest);
         }
@@ -269,6 +215,36 @@ public class AigcServiceImpl implements AigcService {
             case VIDEO -> 120;
             case AUDIO -> 60;
         };
+    }
+
+    private ContentType parseContentType(String contentType) {
+        String normalized = normalizeFilter(contentType);
+        if (normalized == null) {
+            return null;
+        }
+        try {
+            return ContentType.valueOf(normalized.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new AigcException("INVALID_CONTENT_TYPE", "不支持的内容类型: " + contentType);
+        }
+    }
+
+    private String normalizeFilter(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void dispatchGenerationAfterCommit(String taskId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            taskExecutor.executeGeneration(taskId);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                taskExecutor.executeGeneration(taskId);
+            }
+        });
     }
 
     /**

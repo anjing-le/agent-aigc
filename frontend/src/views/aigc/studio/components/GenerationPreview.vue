@@ -99,18 +99,26 @@
 
       <!-- 视频结果 (后端返回大写 VIDEO) -->
       <template v-else-if="isVideo">
-        <video
-          :src="result.url"
-          controls
-          class="generation-preview__video"
+        <el-image
+          v-if="isVisualPreview"
+          :src="result.thumbnailUrl || result.url"
+          fit="contain"
+          class="generation-preview__image"
         />
+        <video v-else :src="result.url" controls class="generation-preview__video" />
       </template>
 
       <!-- 音频结果 (后端返回大写 AUDIO) -->
       <template v-else-if="isAudio">
         <div class="generation-preview__audio">
+          <el-image
+            v-if="isVisualPreview"
+            :src="result.thumbnailUrl || result.url"
+            fit="contain"
+            class="generation-preview__audio-cover"
+          />
           <el-icon :size="48"><Headset /></el-icon>
-          <audio :src="result.url" controls class="generation-preview__audio-player" />
+          <audio v-if="!isVisualPreview" :src="result.url" controls class="generation-preview__audio-player" />
         </div>
       </template>
 
@@ -176,6 +184,7 @@ const statusText = computed(() => {
 const isImage = computed(() => props.result?.contentType?.toUpperCase() === 'IMAGE')
 const isVideo = computed(() => props.result?.contentType?.toUpperCase() === 'VIDEO')
 const isAudio = computed(() => props.result?.contentType?.toUpperCase() === 'AUDIO')
+const isVisualPreview = computed(() => props.result?.url?.startsWith('data:image/') || false)
 
 /** 获取内容类型标签 */
 const getContentTypeLabel = (type: ContentType) => {
@@ -398,6 +407,13 @@ const handleRegenerate = () => {
     &-player {
       width: 300px;
     }
+
+    &-cover {
+      width: min(520px, 80vw);
+      max-height: 300px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
   }
 
   &__actions {
@@ -406,4 +422,3 @@ const handleRegenerate = () => {
   }
 }
 </style>
-

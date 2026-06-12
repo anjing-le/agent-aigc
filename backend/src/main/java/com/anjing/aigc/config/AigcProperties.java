@@ -56,6 +56,11 @@ public class AigcProperties {
          * OneRouter 配置（用于 Agent 智能路由，便宜的 LLM）
          */
         private OneRouterConfig onerouter = new OneRouterConfig();
+
+        /**
+         * Mock 配置（用于本地演示和无外部 Key 的端到端联调）
+         */
+        private MockProviderConfig mock = new MockProviderConfig();
     }
     
     @Data
@@ -103,6 +108,11 @@ public class AigcProperties {
          * 温度（0-1，越低越稳定）
          */
         private double temperature = 0.1;
+    }
+
+    @Data
+    public static class MockProviderConfig {
+        private boolean enabled = true;
     }
     
     // ==================== 图片生成路由配置 ====================

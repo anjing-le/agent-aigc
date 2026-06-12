@@ -190,6 +190,8 @@ springdoc:
 # dev/test 默认不要求外部 API Key；真实生成能力通过 application-local.yml 或环境变量开启。
 aigc:
   providers:
+    mock:
+      enabled: ${AIGC_MOCK_ENABLED:true}
     google:
       enabled: ${AIGC_GOOGLE_ENABLED:false}
       api-key: ${AIGC_GOOGLE_API_KEY:}
@@ -204,11 +206,11 @@ aigc:
       timeout: ${AIGC_ONEROUTER_TIMEOUT_MS:30000}
       temperature: ${AIGC_ONEROUTER_TEMPERATURE:0.1}
   image:
-    active-provider: ${AIGC_IMAGE_ACTIVE_PROVIDER:google}
+    active-provider: ${AIGC_IMAGE_ACTIVE_PROVIDER:mock}
   video:
-    active-provider: ${AIGC_VIDEO_ACTIVE_PROVIDER:google}
+    active-provider: ${AIGC_VIDEO_ACTIVE_PROVIDER:mock}
   audio:
-    active-provider: ${AIGC_AUDIO_ACTIVE_PROVIDER:google}
+    active-provider: ${AIGC_AUDIO_ACTIVE_PROVIDER:mock}
   storage:
     local:
       enabled: true
