@@ -14,6 +14,20 @@
         />
       </div>
 
+      <div class="aigc-studio__models">
+        <div
+          v-for="model in availableModelCards"
+          :key="model.id"
+          class="aigc-studio__model"
+        >
+          <span class="aigc-studio__model-type">{{ getContentTypeLabel(model.contentType) }}</span>
+          <span class="aigc-studio__model-name">{{ model.name }}</span>
+          <el-tag size="small" :type="model.available ? 'success' : 'info'" effect="plain">
+            {{ model.available ? '可用' : '不可用' }}
+          </el-tag>
+        </div>
+      </div>
+
       <!-- 底部：对话输入区域（极简设计，只需输入需求） -->
       <CreationInput
         v-model="userInput"
@@ -46,13 +60,15 @@ import HistoryPanel from './components/HistoryPanel.vue'
 import {
   fetchGenerate,
   fetchGetTaskStatus,
-  fetchGetAssetList
+  fetchGetAssetList,
+  fetchGetModelList
 } from '@/api/aigc'
 import type {
   GenerateRequest,
   TaskStatusResponse,
   AssetItem,
-  ContentType
+  ContentType,
+  ModelInfo
 } from '@/api/model/aigcModel'
 import { nowIsoString } from '@/utils/time'
 
@@ -73,6 +89,9 @@ const generationResult = ref<AssetItem | null>(null)
 // 历史记录
 const historyItems = ref<AssetItem[]>([])
 const historyLoading = ref(false)
+const availableModels = ref<ModelInfo[]>([])
+
+const availableModelCards = computed(() => availableModels.value.slice(0, 6))
 
 // ==================== 方法 ====================
 
@@ -86,6 +105,19 @@ const loadHistory = async () => {
     console.error('加载历史记录失败:', error)
   } finally {
     historyLoading.value = false
+  }
+}
+
+const loadModels = async () => {
+  try {
+    const response = await fetchGetModelList()
+    availableModels.value = [
+      ...response.imageModels,
+      ...response.videoModels,
+      ...response.audioModels
+    ]
+  } catch (error) {
+    console.error('加载模型列表失败:', error)
   }
 }
 
@@ -241,6 +273,15 @@ const defaultParamsForType = (contentType: ContentType): Record<string, string |
   return {}
 }
 
+const getContentTypeLabel = (type: ContentType) => {
+  const map: Record<ContentType, string> = {
+    IMAGE: '图片',
+    VIDEO: '视频',
+    AUDIO: '音频'
+  }
+  return map[type]
+}
+
 /** 处理历史记录删除 */
 const handleHistoryDelete = async (item: AssetItem) => {
   historyItems.value = historyItems.value.filter(h => h.id !== item.id)
@@ -249,6 +290,7 @@ const handleHistoryDelete = async (item: AssetItem) => {
 // ==================== 生命周期 ====================
 onMounted(() => {
   loadHistory()
+  loadModels()
 })
 </script>
 
@@ -277,6 +319,36 @@ onMounted(() => {
     border-radius: 12px;
     border: 1px solid var(--el-border-color-light);
     overflow: hidden;
+  }
+
+  &__models {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  &__model {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+    background: var(--el-bg-color);
+    font-size: 12px;
+    color: var(--el-text-color-regular);
+  }
+
+  &__model-type {
+    color: var(--el-text-color-secondary);
+  }
+
+  &__model-name {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__sidebar {

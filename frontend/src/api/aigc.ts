@@ -7,7 +7,8 @@ import type {
   GalleryListResponse,
   AssetListResponse,
   GallerySearchParams,
-  AssetSearchParams
+  AssetSearchParams,
+  ModelListResponse
 } from './model/aigcModel'
 
 /**
@@ -61,7 +62,12 @@ export function fetchGetAssetList(params: AssetSearchParams) {
 }
 
 // 注：模型选择由Agent自动处理，用户无需关心
-// fetchGetModelList 接口保留供管理后台使用
+// 模型列表由后端 ProviderRouter 派生，供创作页和管理后台展示可用能力。
+export function fetchGetModelList() {
+  return request.get<ModelListResponse>({
+    url: ApiPaths.aigc.models
+  })
+}
 
 /**
  * 保存作品到灵感广场

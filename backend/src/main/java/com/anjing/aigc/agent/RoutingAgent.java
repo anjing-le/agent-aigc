@@ -171,6 +171,10 @@ public class RoutingAgent {
      * - 其他情况 → gemini-2.5-flash-image (快速便宜)
      */
     private String selectImageModel(AnalyzedIntent intent) {
+        if (isActiveProvider("mock", aigcProperties.getActiveImageProvider())) {
+            return "mock-image-preview";
+        }
+
         var imageParams = intent.getEffectiveImageParams();
         
         // 如果需要高分辨率(2K/4K)，使用 Gemini 3 Pro
@@ -191,6 +195,10 @@ public class RoutingAgent {
      * - quality=standard → veo-3.1-generate-preview
      */
     private String selectVideoModel(AnalyzedIntent intent) {
+        if (isActiveProvider("mock", aigcProperties.getActiveVideoProvider())) {
+            return "mock-video-preview";
+        }
+
         var videoParams = intent.getEffectiveVideoParams();
         
         String baseModel = aigcProperties.getVideo().getGoogle().getModel();
@@ -219,6 +227,10 @@ public class RoutingAgent {
      * 选择音频模型
      */
     private String selectAudioModel(AnalyzedIntent intent) {
+        if (isActiveProvider("mock", aigcProperties.getActiveAudioProvider())) {
+            return "mock-audio-preview";
+        }
+
         var audioParams = intent.getEffectiveAudioParams();
         
         // 根据音频类型选择模型
@@ -227,6 +239,10 @@ public class RoutingAgent {
         }
         
         return aigcProperties.getAudio().getGoogle().getModel();
+    }
+
+    private boolean isActiveProvider(String expected, String actual) {
+        return actual != null && expected.equalsIgnoreCase(actual.trim());
     }
 
     private void applyUserOverrides(AnalyzedIntent intent, GenerateRequest request) {

@@ -14,6 +14,8 @@ import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
+import com.anjing.aigc.provider.ContentProvider;
+import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcService;
@@ -49,6 +51,7 @@ public class AigcServiceImpl implements AigcService {
 
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
+    private final ProviderRouter providerRouter;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
 
@@ -120,38 +123,56 @@ public class AigcServiceImpl implements AigcService {
 
     @Override
     public ModelListResponse getAvailableModels() {
-        // 图片生成模型
-        List<ModelInfo> imageModels = List.of(
-                ModelInfo.builder()
-                        .id("nano-banana")
-                        .name("Nano Banana")
-                        .description("高质量图片生成模型，支持多种风格")
-                        .contentType(ContentType.IMAGE)
-                        .provider("Nano Banana")
-                        .available(true)
-                        .build()
-        );
+        List<ModelInfo> imageModels = providerRouter.getAvailableImageProviders().stream()
+                .map(provider -> toModelInfo(provider, ContentType.IMAGE))
+                .toList();
 
-        // 视频生成模型
-        List<ModelInfo> videoModels = List.of(
-                ModelInfo.builder()
-                        .id("sora-2")
-                        .name("Sora 2")
-                        .description("OpenAI视频生成模型，支持文生视频和图生视频")
-                        .contentType(ContentType.VIDEO)
-                        .provider("OpenAI")
-                        .available(true)
-                        .build()
-        );
+        List<ModelInfo> videoModels = providerRouter.getAvailableVideoProviders().stream()
+                .map(provider -> toModelInfo(provider, ContentType.VIDEO))
+                .toList();
 
-        // TODO: 音频生成模型预留
-        List<ModelInfo> audioModels = List.of();
+        List<ModelInfo> audioModels = providerRouter.getAvailableAudioProviders().stream()
+                .map(provider -> toModelInfo(provider, ContentType.AUDIO))
+                .toList();
 
         return ModelListResponse.builder()
                 .imageModels(imageModels)
                 .videoModels(videoModels)
                 .audioModels(audioModels)
                 .build();
+    }
+
+    private ModelInfo toModelInfo(ContentProvider provider, ContentType contentType) {
+        return ModelInfo.builder()
+                .id(toModelId(provider, contentType))
+                .name(provider.getProviderName())
+                .description(toModelDescription(provider, contentType))
+                .contentType(contentType)
+                .provider(provider.getProviderType().name())
+                .available(provider.isAvailable())
+                .icon(contentType.name().toLowerCase())
+                .build();
+    }
+
+    private String toModelId(ContentProvider provider, ContentType contentType) {
+        String normalizedProvider = provider.getProviderName()
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+        return contentType.name().toLowerCase() + "-" + normalizedProvider;
+    }
+
+    private String toModelDescription(ContentProvider provider, ContentType contentType) {
+        if (provider.getProviderType() == ContentProvider.ProviderType.OTHER
+                && provider.getProviderName().toLowerCase().contains("mock")) {
+            return "本地演示模型，无需外部 API Key";
+        }
+        return switch (contentType) {
+            case IMAGE -> "图片生成 Provider，可用于文生图和参考图创作";
+            case VIDEO -> "视频生成 Provider，可用于文生视频和图生视频";
+            case AUDIO -> "音频生成 Provider，可用于配音或音乐创作";
+            case TEXT -> "文本生成 Provider";
+        };
     }
 
     @Override
