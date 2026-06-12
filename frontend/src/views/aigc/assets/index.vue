@@ -29,6 +29,8 @@
           :key="item.id"
           :item="item"
           @preview="handlePreview(item)"
+          @download="handleDownload(item)"
+          @publish="handlePublish(item)"
           @delete="handleDelete(item)"
         />
       </div>
@@ -82,6 +84,17 @@
             <el-tag>{{ previewItem.model }}</el-tag>
             <span>{{ formatTime(previewItem.createdAt) }}</span>
           </div>
+          <div class="asset-preview__actions">
+            <el-button :icon="Download" @click="handleDownload(previewItem)">下载</el-button>
+            <el-button
+              v-if="!previewItem.isPublished"
+              type="primary"
+              :icon="Share"
+              @click="handlePublish(previewItem)"
+            >
+              发布到广场
+            </el-button>
+          </div>
         </div>
       </div>
     </el-dialog>
@@ -89,12 +102,13 @@
 </template>
 
 <script setup lang="ts">
-import { Refresh } from '@element-plus/icons-vue'
+import { Download, Refresh, Share } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AssetCard from './components/AssetCard.vue'
-import { fetchGetAssetList, fetchDeleteAsset } from '@/api/aigc'
+import { fetchGetAssetList, fetchDeleteAsset, fetchSaveToGallery } from '@/api/aigc'
 import type { AssetItem, ContentType } from '@/api/model/aigcModel'
 import { formatDateTime } from '@/utils/time'
+import { downloadAigcAsset } from '@/utils/aigcAsset'
 
 defineOptions({ name: 'AIGCAssets' })
 
@@ -145,6 +159,26 @@ const handlePageChange = () => {
 const handlePreview = (item: AssetItem) => {
   previewItem.value = item
   previewVisible.value = true
+}
+
+/** 下载 */
+const handleDownload = (item: AssetItem) => {
+  downloadAigcAsset(item)
+}
+
+/** 发布到广场 */
+const handlePublish = async (item: AssetItem) => {
+  try {
+    await fetchSaveToGallery(item.id)
+    item.isPublished = true
+    if (previewItem.value?.id === item.id) {
+      previewItem.value.isPublished = true
+    }
+    ElMessage.success('已发布到灵感广场')
+  } catch (error) {
+    console.error('发布失败:', error)
+    ElMessage.error('发布失败')
+  }
 }
 
 /** 删除 */
@@ -246,6 +280,12 @@ onMounted(() => {
     gap: 12px;
     font-size: 12px;
     color: var(--el-text-color-secondary);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
   }
 }
 </style>

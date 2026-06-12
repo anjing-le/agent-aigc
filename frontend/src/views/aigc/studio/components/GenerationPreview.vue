@@ -255,6 +255,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { TaskStatusResponse, AssetItem, ContentType } from '@/api/model/aigcModel'
+import { downloadAigcAsset } from '@/utils/aigcAsset'
 
 interface Props {
   task?: TaskStatusResponse | null
@@ -363,22 +364,8 @@ const openMaterial = (url: string) => {
 
 /** 处理下载 */
 const handleDownload = () => {
-  if (!props.result?.url) return
-
-  const link = document.createElement('a')
-  link.href = props.result.url
-  link.download = `aigc-${props.result.id}.${getFileExtension(props.result.contentType)}`
-  link.click()
-}
-
-/** 获取文件扩展名 */
-const getFileExtension = (contentType: string) => {
-  const map: Record<string, string> = {
-    IMAGE: 'png',
-    VIDEO: 'mp4',
-    AUDIO: 'mp3'
-  }
-  return map[contentType?.toUpperCase()] || 'file'
+  if (!props.result) return
+  downloadAigcAsset(props.result)
 }
 
 /** 处理重新生成 */

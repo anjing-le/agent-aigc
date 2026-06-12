@@ -48,6 +48,17 @@
     <!-- 操作 -->
     <div class="asset-card__actions">
       <el-button size="small" :icon="View" @click="$emit('preview')">预览</el-button>
+      <el-button size="small" :icon="Download" @click="$emit('download')">下载</el-button>
+      <el-button
+        v-if="!item.isPublished"
+        size="small"
+        :icon="Share"
+        type="primary"
+        plain
+        @click="$emit('publish')"
+      >
+        发布
+      </el-button>
       <el-button
         size="small"
         :icon="Delete"
@@ -68,6 +79,8 @@ import {
   VideoPlay,
   Headset,
   View,
+  Download,
+  Share,
   Delete
 } from '@element-plus/icons-vue'
 import type { AssetItem, ContentType } from '@/api/model/aigcModel'
@@ -79,6 +92,8 @@ interface Props {
 
 interface Emits {
   preview: []
+  download: []
+  publish: []
   delete: []
 }
 
@@ -195,6 +210,7 @@ const formatTime = (time: string) => formatDateTime(time)
 
   &__actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     padding: 12px 16px;
     border-top: 1px solid var(--el-border-color-lighter);

@@ -114,6 +114,7 @@ import { ElMessageBox, ElMessage } from 'element-plus'
 import type { AssetItem, ContentType } from '@/api/model/aigcModel'
 import { fetchSaveToGallery, fetchDeleteAsset } from '@/api/aigc'
 import { formatDate } from '@/utils/time'
+import { downloadAigcAsset } from '@/utils/aigcAsset'
 
 interface Props {
   items: AssetItem[]
@@ -200,10 +201,7 @@ const handleCommand = async (command: string, item: AssetItem) => {
 
 /** 处理下载 */
 const handleDownload = (item: AssetItem) => {
-  const link = document.createElement('a')
-  link.href = item.url
-  link.download = `aigc-${item.id}`
-  link.click()
+  downloadAigcAsset(item)
 }
 
 /** 处理分享 */
