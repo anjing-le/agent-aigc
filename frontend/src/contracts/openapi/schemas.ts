@@ -231,6 +231,8 @@ export interface GalleryDTO {
 }
 
 export interface GenerateRequest {
+  contentTypeHint?: string
+  generationParams?: Record<string, unknown>
   prompt: string
   referenceImages?: string[]
 }

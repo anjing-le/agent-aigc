@@ -2,6 +2,66 @@
 <!-- 用户只需：输入描述 + 可选上传素材 -->
 <template>
   <div class="creation-input">
+    <div class="creation-input__controls">
+      <el-radio-group v-model="contentMode" size="small" :disabled="loading">
+        <el-radio-button label="AUTO">自动</el-radio-button>
+        <el-radio-button label="IMAGE">图片</el-radio-button>
+        <el-radio-button label="VIDEO">视频</el-radio-button>
+        <el-radio-button label="AUDIO">音频</el-radio-button>
+      </el-radio-group>
+
+      <div v-if="contentMode !== 'AUTO'" class="creation-input__params">
+        <template v-if="contentMode === 'IMAGE'">
+          <el-select v-model="localParams.aspectRatio" size="small" placeholder="比例" :disabled="loading">
+            <el-option label="16:9" value="16:9" />
+            <el-option label="1:1" value="1:1" />
+            <el-option label="9:16" value="9:16" />
+            <el-option label="4:3" value="4:3" />
+          </el-select>
+          <el-select v-model="localParams.imageSize" size="small" placeholder="尺寸" :disabled="loading">
+            <el-option label="1K" value="1K" />
+            <el-option label="2K" value="2K" />
+            <el-option label="4K" value="4K" />
+          </el-select>
+          <el-select v-model="localParams.style" size="small" placeholder="风格" clearable :disabled="loading">
+            <el-option label="写实" value="photorealistic" />
+            <el-option label="动漫" value="anime" />
+            <el-option label="水彩" value="watercolor" />
+            <el-option label="3D" value="3d_render" />
+          </el-select>
+        </template>
+
+        <template v-else-if="contentMode === 'VIDEO'">
+          <el-select v-model="localParams.aspectRatio" size="small" placeholder="比例" :disabled="loading">
+            <el-option label="16:9" value="16:9" />
+            <el-option label="9:16" value="9:16" />
+          </el-select>
+          <el-select v-model="localParams.duration" size="small" placeholder="时长" :disabled="loading">
+            <el-option label="4s" :value="4" />
+            <el-option label="6s" :value="6" />
+            <el-option label="8s" :value="8" />
+          </el-select>
+          <el-select v-model="localParams.quality" size="small" placeholder="质量" :disabled="loading">
+            <el-option label="快速" value="fast" />
+            <el-option label="标准" value="standard" />
+          </el-select>
+        </template>
+
+        <template v-else>
+          <el-select v-model="localParams.audioType" size="small" placeholder="类型" :disabled="loading">
+            <el-option label="配音" value="tts" />
+            <el-option label="音乐" value="music" />
+          </el-select>
+          <el-select v-model="localParams.voice" size="small" placeholder="音色" :disabled="loading">
+            <el-option label="Kore" value="Kore" />
+            <el-option label="Aoede" value="Aoede" />
+            <el-option label="Fenrir" value="Fenrir" />
+            <el-option label="Puck" value="Puck" />
+          </el-select>
+        </template>
+      </div>
+    </div>
+
     <!-- 上传的素材预览 -->
     <div v-if="localFiles.length > 0" class="creation-input__files">
       <div
@@ -96,16 +156,24 @@
 <script setup lang="ts">
 import { Close, FolderAdd, Promotion, Loading, MagicStick } from '@element-plus/icons-vue'
 import type { UploadFile } from 'element-plus'
+import type { ContentType } from '@/api/model/aigcModel'
+
+type ContentMode = 'AUTO' | ContentType
+type GenerationParams = Record<string, string | number | boolean>
 
 interface Props {
   modelValue: string
   files?: File[]
+  contentTypeHint?: ContentType | null
+  generationParams?: GenerationParams
   loading?: boolean
 }
 
 interface Emits {
   'update:modelValue': [value: string]
   'update:files': [files: File[]]
+  'update:contentTypeHint': [value: ContentType | null]
+  'update:generationParams': [value: GenerationParams]
   submit: []
 }
 
@@ -134,6 +202,19 @@ const localFiles = computed({
   set: (val) => emit('update:files', val)
 })
 
+const contentMode = computed<ContentMode>({
+  get: () => props.contentTypeHint || 'AUTO',
+  set: (val) => {
+    emit('update:contentTypeHint', val === 'AUTO' ? null : val)
+    emit('update:generationParams', defaultParams(val))
+  }
+})
+
+const localParams = computed<GenerationParams>({
+  get: () => props.generationParams || {},
+  set: (val) => emit('update:generationParams', val)
+})
+
 // 文件预览列表
 const filesPreviews = ref<FilePreview[]>([])
 
@@ -157,6 +238,19 @@ const examples = [
   '水彩风格的樱花树下的少女',
   '让这张图片动起来'
 ]
+
+const defaultParams = (mode: ContentMode): GenerationParams => {
+  if (mode === 'IMAGE') {
+    return { aspectRatio: '16:9', imageSize: '1K' }
+  }
+  if (mode === 'VIDEO') {
+    return { aspectRatio: '16:9', duration: 8, quality: 'standard' }
+  }
+  if (mode === 'AUDIO') {
+    return { audioType: 'tts', voice: 'Kore' }
+  }
+  return {}
+}
 
 /** 处理文件选择 */
 const handleFileChange = (file: UploadFile) => {
@@ -203,6 +297,25 @@ watch(() => props.files, (newFiles) => {
   padding: 20px;
   border: 1px solid var(--el-border-color-light);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  &__params {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    .el-select {
+      width: 96px;
+    }
+  }
 
   &__files {
     display: flex;
@@ -328,4 +441,3 @@ watch(() => props.files, (newFiles) => {
   }
 }
 </style>
-

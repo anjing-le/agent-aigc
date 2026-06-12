@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 生成请求
@@ -34,6 +35,20 @@ public class GenerateRequest {
     @NotBlank(message = "请描述你想要创作的内容")
     private String prompt;
 
+    /**
+     * 内容类型提示（可选）
+     *
+     * <p>为空时由 Agent 自动识别；有值时作为用户显式选择，Agent 仍负责 Prompt 优化和模型选择。</p>
+     */
+    private String contentTypeHint;
+
+    /**
+     * 生成参数（可选）
+     *
+     * <p>用于承载宽高比、尺寸、视频时长、音色等轻量参数。V1 前保持 Map，待真实 provider 链路稳定后再收敛为强类型 DTO。</p>
+     */
+    private Map<String, Object> generationParams;
+
     /** 
      * 参考素材URL列表（可选）
      * 
@@ -46,4 +61,3 @@ public class GenerateRequest {
      */
     private List<String> referenceImages;
 }
-

@@ -9,7 +9,7 @@
 | 维度 | 状态 | 说明 |
 | --- | --- | --- |
 | 工程规范 | Ready | 已继承脚手架的前后端目录、统一 API 响应、OpenAPI、服务边界、请求上下文和质量门禁 |
-| AIGC 主链路 | V0.8 | 已具备创作任务、意图识别、Prompt 优化、Provider 路由、任务轮询、资产保存 |
+| AIGC 主链路 | V0.9 in progress | 已具备创作任务、意图识别、Prompt 优化、Provider 路由、任务轮询、资产保存，并开始支持显式类型与参数提示 |
 | 本地演示 | Ready | 默认使用 mock provider，无 Google/OneRouter Key 也能端到端创建作品 |
 | 真实模型接入 | In progress | Google GenAI 和 OneRouter 路径保留，通过环境变量切换 provider 与 key |
 | 作品管理 | V0.8 | 支持资产列表、发布到广场、广场按类型/模型/关键词筛选 |
@@ -26,6 +26,8 @@
 - 任务完成时回写 assetId、resultUrl、thumbnailUrl、durationMs 等结果字段。
 - 画廊查询支持 contentType、model、keyword 过滤。
 - 前端创作工坊支持任务提交、进度轮询、Agent 决策展示、生成结果预览、历史记录和作品广场入口。
+- 创作输入支持自动识别、图片、视频、音频模式切换，并可传入宽高比、尺寸、时长、音色等轻量参数。
+- Agent 决策展示已补充清洗 Prompt、参数摘要和置信度；历史记录支持复用 Prompt，结果区支持重新生成回填。
 
 ## 当前判断
 

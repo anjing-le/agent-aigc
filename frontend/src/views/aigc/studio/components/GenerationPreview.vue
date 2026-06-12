@@ -66,9 +66,28 @@
             <span class="label">输出类型</span>
             <el-tag size="small" type="warning" effect="plain">{{ getContentTypeLabel(task.agentAnalysis.contentType) }}</el-tag>
           </div>
+          <div v-if="task.agentAnalysis.confidence" class="decision-item">
+            <span class="label">置信度</span>
+            <el-tag size="small" type="info" effect="plain">{{ formatConfidence(task.agentAnalysis.confidence) }}</el-tag>
+          </div>
         </div>
 
-        <!-- 优化后的提示词 -->
+        <div v-if="task?.agentAnalysis?.cleanPrompt" class="generation-preview__optimized-prompt">
+          <div class="prompt-label">
+            <el-icon><Edit /></el-icon>
+            清洗后的提示词
+          </div>
+          <div class="prompt-content">{{ task.agentAnalysis.cleanPrompt }}</div>
+        </div>
+
+        <div v-if="agentParamsText" class="generation-preview__optimized-prompt">
+          <div class="prompt-label">
+            <el-icon><MagicStick /></el-icon>
+            参数
+          </div>
+          <div class="prompt-content">{{ agentParamsText }}</div>
+        </div>
+
         <div v-if="task?.agentAnalysis?.optimizedPrompt" class="generation-preview__optimized-prompt">
           <div class="prompt-label">
             <el-icon><MagicStick /></el-icon>
@@ -155,6 +174,10 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false
 })
 
+const emit = defineEmits<{
+  regenerate: [prompt: string]
+}>()
+
 // 进度百分比
 const progressPercentage = computed(() => {
   return props.task?.progress || 0
@@ -186,6 +209,43 @@ const isVideo = computed(() => props.result?.contentType?.toUpperCase() === 'VID
 const isAudio = computed(() => props.result?.contentType?.toUpperCase() === 'AUDIO')
 const isVisualPreview = computed(() => props.result?.url?.startsWith('data:image/') || false)
 
+const agentParamsText = computed(() => {
+  const analysis = props.task?.agentAnalysis
+  const intent = analysis?.analyzedIntent
+  if (!analysis || !intent) return ''
+
+  if (analysis.contentType === 'IMAGE' && intent.imageParams) {
+    return compactParams({
+      比例: intent.imageParams.aspectRatio,
+      尺寸: intent.imageParams.imageSize,
+      风格: intent.imageParams.style
+    })
+  }
+  if (analysis.contentType === 'VIDEO' && intent.videoParams) {
+    return compactParams({
+      比例: intent.videoParams.aspectRatio,
+      分辨率: intent.videoParams.resolution,
+      时长: intent.videoParams.duration ? `${intent.videoParams.duration}s` : '',
+      质量: intent.videoParams.quality
+    })
+  }
+  if (analysis.contentType === 'AUDIO' && intent.audioParams) {
+    return compactParams({
+      类型: intent.audioParams.type,
+      音色: intent.audioParams.voice,
+      情绪: intent.audioParams.mood
+    })
+  }
+  return ''
+})
+
+const compactParams = (params: Record<string, string | number | undefined>) => {
+  return Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(' · ')
+}
+
 /** 获取内容类型标签 */
 const getContentTypeLabel = (type: ContentType) => {
   const typeUpper = type?.toUpperCase()
@@ -196,6 +256,8 @@ const getContentTypeLabel = (type: ContentType) => {
   }
   return map[typeUpper] || type
 }
+
+const formatConfidence = (confidence: number) => `${Math.round(confidence * 100)}%`
 
 /** 处理下载 */
 const handleDownload = () => {
@@ -219,8 +281,11 @@ const getFileExtension = (contentType: string) => {
 
 /** 处理重新生成 */
 const handleRegenerate = () => {
-  // 通过事件通知父组件重新生成
-  ElMessage.info('请修改描述后重新提交')
+  if (!props.result?.prompt) {
+    ElMessage.info('请修改描述后重新提交')
+    return
+  }
+  emit('regenerate', props.result.prompt)
 }
 </script>
 

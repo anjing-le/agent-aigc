@@ -10,6 +10,7 @@
           :task="currentTask"
           :result="generationResult"
           :loading="generating"
+          @regenerate="handleReusePrompt"
         />
       </div>
 
@@ -17,6 +18,8 @@
       <CreationInput
         v-model="userInput"
         v-model:files="uploadedFiles"
+        v-model:content-type-hint="contentTypeHint"
+        v-model:generation-params="generationParams"
         :loading="generating"
         @submit="handleCreate"
       />
@@ -28,6 +31,7 @@
         :items="historyItems"
         :loading="historyLoading"
         @select="handleHistorySelect"
+        @reuse="handleHistoryReuse"
         @delete="handleHistoryDelete"
       />
     </div>
@@ -47,7 +51,8 @@ import {
 import type {
   GenerateRequest,
   TaskStatusResponse,
-  AssetItem
+  AssetItem,
+  ContentType
 } from '@/api/model/aigcModel'
 import { nowIsoString } from '@/utils/time'
 
@@ -57,6 +62,8 @@ defineOptions({ name: 'AIGCStudio' })
 // 用户输入（文本 + 文件，仅此而已）
 const userInput = ref('')
 const uploadedFiles = ref<File[]>([])
+const contentTypeHint = ref<ContentType | null>(null)
+const generationParams = ref<Record<string, string | number | boolean>>({})
 
 // 生成状态
 const generating = ref(false)
@@ -101,6 +108,8 @@ const handleCreate = async () => {
     // 构建请求 - 不指定模型，让Agent自动决策
     const request: GenerateRequest = {
       prompt: userInput.value.trim(),
+      contentTypeHint: contentTypeHint.value || undefined,
+      generationParams: normalizeGenerationParams(generationParams.value),
       // 如果有上传文件，转换为base64或URL
       referenceImages: await convertFilesToUrls(uploadedFiles.value)
     }
@@ -158,7 +167,10 @@ const pollTaskStatus = async (taskId: string) => {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const status = await fetchGetTaskStatus(taskId)
-      currentTask.value = status
+      currentTask.value = {
+        ...status,
+        agentAnalysis: status.agentAnalysis || currentTask.value?.agentAnalysis
+      }
 
       // 注意：后端返回的枚举是大写
       if (status.status === 'COMPLETED' && status.result) {
@@ -194,9 +206,39 @@ const pollTaskStatus = async (taskId: string) => {
   ElMessage.error('创作超时，请重试')
 }
 
+const normalizeGenerationParams = (params: Record<string, string | number | boolean>) => {
+  const normalized: Record<string, string | number | boolean> = {}
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== '' && value !== null && value !== undefined) {
+      normalized[key] = value
+    }
+  })
+  return Object.keys(normalized).length > 0 ? normalized : undefined
+}
+
 /** 处理历史记录选择 */
 const handleHistorySelect = (item: AssetItem) => {
   generationResult.value = item
+}
+
+const handleReusePrompt = (prompt: string) => {
+  userInput.value = prompt
+  generationResult.value = null
+}
+
+const handleHistoryReuse = (item: AssetItem) => {
+  userInput.value = item.prompt
+  contentTypeHint.value = item.contentType
+  generationParams.value = defaultParamsForType(item.contentType)
+  generationResult.value = item
+  ElMessage.success('已填入历史 Prompt')
+}
+
+const defaultParamsForType = (contentType: ContentType): Record<string, string | number | boolean> => {
+  if (contentType === 'IMAGE') return { aspectRatio: '16:9', imageSize: '1K' }
+  if (contentType === 'VIDEO') return { aspectRatio: '16:9', duration: 8, quality: 'standard' }
+  if (contentType === 'AUDIO') return { audioType: 'tts', voice: 'Kore' }
+  return {}
 }
 
 /** 处理历史记录删除 */

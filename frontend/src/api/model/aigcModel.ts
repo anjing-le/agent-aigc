@@ -19,6 +19,10 @@ export type TaskStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
 export interface GenerateRequest {
   /** 用户输入的需求描述（必填）*/
   prompt: string
+  /** 内容类型提示；为空时由 Agent 自动识别 */
+  contentTypeHint?: ContentType
+  /** 生成参数；用于宽高比、尺寸、时长、音色等轻量配置 */
+  generationParams?: Record<string, string | number | boolean>
   /** 参考素材URL列表（可选，支持图片/视频，用于图生图、图生视频等场景） */
   referenceImages?: string[]
 }
@@ -37,8 +41,14 @@ export interface GenerateResponse {
     contentType: ContentType
     /** 选择的模型 */
     selectedModel: string
+    /** 清洗后的提示词 */
+    cleanPrompt?: string
     /** 优化后的提示词 */
     optimizedPrompt: string
+    /** 完整意图分析 */
+    analyzedIntent?: Record<string, any>
+    /** 置信度 */
+    confidence?: number
   }
   /** 预估完成时间（秒） */
   estimatedTime?: number
@@ -52,8 +62,14 @@ export interface AgentAnalysis {
   contentType: ContentType
   /** 选择的模型 */
   selectedModel: string
+  /** 清洗后的提示词 */
+  cleanPrompt?: string
   /** 优化后的提示词 */
   optimizedPrompt: string
+  /** 完整意图分析 */
+  analyzedIntent?: Record<string, any>
+  /** 置信度 */
+  confidence?: number
 }
 
 /** 任务状态响应 */

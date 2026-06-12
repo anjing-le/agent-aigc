@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 智能路由Agent - AIGC核心
@@ -92,6 +93,7 @@ public class RoutingAgent {
         
         // 1. 使用 OneRouter gpt-4o-mini 进行智能意图解析
         AnalyzedIntent analyzedIntent = intentAnalyzer.analyze(prompt, hasReference);
+        applyUserOverrides(analyzedIntent, request);
         
         // 2. 根据解析结果选择最优的 Google 模型
         String selectedModel = selectOptimalModel(analyzedIntent);
@@ -225,6 +227,104 @@ public class RoutingAgent {
         }
         
         return aigcProperties.getAudio().getGoogle().getModel();
+    }
+
+    private void applyUserOverrides(AnalyzedIntent intent, GenerateRequest request) {
+        applyContentTypeHint(intent, request.getContentTypeHint(), !CollectionUtils.isEmpty(request.getReferenceImages()));
+        applyGenerationParams(intent, request.getGenerationParams());
+    }
+
+    private void applyContentTypeHint(AnalyzedIntent intent, String contentTypeHint, boolean hasReference) {
+        if (contentTypeHint == null || contentTypeHint.isBlank()) {
+            return;
+        }
+
+        ContentType contentType = ContentType.valueOf(contentTypeHint.trim().toUpperCase());
+        intent.setContentType(contentType);
+        switch (contentType) {
+            case IMAGE -> {
+                intent.setIntent(hasReference ? "image_to_image" : "text_to_image");
+                if (intent.getImageParams() == null) {
+                    intent.setImageParams(AnalyzedIntent.ImageParams.createDefault());
+                }
+            }
+            case VIDEO -> {
+                intent.setIntent(hasReference ? "image_to_video" : "text_to_video");
+                if (intent.getVideoParams() == null) {
+                    intent.setVideoParams(AnalyzedIntent.VideoParams.createDefault());
+                }
+            }
+            case AUDIO -> {
+                intent.setIntent("text_to_audio");
+                if (intent.getAudioParams() == null) {
+                    intent.setAudioParams(AnalyzedIntent.AudioParams.createDefault());
+                }
+            }
+            case TEXT -> throw new UnsupportedOperationException("不支持纯文本生成");
+        }
+        intent.setConfidence(1.0);
+    }
+
+    private void applyGenerationParams(AnalyzedIntent intent, Map<String, Object> params) {
+        if (params == null || params.isEmpty()) {
+            return;
+        }
+
+        switch (intent.getContentType()) {
+            case IMAGE -> applyImageParams(intent, params);
+            case VIDEO -> applyVideoParams(intent, params);
+            case AUDIO -> applyAudioParams(intent, params);
+            case TEXT -> throw new UnsupportedOperationException("不支持纯文本生成");
+        }
+    }
+
+    private void applyImageParams(AnalyzedIntent intent, Map<String, Object> params) {
+        var imageParams = intent.getEffectiveImageParams();
+        getString(params, "aspectRatio").ifPresent(imageParams::setAspectRatio);
+        getString(params, "imageSize").ifPresent(imageParams::setImageSize);
+        getString(params, "style").ifPresent(imageParams::setStyle);
+        intent.setImageParams(imageParams);
+    }
+
+    private void applyVideoParams(AnalyzedIntent intent, Map<String, Object> params) {
+        var videoParams = intent.getEffectiveVideoParams();
+        getString(params, "aspectRatio").ifPresent(videoParams::setAspectRatio);
+        getString(params, "resolution").ifPresent(videoParams::setResolution);
+        getInteger(params, "duration").ifPresent(videoParams::setDuration);
+        getString(params, "quality").ifPresent(videoParams::setQuality);
+        intent.setVideoParams(videoParams);
+    }
+
+    private void applyAudioParams(AnalyzedIntent intent, Map<String, Object> params) {
+        var audioParams = intent.getEffectiveAudioParams();
+        getString(params, "audioType").ifPresent(audioParams::setType);
+        getString(params, "voice").ifPresent(audioParams::setVoice);
+        getInteger(params, "bpm").ifPresent(audioParams::setBpm);
+        getString(params, "mood").ifPresent(audioParams::setMood);
+        intent.setAudioParams(audioParams);
+    }
+
+    private java.util.Optional<String> getString(Map<String, Object> params, String key) {
+        Object value = params.get(key);
+        if (value == null || value.toString().isBlank()) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(value.toString().trim());
+    }
+
+    private java.util.Optional<Integer> getInteger(Map<String, Object> params, String key) {
+        Object value = params.get(key);
+        if (value == null || value.toString().isBlank()) {
+            return java.util.Optional.empty();
+        }
+        if (value instanceof Number number) {
+            return java.util.Optional.of(number.intValue());
+        }
+        try {
+            return java.util.Optional.of(Integer.parseInt(value.toString()));
+        } catch (NumberFormatException e) {
+            return java.util.Optional.empty();
+        }
     }
     
     private String truncate(String str, int maxLength) {

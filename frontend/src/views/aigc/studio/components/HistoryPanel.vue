@@ -38,7 +38,7 @@
           <!-- 缩略图 (后端返回大写枚举) -->
           <div class="history-panel__item-thumb">
             <el-image
-              v-if="isImage(item.contentType)"
+              v-if="isImage(item.contentType) || hasVisualPreview(item)"
               :src="item.thumbnailUrl || item.url"
               fit="cover"
             >
@@ -77,6 +77,10 @@
                     <el-icon><Download /></el-icon>
                     下载
                   </el-dropdown-item>
+                  <el-dropdown-item command="reuse">
+                    <el-icon><CopyDocument /></el-icon>
+                    复用
+                  </el-dropdown-item>
                   <el-dropdown-item v-if="!item.isPublished" command="share">
                     <el-icon><Share /></el-icon>
                     分享
@@ -102,6 +106,7 @@ import {
   Headset,
   MoreFilled,
   Download,
+  CopyDocument,
   Share,
   Delete
 } from '@element-plus/icons-vue'
@@ -117,6 +122,7 @@ interface Props {
 
 interface Emits {
   select: [item: AssetItem]
+  reuse: [item: AssetItem]
   delete: [item: AssetItem]
 }
 
@@ -129,6 +135,9 @@ const emit = defineEmits<Emits>()
 /** 判断内容类型 (忽略大小写) */
 const isImage = (type: ContentType) => type?.toUpperCase() === 'IMAGE'
 const isVideo = (type: ContentType) => type?.toUpperCase() === 'VIDEO'
+const hasVisualPreview = (item: AssetItem) => {
+  return item.url?.startsWith('data:image/') || item.thumbnailUrl?.startsWith('data:image/')
+}
 
 /** 获取内容类型标签 */
 const getContentTypeTag = (type: ContentType) => {
@@ -176,6 +185,9 @@ const handleCommand = async (command: string, item: AssetItem) => {
   switch (command) {
     case 'download':
       handleDownload(item)
+      break
+    case 'reuse':
+      emit('reuse', item)
       break
     case 'share':
       await handleShare(item)
