@@ -47,6 +47,9 @@
               <el-tag size="small">{{ item.contentType }}</el-tag>
               <span>{{ formatBytes(item.size) }}</span>
             </div>
+            <div class="material-card__usage">
+              <span>引用 {{ getTaskTotal(item.id) }} 次</span>
+            </div>
             <div class="material-card__footer">
               <span>{{ formatTime(item.createdAt) }}</span>
               <div class="material-card__actions">
@@ -108,7 +111,7 @@
 <script setup lang="ts">
 import { Delete, DocumentCopy, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { fetchDeleteMaterial, fetchGetMaterialList } from '@/api/aigc'
+import { fetchDeleteMaterial, fetchGetMaterialList, fetchGetMaterialTasks } from '@/api/aigc'
 import type { MaterialItem, MaterialSearchParams } from '@/api/model/aigcModel'
 import { formatDateTime } from '@/utils/time'
 
@@ -116,6 +119,7 @@ defineOptions({ name: 'AIGCMaterials' })
 
 const loading = ref(false)
 const materialList = ref<MaterialItem[]>([])
+const materialTaskTotals = ref<Record<string, number>>({})
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(24)
@@ -134,12 +138,26 @@ const loadData = async () => {
     })
     materialList.value = response.records
     total.value = response.total
+    loadTaskTotals(response.records)
   } catch (error) {
     console.error('加载素材失败:', error)
     ElMessage.error('加载素材失败')
   } finally {
     loading.value = false
   }
+}
+
+const loadTaskTotals = async (materials: MaterialItem[]) => {
+  materialTaskTotals.value = {}
+  await Promise.all(materials.map(async material => {
+    try {
+      const response = await fetchGetMaterialTasks(material.id, { current: 1, size: 1 })
+      materialTaskTotals.value[material.id] = response.total
+    } catch (error) {
+      console.error('加载素材引用任务失败:', error)
+      materialTaskTotals.value[material.id] = 0
+    }
+  }))
 }
 
 const handleFilter = () => {
@@ -179,6 +197,8 @@ const handleDelete = async (item: MaterialItem) => {
 }
 
 const isImage = (item: MaterialItem) => item.contentType.startsWith('image/')
+
+const getTaskTotal = (materialId: string) => materialTaskTotals.value[materialId] || 0
 
 const formatTime = (time: string) => formatDateTime(time)
 
@@ -268,6 +288,7 @@ onMounted(() => {
   }
 
   &__meta,
+  &__usage,
   &__footer {
     display: flex;
     align-items: center;

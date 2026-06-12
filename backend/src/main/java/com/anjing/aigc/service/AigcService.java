@@ -34,6 +34,16 @@ public interface AigcService {
     TaskStatusResponse getTaskStatus(String taskId);
 
     /**
+     * 按素材反查引用它的任务
+     *
+     * @param materialId 素材ID
+     * @param current 当前页
+     * @param size 每页大小
+     * @return 任务分页列表
+     */
+    PageResult<TaskStatusResponse> getTasksByMaterial(String materialId, Integer current, Integer size);
+
+    /**
      * 获取可用模型列表
      *
      * @return 模型列表

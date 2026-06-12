@@ -9,6 +9,8 @@ import type {
   GallerySearchParams,
   AssetSearchParams,
   MaterialListResponse,
+  MaterialTaskListResponse,
+  MaterialTaskSearchParams,
   MaterialSearchParams,
   ModelListResponse,
   MaterialUploadResponse
@@ -100,6 +102,18 @@ export function fetchUploadMaterial(file: File) {
 export function fetchDeleteMaterial(materialId: string) {
   return request.del<void>({
     url: ApiPaths.aigc.materialDetail(materialId)
+  })
+}
+
+/**
+ * 按素材反查引用它的任务
+ * @param materialId 素材ID
+ * @param params 分页参数
+ */
+export function fetchGetMaterialTasks(materialId: string, params: Partial<MaterialTaskSearchParams> = {}) {
+  return request.get<MaterialTaskListResponse>({
+    url: ApiPaths.aigc.materialTasks(materialId),
+    params
   })
 }
 

@@ -127,6 +127,15 @@ export interface APIResponsePageResultMaterialDTO {
   timestamp?: number
 }
 
+export interface APIResponsePageResultTaskStatusResponse {
+  code?: string
+  data?: PageResultTaskStatusResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseString {
   code?: string
   data?: string
@@ -389,6 +398,13 @@ export interface PageResultMaterialDTO {
   total?: number
 }
 
+export interface PageResultTaskStatusResponse {
+  current?: number
+  records?: TaskStatusResponse[]
+  size?: number
+  total?: number
+}
+
 /**
  * Refresh token request
  */
@@ -444,6 +460,7 @@ export interface OpenApiSchemas {
   APIResponsePageResultAssetDTO: APIResponsePageResultAssetDTO
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
+  APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
   APIResponseString: APIResponseString
   APIResponseTaskStatusResponse: APIResponseTaskStatusResponse
   APIResponseVoid: APIResponseVoid
@@ -467,6 +484,7 @@ export interface OpenApiSchemas {
   PageResultAssetDTO: PageResultAssetDTO
   PageResultGalleryDTO: PageResultGalleryDTO
   PageResultMaterialDTO: PageResultMaterialDTO
+  PageResultTaskStatusResponse: PageResultTaskStatusResponse
   RefreshTokenRequest: RefreshTokenRequest
   SaveToGalleryRequest: SaveToGalleryRequest
   TaskStatusResponse: TaskStatusResponse

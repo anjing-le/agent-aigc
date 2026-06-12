@@ -199,6 +199,12 @@ export interface MaterialSearchParams extends CommonSearchParams {
 /** 素材列表响应 */
 export type MaterialListResponse = PaginatedResponse<MaterialItem>
 
+/** 素材引用任务搜索参数 */
+export type MaterialTaskSearchParams = CommonSearchParams
+
+/** 素材引用任务列表响应 */
+export type MaterialTaskListResponse = PaginatedResponse<TaskStatusResponse>
+
 /** ==================== 模型相关类型 ==================== */
 
 /** 模型信息 */

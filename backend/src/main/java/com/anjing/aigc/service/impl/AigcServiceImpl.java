@@ -101,6 +101,28 @@ public class AigcServiceImpl implements AigcService {
         AigcTask task = taskRepository.findByTaskId(taskId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.TASK_NOT_FOUND));
 
+        return toTaskStatusResponse(task);
+    }
+
+    @Override
+    public PageResult<TaskStatusResponse> getTasksByMaterial(String materialId, Integer current, Integer size) {
+        materialRepository.findByMaterialId(materialId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
+
+        int pageNumber = current != null && current > 0 ? current - 1 : 0;
+        int pageSize = size != null && size > 0 ? Math.min(size, 100) : 20;
+        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<AigcTask> page = taskRepository.findByReferenceMaterialId(toMaterialIdPattern(materialId), pageRequest);
+
+        return PageResult.of(
+                page.getContent().stream().map(this::toTaskStatusResponse).toList(),
+                page.getTotalElements(),
+                current != null && current > 0 ? current : 1,
+                pageSize
+        );
+    }
+
+    private TaskStatusResponse toTaskStatusResponse(AigcTask task) {
         TaskStatusResponse response = TaskStatusResponse.builder()
                 .taskId(task.getTaskId())
                 .status(task.getStatus())
@@ -269,6 +291,10 @@ public class AigcServiceImpl implements AigcService {
         return materialRepository.findByMaterialIdIn(materialIds).stream()
                 .map(this::toMaterialDTO)
                 .toList();
+    }
+
+    private String toMaterialIdPattern(String materialId) {
+        return "%\"" + materialId + "\"%";
     }
 
     private MaterialDTO toMaterialDTO(AigcMaterial material) {

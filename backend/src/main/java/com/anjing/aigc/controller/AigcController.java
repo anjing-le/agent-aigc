@@ -119,6 +119,16 @@ public class AigcController {
         return APIResponse.success(null);
     }
 
+    @GetMapping(ApiConstants.Aigc.MATERIAL_TASKS)
+    @Operation(summary = "按素材反查引用它的 AIGC 任务")
+    public APIResponse<PageResult<TaskStatusResponse>> getMaterialTasks(
+            @PathVariable String materialId,
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        PageResult<TaskStatusResponse> tasks = aigcService.getTasksByMaterial(materialId, current, size);
+        return APIResponse.success(tasks);
+    }
+
     /**
      * 获取灵感广场作品列表
      *

@@ -63,6 +63,8 @@ export const ApiPaths = {
     materials: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materials,
     materialDetail: (materialId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDetail, { materialId }),
+    materialTasks: (materialId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialTasks, { materialId }),
     materialUpload: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialUpload,
     gallery: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallery,
     gallerySave: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallerySave,
