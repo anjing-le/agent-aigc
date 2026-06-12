@@ -300,7 +300,10 @@ export interface LoginRequest {
 
 export interface MaterialUploadResponse {
   contentType?: string
+  createdAt?: string
   fileName?: string
+  materialId?: string
+  originalFileName?: string
   size?: number
   url?: string
 }

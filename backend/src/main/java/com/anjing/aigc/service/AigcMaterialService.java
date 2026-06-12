@@ -1,9 +1,12 @@
 package com.anjing.aigc.service;
 
 import com.anjing.aigc.exception.AigcException;
+import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
+import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
+import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,7 @@ public class AigcMaterialService {
     );
 
     private final LocalAigcStorageService localAigcStorageService;
+    private final AigcMaterialRepository materialRepository;
 
     public MaterialUploadResponse uploadMaterial(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -52,11 +56,24 @@ public class AigcMaterialService {
         String fileName = "material-" + IdUtils.uuid() + "." + extension;
         try {
             String url = localAigcStorageService.saveBytes("materials", fileName, file.getBytes());
+            AigcMaterial material = new AigcMaterial();
+            material.setMaterialId(IdUtils.uuid());
+            material.setFileName(fileName);
+            material.setOriginalFileName(file.getOriginalFilename());
+            material.setContentType(contentType);
+            material.setSize(file.getSize());
+            material.setUrl(url);
+            material.setCreatedAt(DateUtils.nowLocalDateTime());
+            materialRepository.save(material);
+
             return MaterialUploadResponse.builder()
+                    .materialId(material.getMaterialId())
                     .url(url)
                     .fileName(fileName)
+                    .originalFileName(material.getOriginalFileName())
                     .contentType(contentType)
                     .size(file.getSize())
+                    .createdAt(material.getCreatedAt().toString())
                     .build();
         } catch (IOException e) {
             throw new AigcException(AigcErrorCode.MATERIAL_SAVE_FAILED, "素材保存失败，请稍后重试", e);

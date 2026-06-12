@@ -1,7 +1,9 @@
 package com.anjing.aigc.service;
 
 import com.anjing.aigc.exception.AigcException;
+import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
+import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import org.junit.jupiter.api.Test;
@@ -19,7 +21,8 @@ import static org.mockito.Mockito.when;
 class AigcMaterialServiceTest {
 
     private final LocalAigcStorageService storageService = mock(LocalAigcStorageService.class);
-    private final AigcMaterialService materialService = new AigcMaterialService(storageService);
+    private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
+    private final AigcMaterialService materialService = new AigcMaterialService(storageService, materialRepository);
 
     @Test
     void uploadMaterialStoresSupportedImage() throws Exception {
@@ -35,9 +38,11 @@ class AigcMaterialServiceTest {
         MaterialUploadResponse response = materialService.uploadMaterial(file);
 
         assertEquals("/uploads/aigc/materials/material-demo.png", response.getUrl());
+        assertEquals("cover.png", response.getOriginalFileName());
         assertEquals("image/png", response.getContentType());
         assertEquals(3, response.getSize());
         verify(storageService).saveBytes(eq("materials"), any(String.class), eq(file.getBytes()));
+        verify(materialRepository).save(any(AigcMaterial.class));
     }
 
     @Test
