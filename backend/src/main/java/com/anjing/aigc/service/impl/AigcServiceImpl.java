@@ -1,6 +1,7 @@
 package com.anjing.aigc.service.impl;
 
 import com.anjing.aigc.agent.RoutingAgent;
+import com.anjing.aigc.config.AigcProperties;
 import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
 import com.anjing.aigc.model.dto.MaterialDTO;
@@ -44,6 +45,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,6 +64,7 @@ public class AigcServiceImpl implements AigcService {
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
     private final ProviderRouter providerRouter;
+    private final AigcProperties aigcProperties;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
     private final AigcMaterialRepository materialRepository;
@@ -181,15 +184,15 @@ public class AigcServiceImpl implements AigcService {
 
     @Override
     public ModelListResponse getAvailableModels() {
-        List<ModelInfo> imageModels = providerRouter.getAvailableImageProviders().stream()
+        List<ModelInfo> imageModels = providerRouter.getImageProviders().stream()
                 .map(provider -> toModelInfo(provider, ContentType.IMAGE))
                 .toList();
 
-        List<ModelInfo> videoModels = providerRouter.getAvailableVideoProviders().stream()
+        List<ModelInfo> videoModels = providerRouter.getVideoProviders().stream()
                 .map(provider -> toModelInfo(provider, ContentType.VIDEO))
                 .toList();
 
-        List<ModelInfo> audioModels = providerRouter.getAvailableAudioProviders().stream()
+        List<ModelInfo> audioModels = providerRouter.getAudioProviders().stream()
                 .map(provider -> toModelInfo(provider, ContentType.AUDIO))
                 .toList();
 
@@ -201,13 +204,20 @@ public class AigcServiceImpl implements AigcService {
     }
 
     private ModelInfo toModelInfo(ContentProvider provider, ContentType contentType) {
+        boolean active = isActiveProvider(provider, getActiveProvider(contentType));
         return ModelInfo.builder()
                 .id(toModelId(provider, contentType))
                 .name(provider.getProviderName())
                 .description(toModelDescription(provider, contentType))
                 .contentType(contentType)
                 .provider(provider.getProviderType().name())
+                .activeProvider(getActiveProvider(contentType))
+                .active(active)
                 .available(provider.isAvailable())
+                .configuredModel(resolveConfiguredModel(provider, contentType))
+                .defaultParams(resolveDefaultParams(provider, contentType))
+                .missingConfig(resolveMissingConfig(provider))
+                .statusReason(resolveModelStatusReason(provider, active))
                 .icon(contentType.name().toLowerCase())
                 .build();
     }
@@ -231,6 +241,96 @@ public class AigcServiceImpl implements AigcService {
             case AUDIO -> "音频生成 Provider，可用于配音或音乐创作";
             case TEXT -> "文本生成 Provider";
         };
+    }
+
+    private String getActiveProvider(ContentType contentType) {
+        return switch (contentType) {
+            case IMAGE -> aigcProperties.getImage().getActiveProvider();
+            case VIDEO -> aigcProperties.getVideo().getActiveProvider();
+            case AUDIO -> aigcProperties.getAudio().getActiveProvider();
+            case TEXT -> "";
+        };
+    }
+
+    private boolean isActiveProvider(ContentProvider provider, String activeProvider) {
+        if (activeProvider == null || activeProvider.isBlank()) {
+            return provider.isAvailable();
+        }
+        return switch (activeProvider.toLowerCase()) {
+            case "google" -> provider.getProviderType() == ContentProvider.ProviderType.GOOGLE;
+            case "openai" -> provider.getProviderType() == ContentProvider.ProviderType.OPENAI;
+            case "stability" -> provider.getProviderType() == ContentProvider.ProviderType.STABILITY;
+            default -> provider.getProviderName().toLowerCase().contains(activeProvider.toLowerCase());
+        };
+    }
+
+    private String resolveConfiguredModel(ContentProvider provider, ContentType contentType) {
+        if (provider.getProviderType() == ContentProvider.ProviderType.OTHER
+                && provider.getProviderName().toLowerCase().contains("mock")) {
+            return switch (contentType) {
+                case IMAGE -> "mock-image-preview";
+                case VIDEO -> "mock-video-preview";
+                case AUDIO -> "mock-audio-preview";
+                case TEXT -> "mock-text-preview";
+            };
+        }
+        if (provider.getProviderType() != ContentProvider.ProviderType.GOOGLE) {
+            return null;
+        }
+        return switch (contentType) {
+            case IMAGE -> aigcProperties.getImage().getGoogle().getModel();
+            case VIDEO -> aigcProperties.getVideo().getGoogle().getModel();
+            case AUDIO -> aigcProperties.getAudio().getGoogle().getModel();
+            case TEXT -> null;
+        };
+    }
+
+    private Map<String, Object> resolveDefaultParams(ContentProvider provider, ContentType contentType) {
+        if (provider.getProviderType() == ContentProvider.ProviderType.OTHER
+                && provider.getProviderName().toLowerCase().contains("mock")) {
+            return Map.of("mode", "local-demo", "externalKey", false);
+        }
+        if (provider.getProviderType() != ContentProvider.ProviderType.GOOGLE) {
+            return Map.of();
+        }
+        return switch (contentType) {
+            case IMAGE -> Map.of(
+                    "aspectRatio", aigcProperties.getImage().getGoogle().getDefaultAspectRatio(),
+                    "imageSize", aigcProperties.getImage().getGoogle().getDefaultImageSize(),
+                    "timeoutMs", aigcProperties.getImage().getGoogle().getTimeout()
+            );
+            case VIDEO -> Map.of(
+                    "aspectRatio", aigcProperties.getVideo().getGoogle().getDefaultAspectRatio(),
+                    "resolution", aigcProperties.getVideo().getGoogle().getDefaultResolution(),
+                    "duration", aigcProperties.getVideo().getGoogle().getDefaultDuration(),
+                    "timeoutMs", aigcProperties.getVideo().getGoogle().getTimeout()
+            );
+            case AUDIO -> Map.of(
+                    "voice", aigcProperties.getAudio().getGoogle().getDefaultVoice(),
+                    "bpm", aigcProperties.getAudio().getGoogle().getDefaultBpm(),
+                    "temperature", aigcProperties.getAudio().getGoogle().getDefaultTemperature(),
+                    "timeoutMs", aigcProperties.getAudio().getGoogle().getTimeout()
+            );
+            case TEXT -> Map.of();
+        };
+    }
+
+    private String resolveMissingConfig(ContentProvider provider) {
+        if (provider.getProviderType() == ContentProvider.ProviderType.GOOGLE && !aigcProperties.isGoogleConfigured()) {
+            return "缺少 aigc.providers.google.api-key";
+        }
+        return null;
+    }
+
+    private String resolveModelStatusReason(ContentProvider provider, boolean active) {
+        if (!provider.isAvailable()) {
+            String missingConfig = resolveMissingConfig(provider);
+            return missingConfig != null ? missingConfig : "Provider 未启用或配置不完整";
+        }
+        if (active) {
+            return "当前路由会优先使用此 Provider";
+        }
+        return "已注册，可通过 active-provider 切换";
     }
 
     @Override

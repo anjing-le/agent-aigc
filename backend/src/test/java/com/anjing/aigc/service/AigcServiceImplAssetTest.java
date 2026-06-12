@@ -1,6 +1,7 @@
 package com.anjing.aigc.service;
 
 import com.anjing.aigc.agent.RoutingAgent;
+import com.anjing.aigc.config.AigcProperties;
 import com.anjing.aigc.exception.AigcException;
 import com.anjing.aigc.model.entity.AigcAsset;
 import com.anjing.aigc.model.entity.AigcTask;
@@ -8,6 +9,9 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.provider.ContentProvider;
+import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
@@ -19,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,6 +37,7 @@ class AigcServiceImplAssetTest {
     private final RoutingAgent routingAgent = mock(RoutingAgent.class);
     private final AigcTaskExecutor taskExecutor = mock(AigcTaskExecutor.class);
     private final ProviderRouter providerRouter = mock(ProviderRouter.class);
+    private final AigcProperties aigcProperties = new AigcProperties();
     private final AigcTaskRepository taskRepository = mock(AigcTaskRepository.class);
     private final AigcAssetRepository assetRepository = mock(AigcAssetRepository.class);
     private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
@@ -41,6 +47,7 @@ class AigcServiceImplAssetTest {
             routingAgent,
             taskExecutor,
             providerRouter,
+            aigcProperties,
             taskRepository,
             assetRepository,
             materialRepository,
@@ -100,6 +107,34 @@ class AigcServiceImplAssetTest {
         assertEquals(0.8, detail.getTask().getAgentAnalysis().getConfidence());
         assertEquals("Mock Image Provider", detail.getTask().getProviderExecution().getProviderName());
         assertEquals("MOCK_FREE", detail.getTask().getProviderExecution().getCostStatus());
+    }
+
+    @Test
+    void getAvailableModelsReturnsConfigurationStatus() {
+        aigcProperties.getImage().setActiveProvider("google");
+        aigcProperties.getProviders().getGoogle().setApiKey(null);
+
+        ImageGenerationProvider googleProvider = mock(ImageGenerationProvider.class);
+        when(googleProvider.getProviderName()).thenReturn("Google Nano Banana");
+        when(googleProvider.getProviderType()).thenReturn(ContentProvider.ProviderType.GOOGLE);
+        when(googleProvider.isAvailable()).thenReturn(false);
+
+        ImageGenerationProvider mockProvider = mock(ImageGenerationProvider.class);
+        when(mockProvider.getProviderName()).thenReturn("Mock Image Provider");
+        when(mockProvider.getProviderType()).thenReturn(ContentProvider.ProviderType.OTHER);
+        when(mockProvider.isAvailable()).thenReturn(true);
+
+        when(providerRouter.getImageProviders()).thenReturn(List.of(googleProvider, mockProvider));
+        when(providerRouter.getVideoProviders()).thenReturn(List.of());
+        when(providerRouter.getAudioProviders()).thenReturn(List.of());
+
+        ModelListResponse models = aigcService.getAvailableModels();
+
+        assertEquals(2, models.getImageModels().size());
+        assertEquals("缺少 aigc.providers.google.api-key", models.getImageModels().get(0).getMissingConfig());
+        assertEquals(true, models.getImageModels().get(0).getActive());
+        assertEquals("mock-image-preview", models.getImageModels().get(1).getConfiguredModel());
+        assertEquals("local-demo", models.getImageModels().get(1).getDefaultParams().get("mode"));
     }
 
     @Test

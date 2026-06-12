@@ -150,6 +150,10 @@ public class ProviderRouter {
                 .filter(ContentProvider::isAvailable)
                 .toList();
     }
+
+    public List<ImageGenerationProvider> getImageProviders() {
+        return imageProviders;
+    }
     
     /**
      * 获取所有可用的视频提供商
@@ -159,6 +163,10 @@ public class ProviderRouter {
                 .filter(ContentProvider::isAvailable)
                 .toList();
     }
+
+    public List<VideoGenerationProvider> getVideoProviders() {
+        return videoProviders;
+    }
     
     /**
      * 获取所有可用的音频提供商
@@ -167,5 +175,9 @@ public class ProviderRouter {
         return audioProviders.stream()
                 .filter(ContentProvider::isAvailable)
                 .toList();
+    }
+
+    public List<AudioGenerationProvider> getAudioProviders() {
+        return audioProviders;
     }
 }

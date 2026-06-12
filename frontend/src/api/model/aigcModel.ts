@@ -249,8 +249,20 @@ export interface ModelInfo {
   contentType: ContentType
   /** 模型提供商 */
   provider: string
+  /** 当前内容类型配置的激活 Provider */
+  activeProvider?: string
+  /** 是否为当前激活 Provider */
+  active?: boolean
   /** 是否可用 */
   available: boolean
+  /** 配置中的模型名称 */
+  configuredModel?: string
+  /** 默认生成参数 */
+  defaultParams?: Record<string, string | number | boolean>
+  /** 缺失配置说明 */
+  missingConfig?: string
+  /** 状态说明 */
+  statusReason?: string
   /** 模型图标 */
   icon?: string
 }
