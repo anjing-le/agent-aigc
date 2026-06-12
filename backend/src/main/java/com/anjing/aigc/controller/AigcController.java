@@ -1,5 +1,6 @@
 package com.anjing.aigc.controller;
 
+import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.SaveToGalleryRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
@@ -99,6 +100,16 @@ public class AigcController {
     public APIResponse<MaterialUploadResponse> uploadMaterial(@RequestPart("file") MultipartFile file) {
         MaterialUploadResponse response = aigcMaterialService.uploadMaterial(file);
         return APIResponse.success(response);
+    }
+
+    @GetMapping(ApiConstants.Aigc.MATERIALS)
+    @Operation(summary = "获取 AIGC 参考素材列表")
+    public APIResponse<PageResult<MaterialDTO>> getMaterialList(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) String contentType) {
+        PageResult<MaterialDTO> materials = aigcMaterialService.getMaterialList(current, size, contentType);
+        return APIResponse.success(materials);
     }
 
     /**

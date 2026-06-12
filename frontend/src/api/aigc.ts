@@ -8,6 +8,8 @@ import type {
   AssetListResponse,
   GallerySearchParams,
   AssetSearchParams,
+  MaterialListResponse,
+  MaterialSearchParams,
   ModelListResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
@@ -58,6 +60,17 @@ export function fetchGetGalleryList(params: GallerySearchParams) {
 export function fetchGetAssetList(params: AssetSearchParams) {
   return request.get<AssetListResponse>({
     url: ApiPaths.aigc.assets,
+    params
+  })
+}
+
+/**
+ * 获取参考素材列表
+ * @param params 搜索参数
+ */
+export function fetchGetMaterialList(params: MaterialSearchParams) {
+  return request.get<MaterialListResponse>({
+    url: ApiPaths.aigc.materials,
     params
   })
 }

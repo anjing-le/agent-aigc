@@ -1,6 +1,7 @@
 package com.anjing.aigc.service;
 
 import com.anjing.aigc.exception.AigcException;
+import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.repository.AigcMaterialRepository;
@@ -9,8 +10,12 @@ import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.anjing.model.response.PageResult;
 
 import java.io.IOException;
 import java.util.Map;
@@ -33,6 +38,26 @@ public class AigcMaterialService {
 
     private final LocalAigcStorageService localAigcStorageService;
     private final AigcMaterialRepository materialRepository;
+
+    public PageResult<MaterialDTO> getMaterialList(Integer current, Integer size, String contentType) {
+        int pageNumber = current != null && current > 0 ? current - 1 : 0;
+        int pageSize = size != null && size > 0 ? Math.min(size, 100) : 20;
+        PageRequest pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<AigcMaterial> page;
+        if (contentType == null || contentType.isBlank()) {
+            page = materialRepository.findAll(pageable);
+        } else {
+            page = materialRepository.findByContentTypeStartingWith(contentType.trim().toLowerCase() + "/", pageable);
+        }
+
+        return PageResult.of(
+                page.getContent().stream().map(this::toDTO).toList(),
+                page.getTotalElements(),
+                current != null && current > 0 ? current : 1,
+                pageSize
+        );
+    }
 
     public MaterialUploadResponse uploadMaterial(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -78,5 +103,17 @@ public class AigcMaterialService {
         } catch (IOException e) {
             throw new AigcException(AigcErrorCode.MATERIAL_SAVE_FAILED, "素材保存失败，请稍后重试", e);
         }
+    }
+
+    private MaterialDTO toDTO(AigcMaterial material) {
+        return MaterialDTO.builder()
+                .id(material.getMaterialId())
+                .url(material.getUrl())
+                .fileName(material.getFileName())
+                .originalFileName(material.getOriginalFileName())
+                .contentType(material.getContentType())
+                .size(material.getSize())
+                .createdAt(material.getCreatedAt().toString())
+                .build();
     }
 }

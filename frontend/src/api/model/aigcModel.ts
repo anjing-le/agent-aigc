@@ -166,6 +166,33 @@ export type GalleryListResponse = PaginatedResponse<GalleryItem>
 /** 资产列表响应 */
 export type AssetListResponse = PaginatedResponse<AssetItem>
 
+/** 参考素材项 */
+export interface MaterialItem {
+  /** 素材ID */
+  id: string
+  /** 可访问 URL */
+  url: string
+  /** 保存后的文件名 */
+  fileName: string
+  /** 原始文件名 */
+  originalFileName?: string
+  /** MIME 类型 */
+  contentType: string
+  /** 文件大小 */
+  size: number
+  /** 创建时间 */
+  createdAt: string
+}
+
+/** 素材搜索参数 */
+export interface MaterialSearchParams extends CommonSearchParams {
+  /** image 或 video */
+  contentType?: 'image' | 'video'
+}
+
+/** 素材列表响应 */
+export type MaterialListResponse = PaginatedResponse<MaterialItem>
+
 /** ==================== 模型相关类型 ==================== */
 
 /** 模型信息 */
@@ -198,12 +225,18 @@ export interface ModelListResponse {
 
 /** 素材上传响应 */
 export interface MaterialUploadResponse {
+  /** 素材ID */
+  materialId?: string
   /** 可访问 URL */
   url: string
   /** 保存后的文件名 */
   fileName: string
+  /** 原始文件名 */
+  originalFileName?: string
   /** MIME 类型 */
   contentType: string
   /** 文件大小 */
   size: number
+  /** 创建时间 */
+  createdAt?: string
 }

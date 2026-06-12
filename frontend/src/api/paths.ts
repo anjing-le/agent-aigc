@@ -60,6 +60,7 @@ export const ApiPaths = {
     taskStatus: (taskId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.taskStatus, { taskId }),
     models: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.models,
+    materials: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materials,
     materialUpload: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialUpload,
     gallery: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallery,
     gallerySave: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallerySave,

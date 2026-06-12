@@ -118,6 +118,15 @@ export interface APIResponsePageResultGalleryDTO {
   timestamp?: number
 }
 
+export interface APIResponsePageResultMaterialDTO {
+  code?: string
+  data?: PageResultMaterialDTO
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseString {
   code?: string
   data?: string
@@ -298,6 +307,16 @@ export interface LoginRequest {
   username: string
 }
 
+export interface MaterialDTO {
+  contentType?: string
+  createdAt?: string
+  fileName?: string
+  id?: string
+  originalFileName?: string
+  size?: number
+  url?: string
+}
+
 export interface MaterialUploadResponse {
   contentType?: string
   createdAt?: string
@@ -362,6 +381,13 @@ export interface PageResultGalleryDTO {
   total?: number
 }
 
+export interface PageResultMaterialDTO {
+  current?: number
+  records?: MaterialDTO[]
+  size?: number
+  total?: number
+}
+
 /**
  * Refresh token request
  */
@@ -414,6 +440,7 @@ export interface OpenApiSchemas {
   APIResponseModelListResponse: APIResponseModelListResponse
   APIResponsePageResultAssetDTO: APIResponsePageResultAssetDTO
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
+  APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
   APIResponseString: APIResponseString
   APIResponseTaskStatusResponse: APIResponseTaskStatusResponse
   APIResponseVoid: APIResponseVoid
@@ -427,6 +454,7 @@ export interface OpenApiSchemas {
   GenerationResult: GenerationResult
   ImageParams: ImageParams
   LoginRequest: LoginRequest
+  MaterialDTO: MaterialDTO
   MaterialUploadResponse: MaterialUploadResponse
   MiddlewareInfo: MiddlewareInfo
   MiddlewareStatusReport: MiddlewareStatusReport
@@ -435,6 +463,7 @@ export interface OpenApiSchemas {
   ModelListResponse: ModelListResponse
   PageResultAssetDTO: PageResultAssetDTO
   PageResultGalleryDTO: PageResultGalleryDTO
+  PageResultMaterialDTO: PageResultMaterialDTO
   RefreshTokenRequest: RefreshTokenRequest
   SaveToGalleryRequest: SaveToGalleryRequest
   TaskStatusResponse: TaskStatusResponse

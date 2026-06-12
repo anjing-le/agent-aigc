@@ -58,6 +58,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/items/{id}",
     operationId: "getItem"
   },
+  getMaterialList: {
+    method: "GET",
+    path: "/api/aigc/materials",
+    operationId: "getMaterialList"
+  },
   getModels: {
     method: "GET",
     path: "/api/aigc/models",
@@ -190,6 +195,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseMapStringObject
     data: NonNullable<Schemas.APIResponseMapStringObject['data']>
+  }
+  getMaterialList: {
+    pathParams: undefined
+    query: { contentType?: string; current?: number; size?: number }
+    request: undefined
+    response: Schemas.APIResponsePageResultMaterialDTO
+    data: NonNullable<Schemas.APIResponsePageResultMaterialDTO['data']>
   }
   getModels: {
     pathParams: undefined
