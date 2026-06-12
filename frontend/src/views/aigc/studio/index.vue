@@ -61,7 +61,8 @@ import {
   fetchGenerate,
   fetchGetTaskStatus,
   fetchGetAssetList,
-  fetchGetModelList
+  fetchGetModelList,
+  fetchUploadMaterial
 } from '@/api/aigc'
 import type {
   GenerateRequest,
@@ -168,27 +169,16 @@ const handleCreate = async () => {
   }
 }
 
-/** 将文件转换为URL（后续可改为上传到OSS） */
+/** 将文件上传为可访问 URL */
 const convertFilesToUrls = async (files: File[]): Promise<string[]> => {
   if (files.length === 0) return []
 
-  // TODO: 实际应该上传到服务器，这里暂时转为base64
   const urls: string[] = []
   for (const file of files) {
-    const base64 = await fileToBase64(file)
-    urls.push(base64)
+    const uploaded = await fetchUploadMaterial(file)
+    urls.push(uploaded.url)
   }
   return urls
-}
-
-/** 文件转base64 */
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
 }
 
 /** 轮询任务状态 */
