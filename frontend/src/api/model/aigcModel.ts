@@ -195,3 +195,15 @@ export interface ModelListResponse {
   /** 音频生成模型（预留） */
   audioModels: ModelInfo[]
 }
+
+/** 素材上传响应 */
+export interface MaterialUploadResponse {
+  /** 可访问 URL */
+  url: string
+  /** 保存后的文件名 */
+  fileName: string
+  /** MIME 类型 */
+  contentType: string
+  /** 文件大小 */
+  size: number
+}

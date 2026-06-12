@@ -79,6 +79,7 @@
         { "name": "generate", "backendConstant": "GENERATE_FULL", "frontendKey": "generate", "path": "/api/aigc/generate", "methods": ["POST"] },
         { "name": "taskStatus", "backendConstant": "TASK_STATUS_FULL", "frontendKey": "taskStatus", "path": "/api/aigc/task/{taskId}", "methods": ["GET"] },
         { "name": "models", "backendConstant": "MODELS_FULL", "frontendKey": "models", "path": "/api/aigc/models", "methods": ["GET"] },
+        { "name": "materialUpload", "backendConstant": "MATERIAL_UPLOAD_FULL", "frontendKey": "materialUpload", "path": "/api/aigc/materials/upload", "methods": ["POST"] },
         { "name": "gallery", "backendConstant": "GALLERY_FULL", "frontendKey": "gallery", "path": "/api/aigc/gallery", "methods": ["GET"] },
         { "name": "gallerySave", "backendConstant": "GALLERY_SAVE_FULL", "frontendKey": "gallerySave", "path": "/api/aigc/gallery/save", "methods": ["POST"] },
         { "name": "assets", "backendConstant": "ASSETS_FULL", "frontendKey": "assets", "path": "/api/aigc/assets", "methods": ["GET"] },

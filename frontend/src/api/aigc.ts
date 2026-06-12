@@ -8,7 +8,8 @@ import type {
   AssetListResponse,
   GallerySearchParams,
   AssetSearchParams,
-  ModelListResponse
+  ModelListResponse,
+  MaterialUploadResponse
 } from './model/aigcModel'
 
 /**
@@ -66,6 +67,16 @@ export function fetchGetAssetList(params: AssetSearchParams) {
 export function fetchGetModelList() {
   return request.get<ModelListResponse>({
     url: ApiPaths.aigc.models
+  })
+}
+
+export function fetchUploadMaterial(file: File) {
+  const data = new FormData()
+  data.append('file', file)
+  return request.post<MaterialUploadResponse>({
+    url: ApiPaths.aigc.materialUpload,
+    data,
+    headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
 

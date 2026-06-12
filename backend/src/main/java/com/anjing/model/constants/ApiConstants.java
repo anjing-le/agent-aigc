@@ -253,6 +253,7 @@ public class ApiConstants {
         public static final String GENERATE = "/generate";
         public static final String TASK_STATUS = "/task/{taskId}";
         public static final String MODELS = "/models";
+        public static final String MATERIAL_UPLOAD = "/materials/upload";
         public static final String GALLERY = "/gallery";
         public static final String GALLERY_SAVE = "/gallery/save";
         public static final String ASSETS = "/assets";
@@ -261,6 +262,7 @@ public class ApiConstants {
         public static final String GENERATE_FULL = BASE + GENERATE;
         public static final String TASK_STATUS_FULL = BASE + TASK_STATUS;
         public static final String MODELS_FULL = BASE + MODELS;
+        public static final String MATERIAL_UPLOAD_FULL = BASE + MATERIAL_UPLOAD;
         public static final String GALLERY_FULL = BASE + GALLERY;
         public static final String GALLERY_SAVE_FULL = BASE + GALLERY_SAVE;
         public static final String ASSETS_FULL = BASE + ASSETS;

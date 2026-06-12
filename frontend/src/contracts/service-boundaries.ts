@@ -239,6 +239,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "materialUpload",
+          "backendConstant": "MATERIAL_UPLOAD_FULL",
+          "frontendKey": "materialUpload",
+          "path": "/api/aigc/materials/upload",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
           "name": "gallery",
           "backendConstant": "GALLERY_FULL",
           "frontendKey": "gallery",
@@ -332,6 +341,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "gallery": "/api/aigc/gallery",
     "gallerySave": "/api/aigc/gallery/save",
     "generate": "/api/aigc/generate",
+    "materialUpload": "/api/aigc/materials/upload",
     "models": "/api/aigc/models",
     "taskStatus": "/api/aigc/task/{taskId}"
   },

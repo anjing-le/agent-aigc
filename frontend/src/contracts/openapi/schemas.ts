@@ -73,6 +73,15 @@ export interface APIResponseMapStringObject {
   timestamp?: number
 }
 
+export interface APIResponseMaterialUploadResponse {
+  code?: string
+  data?: MaterialUploadResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseMiddlewareStatusReport {
   code?: string
   data?: MiddlewareStatusReport
@@ -289,6 +298,13 @@ export interface LoginRequest {
   username: string
 }
 
+export interface MaterialUploadResponse {
+  contentType?: string
+  fileName?: string
+  size?: number
+  url?: string
+}
+
 export interface MiddlewareInfo {
   details?: string
   enabled?: boolean
@@ -390,6 +406,7 @@ export interface OpenApiSchemas {
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
   APIResponseGenerateResponse: APIResponseGenerateResponse
   APIResponseMapStringObject: APIResponseMapStringObject
+  APIResponseMaterialUploadResponse: APIResponseMaterialUploadResponse
   APIResponseMiddlewareStatusReport: APIResponseMiddlewareStatusReport
   APIResponseModelListResponse: APIResponseModelListResponse
   APIResponsePageResultAssetDTO: APIResponsePageResultAssetDTO
@@ -407,6 +424,7 @@ export interface OpenApiSchemas {
   GenerationResult: GenerationResult
   ImageParams: ImageParams
   LoginRequest: LoginRequest
+  MaterialUploadResponse: MaterialUploadResponse
   MiddlewareInfo: MiddlewareInfo
   MiddlewareStatusReport: MiddlewareStatusReport
   MiddlewareSummary: MiddlewareSummary

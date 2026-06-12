@@ -118,6 +118,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/items/{id}",
     operationId: "updateItem"
   },
+  uploadMaterial: {
+    method: "POST",
+    path: "/api/aigc/materials/upload",
+    operationId: "uploadMaterial"
+  },
 } as const satisfies Record<string, OpenApiOperationMeta>
 
 export type OpenApiOperationId = keyof typeof OPENAPI_OPERATIONS
@@ -269,6 +274,13 @@ export interface OpenApiOperationTypes {
     request: Record<string, unknown>
     response: Schemas.APIResponseMapStringObject
     data: NonNullable<Schemas.APIResponseMapStringObject['data']>
+  }
+  uploadMaterial: {
+    pathParams: undefined
+    query: undefined
+    request: { file: string }
+    response: Schemas.APIResponseMaterialUploadResponse
+    data: NonNullable<Schemas.APIResponseMaterialUploadResponse['data']>
   }
 }
 
