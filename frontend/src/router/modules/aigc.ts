@@ -43,9 +43,18 @@ export const aigcRoutes: AppRouteRecord = {
         icon: 'ri:folder-5-line',
         keepAlive: true
       }
+    },
+    {
+      path: 'models',
+      name: 'AIGCModels',
+      component: '/aigc/models',
+      meta: {
+        title: '模型配置',
+        icon: 'ri:settings-3-line',
+        keepAlive: true
+      }
     }
   ]
 }
 
 export default aigcRoutes
-

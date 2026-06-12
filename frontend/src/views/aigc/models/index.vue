@@ -1,0 +1,219 @@
+<template>
+  <div class="aigc-models">
+    <div class="aigc-models__header">
+      <div>
+        <h2 class="aigc-models__title">模型配置</h2>
+        <p class="aigc-models__subtitle">Provider 状态来自后端配置和已注册 Bean</p>
+      </div>
+      <el-button :icon="Refresh" :loading="loading" @click="loadModels">刷新</el-button>
+    </div>
+
+    <div class="aigc-models__groups">
+      <section
+        v-for="group in modelGroups"
+        :key="group.type"
+        class="aigc-models__group"
+      >
+        <div class="aigc-models__group-header">
+          <div>
+            <h3 class="aigc-models__group-title">{{ group.title }}</h3>
+            <p class="aigc-models__group-desc">{{ group.description }}</p>
+          </div>
+          <el-tag size="small" effect="plain">{{ group.models.length }} 个</el-tag>
+        </div>
+
+        <el-empty
+          v-if="!loading && group.models.length === 0"
+          description="暂无可用 Provider"
+          :image-size="80"
+        />
+
+        <div v-else class="aigc-models__list">
+          <div
+            v-for="model in group.models"
+            :key="model.id"
+            class="aigc-models__item"
+          >
+            <div class="aigc-models__item-main">
+              <div class="aigc-models__item-name">{{ model.name }}</div>
+              <div class="aigc-models__item-desc">{{ model.description }}</div>
+            </div>
+            <div class="aigc-models__item-meta">
+              <el-tag size="small" type="info" effect="plain">{{ model.provider }}</el-tag>
+              <el-tag size="small" :type="model.available ? 'success' : 'danger'" effect="plain">
+                {{ model.available ? '可用' : '不可用' }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { Refresh } from '@element-plus/icons-vue'
+import { fetchGetModelList } from '@/api/aigc'
+import type { ContentType, ModelInfo, ModelListResponse } from '@/api/model/aigcModel'
+
+defineOptions({ name: 'AIGCModels' })
+
+const loading = ref(false)
+const models = ref<ModelListResponse>({
+  imageModels: [],
+  videoModels: [],
+  audioModels: []
+})
+
+const modelGroups = computed<Array<{
+  type: ContentType
+  title: string
+  description: string
+  models: ModelInfo[]
+}>>(() => [
+  {
+    type: 'IMAGE',
+    title: '图片生成',
+    description: '文生图、图生图、风格迁移等创作能力',
+    models: models.value.imageModels
+  },
+  {
+    type: 'VIDEO',
+    title: '视频生成',
+    description: '文生视频、图生视频和动态化能力',
+    models: models.value.videoModels
+  },
+  {
+    type: 'AUDIO',
+    title: '音频生成',
+    description: '配音、朗读、音乐和声音创作能力',
+    models: models.value.audioModels
+  }
+])
+
+const loadModels = async () => {
+  try {
+    loading.value = true
+    models.value = await fetchGetModelList()
+  } catch (error) {
+    console.error('加载模型配置失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadModels()
+})
+</script>
+
+<style lang="scss" scoped>
+.aigc-models {
+  min-height: 100%;
+  padding: 20px;
+  background: var(--el-bg-color-page);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__subtitle {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
+  }
+
+  &__groups {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  &__group {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+    background: var(--el-bg-color);
+  }
+
+  &__group-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  &__group-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__group-desc {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    line-height: 1.5;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
+    background: var(--el-fill-color-blank);
+  }
+
+  &__item-main {
+    min-width: 0;
+  }
+
+  &__item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__item-desc {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--el-text-color-secondary);
+  }
+
+  &__item-meta {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 1180px) {
+    &__groups {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+</style>
