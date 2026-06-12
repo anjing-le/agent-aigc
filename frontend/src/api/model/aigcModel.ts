@@ -174,6 +174,14 @@ export type GalleryListResponse = PaginatedResponse<GalleryItem>
 /** 资产列表响应 */
 export type AssetListResponse = PaginatedResponse<AssetItem>
 
+/** 资产详情响应 */
+export interface AssetDetailResponse {
+  /** 资产信息 */
+  asset: AssetItem
+  /** 来源任务；老数据可能为空 */
+  task?: TaskStatusResponse | null
+}
+
 /** 参考素材项 */
 export interface MaterialItem {
   /** 素材ID */

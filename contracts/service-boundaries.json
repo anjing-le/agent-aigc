@@ -87,7 +87,7 @@
         { "name": "gallery", "backendConstant": "GALLERY_FULL", "frontendKey": "gallery", "path": "/api/aigc/gallery", "methods": ["GET"] },
         { "name": "gallerySave", "backendConstant": "GALLERY_SAVE_FULL", "frontendKey": "gallerySave", "path": "/api/aigc/gallery/save", "methods": ["POST"] },
         { "name": "assets", "backendConstant": "ASSETS_FULL", "frontendKey": "assets", "path": "/api/aigc/assets", "methods": ["GET"] },
-        { "name": "assetDetail", "backendConstant": "ASSET_DETAIL_FULL", "frontendKey": "assetDetail", "path": "/api/aigc/assets/{assetId}", "methods": ["DELETE"] }
+        { "name": "assetDetail", "backendConstant": "ASSET_DETAIL_FULL", "frontendKey": "assetDetail", "path": "/api/aigc/assets/{assetId}", "methods": ["GET", "DELETE"] }
       ]
     },
     {

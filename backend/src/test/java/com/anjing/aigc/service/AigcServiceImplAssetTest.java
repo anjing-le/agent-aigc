@@ -3,7 +3,10 @@ package com.anjing.aigc.service;
 import com.anjing.aigc.agent.RoutingAgent;
 import com.anjing.aigc.exception.AigcException;
 import com.anjing.aigc.model.entity.AigcAsset;
+import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
+import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
@@ -14,6 +17,7 @@ import com.anjing.model.errorcode.AigcErrorCode;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,6 +59,31 @@ class AigcServiceImplAssetTest {
         verify(storageService).deleteByUrl(asset.getUrl());
         verify(storageService).deleteByUrl(asset.getThumbnailUrl());
         verify(assetRepository).deleteByAssetId("asset-1");
+    }
+
+    @Test
+    void getAssetDetailReturnsSourceTaskWhenExists() {
+        AigcAsset asset = asset("asset-0");
+        asset.setUrl("http://localhost:10003/files/images/asset-0.png");
+        when(assetRepository.findByAssetId("asset-0")).thenReturn(Optional.of(asset));
+
+        AigcTask task = new AigcTask();
+        task.setTaskId("task-0");
+        task.setAssetId("asset-0");
+        task.setPrompt("prompt");
+        task.setOptimizedPrompt("optimized prompt");
+        task.setContentType(ContentType.IMAGE);
+        task.setStatus(TaskStatus.COMPLETED);
+        task.setProgress(100);
+        task.setCreatedAt(LocalDateTime.now());
+        task.setUpdatedAt(LocalDateTime.now());
+        when(taskRepository.findByAssetId("asset-0")).thenReturn(Optional.of(task));
+
+        AssetDetailResponse detail = aigcService.getAssetDetail("asset-0");
+
+        assertEquals("asset-0", detail.getAsset().getId());
+        assertEquals("task-0", detail.getTask().getTaskId());
+        assertEquals(TaskStatus.COMPLETED, detail.getTask().getStatus());
     }
 
     @Test

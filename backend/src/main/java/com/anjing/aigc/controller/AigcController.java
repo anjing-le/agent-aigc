@@ -4,6 +4,7 @@ import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.SaveToGalleryRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
+import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
@@ -187,6 +188,13 @@ public class AigcController {
             @RequestParam(required = false) String contentType) {
         PageResult<AssetDTO> assets = aigcService.getAssetList(current, size, contentType);
         return APIResponse.success(assets);
+    }
+
+    @GetMapping(ApiConstants.Aigc.ASSET_DETAIL)
+    @Operation(summary = "获取资产详情和来源任务")
+    public APIResponse<AssetDetailResponse> getAssetDetail(@PathVariable String assetId) {
+        AssetDetailResponse detail = aigcService.getAssetDetail(assetId);
+        return APIResponse.success(detail);
     }
 
     /**

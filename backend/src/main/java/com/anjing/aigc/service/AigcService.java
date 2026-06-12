@@ -3,6 +3,7 @@ package com.anjing.aigc.service;
 import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
+import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
@@ -86,6 +87,14 @@ public interface AigcService {
      * @return 分页列表
      */
     PageResult<AssetDTO> getAssetList(Integer current, Integer size, String contentType);
+
+    /**
+     * 获取资产详情及来源任务
+     *
+     * @param assetId 资产ID
+     * @return 资产详情
+     */
+    AssetDetailResponse getAssetDetail(String assetId);
 
     /**
      * 删除资产

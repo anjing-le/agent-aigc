@@ -56,7 +56,7 @@
       width="600px"
       destroy-on-close
     >
-      <div v-if="previewItem" class="asset-preview">
+      <div v-loading="previewLoading" v-if="previewItem" class="asset-preview">
         <!-- 后端返回大写枚举 IMAGE/VIDEO/AUDIO -->
         <el-image
           v-if="previewItem.contentType?.toUpperCase() === 'IMAGE'"
@@ -96,6 +96,47 @@
             </el-button>
           </div>
         </div>
+
+        <div v-if="previewTask" class="asset-preview__task">
+          <div class="asset-preview__section-title">来源任务</div>
+          <div class="asset-preview__task-grid">
+            <span>任务ID</span>
+            <strong>{{ previewTask.taskId }}</strong>
+            <span>状态</span>
+            <strong>{{ getTaskStatusLabel(previewTask.status) }}</strong>
+            <span>进度</span>
+            <strong>{{ previewTask.progress }}%</strong>
+          </div>
+          <div v-if="previewTask.result?.prompt" class="asset-preview__task-prompt">
+            <span>原始 Prompt</span>
+            <p>{{ previewTask.result.prompt }}</p>
+          </div>
+          <div v-if="previewTask.referenceMaterials?.length" class="asset-preview__materials">
+            <div class="asset-preview__section-title">参考素材</div>
+            <div class="asset-preview__material-list">
+              <button
+                v-for="material in previewTask.referenceMaterials"
+                :key="material.id"
+                class="asset-preview__material"
+                type="button"
+                @click="openUrl(material.url)"
+              >
+                <el-image
+                  v-if="isImageMaterial(material.contentType)"
+                  :src="material.url"
+                  fit="cover"
+                />
+                <video
+                  v-else-if="isVideoMaterial(material.contentType)"
+                  :src="material.url"
+                  muted
+                  playsinline
+                />
+                <span>{{ material.originalFileName || material.fileName }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </el-dialog>
   </div>
@@ -105,8 +146,8 @@
 import { Download, Refresh, Share } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AssetCard from './components/AssetCard.vue'
-import { fetchGetAssetList, fetchDeleteAsset, fetchSaveToGallery } from '@/api/aigc'
-import type { AssetItem, ContentType } from '@/api/model/aigcModel'
+import { fetchGetAssetList, fetchGetAssetDetail, fetchDeleteAsset, fetchSaveToGallery } from '@/api/aigc'
+import type { AssetItem, ContentType, TaskStatus, TaskStatusResponse } from '@/api/model/aigcModel'
 import { formatDateTime } from '@/utils/time'
 import { downloadAigcAsset } from '@/utils/aigcAsset'
 
@@ -123,6 +164,8 @@ const filterContentType = ref<ContentType | ''>('')
 // 预览
 const previewVisible = ref(false)
 const previewItem = ref<AssetItem | null>(null)
+const previewTask = ref<TaskStatusResponse | null>(null)
+const previewLoading = ref(false)
 
 // ==================== 方法 ====================
 
@@ -156,9 +199,21 @@ const handlePageChange = () => {
 }
 
 /** 预览 */
-const handlePreview = (item: AssetItem) => {
+const handlePreview = async (item: AssetItem) => {
   previewItem.value = item
+  previewTask.value = null
   previewVisible.value = true
+  previewLoading.value = true
+  try {
+    const detail = await fetchGetAssetDetail(item.id)
+    previewItem.value = detail.asset || item
+    previewTask.value = detail.task || null
+  } catch (error) {
+    console.error('加载资产详情失败:', error)
+    ElMessage.warning('资产详情加载失败，已展示基础信息')
+  } finally {
+    previewLoading.value = false
+  }
 }
 
 /** 下载 */
@@ -202,6 +257,20 @@ const handleDelete = async (item: AssetItem) => {
 
 /** 格式化时间 */
 const formatTime = (time: string) => formatDateTime(time)
+
+const getTaskStatusLabel = (status: TaskStatus) => {
+  const map: Record<TaskStatus, string> = {
+    PENDING: '排队中',
+    PROCESSING: '生成中',
+    COMPLETED: '已完成',
+    FAILED: '失败'
+  }
+  return map[status] || status
+}
+
+const isImageMaterial = (contentType: string) => contentType.startsWith('image/')
+const isVideoMaterial = (contentType: string) => contentType.startsWith('video/')
+const openUrl = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')
 
 // ==================== 生命周期 ====================
 onMounted(() => {
@@ -286,6 +355,95 @@ onMounted(() => {
     display: flex;
     gap: 10px;
     margin-top: 16px;
+  }
+
+  &__task {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--el-border-color-light);
+  }
+
+  &__section-title {
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__task-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 8px 12px;
+    font-size: 13px;
+
+    span {
+      color: var(--el-text-color-secondary);
+    }
+
+    strong {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--el-text-color-primary);
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__task-prompt {
+    margin-top: 14px;
+
+    span {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    p {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--el-text-color-primary);
+    }
+  }
+
+  &__materials {
+    margin-top: 16px;
+  }
+
+  &__material-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+  }
+
+  &__material {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+
+    .el-image,
+    video {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      background: var(--el-fill-color-light);
+    }
+
+    span {
+      overflow: hidden;
+      padding: 0 8px 8px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 </style>

@@ -316,6 +316,7 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           "frontendKey": "assetDetail",
           "path": "/api/aigc/assets/{assetId}",
           "methods": [
+            "GET",
             "DELETE"
           ]
         }

@@ -8,6 +8,7 @@ import type {
   AssetListResponse,
   GallerySearchParams,
   AssetSearchParams,
+  AssetDetailResponse,
   MaterialListResponse,
   MaterialTaskListResponse,
   MaterialTaskSearchParams,
@@ -73,6 +74,16 @@ export function fetchGetAssetList(params: AssetSearchParams) {
   return request.get<AssetListResponse>({
     url: ApiPaths.aigc.assets,
     params
+  })
+}
+
+/**
+ * 获取资产详情和来源任务
+ * @param assetId 资产ID
+ */
+export function fetchGetAssetDetail(assetId: string) {
+  return request.get<AssetDetailResponse>({
+    url: ApiPaths.aigc.assetDetail(assetId)
   })
 }
 

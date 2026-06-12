@@ -24,6 +24,11 @@ public interface AigcTaskRepository extends JpaRepository<AigcTask, Long> {
     Optional<AigcTask> findByTaskId(String taskId);
 
     /**
+     * 根据资产ID查询来源任务
+     */
+    Optional<AigcTask> findByAssetId(String assetId);
+
+    /**
      * 按引用素材 ID 反查任务。
      */
     @Query(

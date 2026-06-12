@@ -12,6 +12,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
+import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -271,6 +272,19 @@ public class AigcServiceImpl implements AigcService {
                 .collect(Collectors.toList());
 
         return PageResult.of(records, page.getTotalElements(), current, size);
+    }
+
+    @Override
+    public AssetDetailResponse getAssetDetail(String assetId) {
+        AigcAsset asset = assetRepository.findByAssetId(assetId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
+
+        return AssetDetailResponse.builder()
+                .asset(toAssetDTO(asset))
+                .task(taskRepository.findByAssetId(asset.getAssetId())
+                        .map(this::toTaskStatusResponse)
+                        .orElse(null))
+                .build();
     }
 
     @Override
