@@ -22,7 +22,7 @@
 | `1900-1999` | workflow | `StateMachineErrorCode` | 状态机、流程编排和状态转换错误 |
 | `2000-2099` | business-common | `CommonErrorCode` | 通用业务错误，如数据不存在、重复、不可操作 |
 | `2100-2399` | auth | `AuthErrorCode` | 登录、账号、权限、角色、Token |
-| `2400-2999` | business-module | 下游业务模块 | 业务模块预留区，每个模块建议 100 个 code |
+| `2400-2999` | business-module | `AigcErrorCode` / 下游业务模块 | AIGC 使用 `2400-2499`，其他业务模块每个模块建议 100 个 code |
 | `3000-3999` | validation | `CommonErrorCode` | 参数、格式、范围、校验错误 |
 | `4000-4099` | security/gateway | `CommonErrorCode` | 全局未登录、无权、Token 失效等网关/安全入口错误 |
 | `4100-4999` | gateway/reserved | 网关或平台保留 | 限流、熔断、灰度、跨服务鉴权等平台能力 |
@@ -48,7 +48,7 @@
 
 | 示例模块 | 建议范围 |
 |----------|----------|
-| notice | `2400-2499` |
+| aigc | `2400-2499` |
 | file | `2500-2599` |
 | audit-log | `2600-2699` |
 | tenant | `2700-2799` |

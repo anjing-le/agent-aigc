@@ -1,28 +1,24 @@
 package com.anjing.aigc.exception;
 
-import lombok.Getter;
+import com.anjing.model.errorcode.AigcErrorCode;
+import com.anjing.model.exception.BizException;
 
 /**
  * AIGC 模块业务异常
  * 
  * @author AIGC Team
  */
-@Getter
-public class AigcException extends RuntimeException {
-    
-    private final String errorCode;
-    private final String errorMessage;
-    
-    public AigcException(String errorCode, String errorMessage) {
-        super(errorMessage);
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
+public class AigcException extends BizException {
+
+    public AigcException(AigcErrorCode errorCode) {
+        super(errorCode);
     }
-    
-    public AigcException(String errorCode, String errorMessage, Throwable cause) {
-        super(errorMessage, cause);
-        this.errorCode = errorCode;
-        this.errorMessage = errorMessage;
+
+    public AigcException(AigcErrorCode errorCode, String message) {
+        super(message, errorCode);
+    }
+
+    public AigcException(AigcErrorCode errorCode, String message, Throwable cause) {
+        super(message, cause, errorCode);
     }
 }
-

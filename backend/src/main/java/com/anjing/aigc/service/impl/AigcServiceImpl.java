@@ -21,6 +21,7 @@ import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
 import com.anjing.aigc.exception.AigcException;
+import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.model.response.PageResult;
 import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
@@ -93,7 +94,7 @@ public class AigcServiceImpl implements AigcService {
     @Override
     public TaskStatusResponse getTaskStatus(String taskId) {
         AigcTask task = taskRepository.findByTaskId(taskId)
-                .orElseThrow(() -> new AigcException("TASK_NOT_FOUND", "任务不存在"));
+                .orElseThrow(() -> new AigcException(AigcErrorCode.TASK_NOT_FOUND));
 
         TaskStatusResponse response = TaskStatusResponse.builder()
                 .taskId(task.getTaskId())
@@ -196,7 +197,7 @@ public class AigcServiceImpl implements AigcService {
     @Transactional
     public void saveToGallery(String assetId) {
         AigcAsset asset = assetRepository.findByAssetId(assetId)
-                .orElseThrow(() -> new AigcException("ASSET_NOT_FOUND", "资产不存在"));
+                .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
         
         asset.setIsPublished(true);
         assetRepository.save(asset);
@@ -246,7 +247,7 @@ public class AigcServiceImpl implements AigcService {
         try {
             return ContentType.valueOf(normalized.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new AigcException("INVALID_CONTENT_TYPE", "不支持的内容类型: " + contentType);
+            throw new AigcException(AigcErrorCode.CONTENT_TYPE_UNSUPPORTED, "不支持的内容类型: " + contentType);
         }
     }
 

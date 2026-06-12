@@ -8,6 +8,7 @@ import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
+import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class AigcTaskExecutor {
         long startTime = System.currentTimeMillis();
         try {
             AigcTask task = taskRepository.findByTaskId(taskId)
-                    .orElseThrow(() -> new AigcException("TASK_NOT_FOUND", "任务不存在"));
+                    .orElseThrow(() -> new AigcException(AigcErrorCode.TASK_NOT_FOUND));
 
             task.setStatus(TaskStatus.PROCESSING);
             task.setProgress(10);
