@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.anjing.model.response.PageResult;
 
@@ -57,6 +58,13 @@ public class AigcMaterialService {
                 current != null && current > 0 ? current : 1,
                 pageSize
         );
+    }
+
+    @Transactional
+    public void deleteMaterial(String materialId) {
+        AigcMaterial material = materialRepository.findByMaterialId(materialId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
+        materialRepository.deleteByMaterialId(material.getMaterialId());
     }
 
     public MaterialUploadResponse uploadMaterial(MultipartFile file) {

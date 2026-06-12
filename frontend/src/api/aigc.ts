@@ -94,6 +94,16 @@ export function fetchUploadMaterial(file: File) {
 }
 
 /**
+ * 删除参考素材
+ * @param materialId 素材ID
+ */
+export function fetchDeleteMaterial(materialId: string) {
+  return request.del<void>({
+    url: ApiPaths.aigc.materialDetail(materialId)
+  })
+}
+
+/**
  * 保存作品到灵感广场
  * @param assetId 资产ID
  */

@@ -49,7 +49,10 @@
             </div>
             <div class="material-card__footer">
               <span>{{ formatTime(item.createdAt) }}</span>
-              <el-button text :icon="DocumentCopy" @click="handleCopy(item.url)" />
+              <div class="material-card__actions">
+                <el-button text :icon="DocumentCopy" @click="handleCopy(item.url)" />
+                <el-button text type="danger" :icon="Delete" @click="handleDelete(item)" />
+              </div>
             </div>
           </div>
         </article>
@@ -103,9 +106,9 @@
 </template>
 
 <script setup lang="ts">
-import { DocumentCopy, Refresh } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import { fetchGetMaterialList } from '@/api/aigc'
+import { Delete, DocumentCopy, Refresh } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { fetchDeleteMaterial, fetchGetMaterialList } from '@/api/aigc'
 import type { MaterialItem, MaterialSearchParams } from '@/api/model/aigcModel'
 import { formatDateTime } from '@/utils/time'
 
@@ -156,6 +159,23 @@ const handlePreview = (item: MaterialItem) => {
 const handleCopy = async (url: string) => {
   await navigator.clipboard.writeText(url)
   ElMessage.success('素材地址已复制')
+}
+
+const handleDelete = async (item: MaterialItem) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个素材记录吗？', '提示', {
+      type: 'warning'
+    })
+    await fetchDeleteMaterial(item.id)
+    materialList.value = materialList.value.filter(material => material.id !== item.id)
+    total.value = Math.max(0, total.value - 1)
+    ElMessage.success('删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除素材失败:', error)
+      ElMessage.error('删除素材失败')
+    }
+  }
 }
 
 const isImage = (item: MaterialItem) => item.contentType.startsWith('image/')
@@ -256,6 +276,12 @@ onMounted(() => {
     margin-top: 10px;
     font-size: 12px;
     color: var(--el-text-color-secondary);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 }
 

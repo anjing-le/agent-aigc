@@ -13,5 +13,7 @@ public interface AigcMaterialRepository extends JpaRepository<AigcMaterial, Long
 
     Optional<AigcMaterial> findByMaterialId(String materialId);
 
+    void deleteByMaterialId(String materialId);
+
     Page<AigcMaterial> findByContentTypeStartingWith(String contentTypePrefix, Pageable pageable);
 }

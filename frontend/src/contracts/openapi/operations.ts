@@ -28,6 +28,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/items/{id}",
     operationId: "deleteItem"
   },
+  deleteMaterial: {
+    method: "DELETE",
+    path: "/api/aigc/materials/{materialId}",
+    operationId: "deleteMaterial"
+  },
   features: {
     method: "GET",
     path: "/api/test/features",
@@ -149,6 +154,13 @@ export interface OpenApiOperationTypes {
   }
   deleteItem: {
     pathParams: { id: number }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseVoid
+    data: NonNullable<Schemas.APIResponseVoid['data']>
+  }
+  deleteMaterial: {
+    pathParams: { materialId: string }
     query: undefined
     request: undefined
     response: Schemas.APIResponseVoid

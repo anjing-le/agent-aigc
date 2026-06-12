@@ -76,7 +76,7 @@ public final class ServiceBoundaryConstants {
         public static final String API_PATHS_KEY = "aigc";
         public static final boolean OPENAPI = true;
         public static final String COPY_ACTION = "core business boundary for multimodal generation, assets, gallery, and model metadata";
-        public static final String[] ROUTES = { "generate", "taskStatus", "models", "materials", "materialUpload", "gallery", "gallerySave", "assets", "assetDetail" };
+        public static final String[] ROUTES = { "generate", "taskStatus", "models", "materials", "materialDetail", "materialUpload", "gallery", "gallerySave", "assets", "assetDetail" };
 
         private Aigc() {
         }

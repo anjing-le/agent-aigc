@@ -11,7 +11,8 @@ public enum AigcErrorCode implements ErrorCode {
     MATERIAL_EMPTY("2403", "请上传素材文件"),
     MATERIAL_TYPE_UNSUPPORTED("2404", "仅支持图片或视频素材"),
     MATERIAL_SIZE_EXCEEDED("2405", "素材文件过大"),
-    MATERIAL_SAVE_FAILED("2406", "素材保存失败");
+    MATERIAL_SAVE_FAILED("2406", "素材保存失败"),
+    MATERIAL_NOT_FOUND("2407", "素材不存在");
 
     private final String code;
     private final String message;

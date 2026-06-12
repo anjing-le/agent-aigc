@@ -112,6 +112,13 @@ public class AigcController {
         return APIResponse.success(materials);
     }
 
+    @DeleteMapping(ApiConstants.Aigc.MATERIAL_DETAIL)
+    @Operation(summary = "删除 AIGC 参考素材")
+    public APIResponse<Void> deleteMaterial(@PathVariable String materialId) {
+        aigcMaterialService.deleteMaterial(materialId);
+        return APIResponse.success(null);
+    }
+
     /**
      * 获取灵感广场作品列表
      *
