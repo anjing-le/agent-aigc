@@ -35,6 +35,16 @@ export const aigcRoutes: AppRouteRecord = {
       }
     },
     {
+      path: 'materials',
+      name: 'AIGCMaterials',
+      component: '/aigc/materials',
+      meta: {
+        title: '素材库',
+        icon: 'ri:image-line',
+        keepAlive: true
+      }
+    },
+    {
       path: 'assets',
       name: 'AIGCAssets',
       component: '/aigc/assets',
