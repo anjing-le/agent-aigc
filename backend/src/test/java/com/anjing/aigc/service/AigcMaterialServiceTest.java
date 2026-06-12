@@ -74,13 +74,15 @@ class AigcMaterialServiceTest {
     }
 
     @Test
-    void deleteMaterialRemovesExistingRecord() {
+    void deleteMaterialRemovesExistingRecord() throws Exception {
         AigcMaterial material = new AigcMaterial();
         material.setMaterialId("mat-1");
+        material.setFileName("material-demo.png");
         when(materialRepository.findByMaterialId("mat-1")).thenReturn(Optional.of(material));
 
         materialService.deleteMaterial("mat-1");
 
+        verify(storageService).deleteFile("materials", "material-demo.png");
         verify(materialRepository).deleteByMaterialId("mat-1");
     }
 

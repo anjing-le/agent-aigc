@@ -10,6 +10,7 @@ import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,6 +24,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AigcMaterialService {
 
     private static final long IMAGE_MAX_BYTES = 20L * 1024 * 1024;
@@ -64,6 +66,12 @@ public class AigcMaterialService {
     public void deleteMaterial(String materialId) {
         AigcMaterial material = materialRepository.findByMaterialId(materialId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
+        try {
+            localAigcStorageService.deleteFile("materials", material.getFileName());
+        } catch (IOException e) {
+            log.warn("素材本地文件删除失败，继续删除素材记录: materialId={}, fileName={}",
+                    material.getMaterialId(), material.getFileName(), e);
+        }
         materialRepository.deleteByMaterialId(material.getMaterialId());
     }
 

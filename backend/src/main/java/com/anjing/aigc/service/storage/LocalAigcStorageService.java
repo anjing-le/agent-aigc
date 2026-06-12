@@ -38,6 +38,27 @@ public class LocalAigcStorageService {
         return buildUrl(directory, fileName);
     }
 
+    public boolean deleteFile(String directory, String fileName) throws IOException {
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+
+        var localConfig = aigcProperties.getStorage().getLocal();
+        if (!localConfig.isEnabled()) {
+            return false;
+        }
+
+        Path outputDir = Path.of(localConfig.getBasePath(), directory).toAbsolutePath().normalize();
+        Path outputPath = outputDir.resolve(fileName).normalize();
+        if (!outputPath.startsWith(outputDir)) {
+            throw new IOException("非法文件路径: " + fileName);
+        }
+
+        boolean deleted = Files.deleteIfExists(outputPath);
+        log.debug("AIGC 文件删除结果: {}, path={}", deleted, outputPath);
+        return deleted;
+    }
+
     private String buildUrl(String directory, String fileName) {
         String prefix = aigcProperties.getStorage().getLocal().getUrlPrefix();
         String normalizedPrefix = prefix.endsWith("/") ? prefix.substring(0, prefix.length() - 1) : prefix;
