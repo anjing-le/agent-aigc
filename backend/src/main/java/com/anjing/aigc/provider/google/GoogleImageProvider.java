@@ -9,6 +9,7 @@ import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.model.errorcode.AigcErrorCode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -54,6 +55,8 @@ public class GoogleImageProvider implements ImageGenerationProvider {
     
     // API 端点会根据配置动态选择（直连 or 中转）
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
+    private static final int MAX_API_ATTEMPTS = 3;
+    private static final long RETRY_BACKOFF_MS = 500;
     
     private OkHttpClient httpClient;
     
@@ -159,11 +162,11 @@ public class GoogleImageProvider implements ImageGenerationProvider {
                     .addHeader("User-Agent", "AIGC-Platform/1.0")
                     .build();
             
-            try (Response response = httpClient.newCall(httpRequest).execute()) {
+            try (Response response = executeWithRetry(httpRequest, taskId)) {
                 if (!response.isSuccessful()) {
                     String errorBody = response.body() != null ? response.body().string() : "Unknown error";
                     log.error("Gemini API 调用失败: {} - {}", response.code(), errorBody);
-                    return ImageGenerationResult.failure(taskId, "API_ERROR", 
+                    return ImageGenerationResult.failure(taskId, AigcErrorCode.PROVIDER_CALL_FAILED.getCode(),
                             "API调用失败: " + response.code() + " - " + truncate(errorBody, 200));
                 }
                 
@@ -175,7 +178,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
                         taskId, images.size(), duration);
                 
                 if (images.isEmpty()) {
-                    return ImageGenerationResult.failure(taskId, "NO_IMAGE_GENERATED", 
+                    return ImageGenerationResult.failure(taskId, AigcErrorCode.PROVIDER_CALL_FAILED.getCode(),
                             "API返回成功但未生成图片，可能触发了安全过滤");
                 }
                 
@@ -185,7 +188,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
             log.error("[GoogleImageProvider] ❌ 图片生成失败, taskId: {}, 耗时: {}ms", taskId, duration, e);
-            return ImageGenerationResult.failure(taskId, "GENERATION_ERROR", e.getMessage());
+            return ImageGenerationResult.failure(taskId, AigcErrorCode.PROVIDER_CALL_FAILED.getCode(), e.getMessage());
         }
     }
     
@@ -217,6 +220,13 @@ public class GoogleImageProvider implements ImageGenerationProvider {
         if (imageResult.getImages() != null && !imageResult.getImages().isEmpty()) {
             ImageGenerationResult.GeneratedImage firstImage = imageResult.getImages().get(0);
             String url = saveImageToLocal(firstImage.getBase64Data(), firstImage.getMimeType(), task.getTaskId());
+            if (url == null) {
+                return GenerationResult.failure(
+                        task.getTaskId(),
+                        AigcErrorCode.PROVIDER_CALL_FAILED.getCode(),
+                        "图片已生成但保存到本地失败"
+                );
+            }
             
             return GenerationResult.builder()
                     .success(true)
@@ -230,7 +240,54 @@ public class GoogleImageProvider implements ImageGenerationProvider {
                     .build();
         }
         
-        return GenerationResult.failure(task.getTaskId(), "NO_IMAGE", "未生成图片");
+        return GenerationResult.failure(
+                task.getTaskId(),
+                AigcErrorCode.PROVIDER_CALL_FAILED.getCode(),
+                "未生成图片"
+        );
+    }
+
+    private Response executeWithRetry(Request request, String taskId) throws IOException {
+        IOException lastError = null;
+
+        for (int attempt = 1; attempt <= MAX_API_ATTEMPTS; attempt++) {
+            try {
+                Response response = httpClient.newCall(request).execute();
+                if (!shouldRetry(response.code()) || attempt == MAX_API_ATTEMPTS) {
+                    return response;
+                }
+
+                String errorBody = response.body() != null ? response.body().string() : "";
+                log.warn("Gemini API 可重试失败: taskId={}, attempt={}/{}, status={}, body={}",
+                        taskId, attempt, MAX_API_ATTEMPTS, response.code(), truncate(errorBody, 200));
+                response.close();
+            } catch (IOException e) {
+                lastError = e;
+                if (attempt == MAX_API_ATTEMPTS) {
+                    throw e;
+                }
+                log.warn("Gemini API 网络异常，准备重试: taskId={}, attempt={}/{}",
+                        taskId, attempt, MAX_API_ATTEMPTS, e);
+            }
+
+            sleepBeforeRetry(attempt);
+        }
+
+        throw lastError != null ? lastError : new IOException("Gemini API 调用失败");
+    }
+
+    private boolean shouldRetry(int statusCode) {
+        return statusCode == 429 || statusCode == 500 || statusCode == 502
+                || statusCode == 503 || statusCode == 504;
+    }
+
+    private void sleepBeforeRetry(int attempt) throws IOException {
+        try {
+            Thread.sleep(RETRY_BACKOFF_MS * attempt);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Gemini API 重试等待被中断", e);
+        }
     }
     
     /**
