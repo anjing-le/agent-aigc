@@ -1,6 +1,7 @@
 package com.anjing.aigc.agent;
 
 import com.anjing.aigc.config.AigcProperties;
+import com.anjing.aigc.exception.AigcException;
 import com.anjing.aigc.model.dto.AnalyzedIntent;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
@@ -8,6 +9,7 @@ import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ProviderRouter;
+import com.anjing.model.errorcode.AigcErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 智能路由Agent - AIGC核心
@@ -68,6 +71,17 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class RoutingAgent {
+
+    private static final Set<String> IMAGE_ASPECT_RATIOS = Set.of(
+            "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
+    );
+    private static final Set<String> IMAGE_SIZES = Set.of("1K", "2K", "4K");
+    private static final Set<String> VIDEO_ASPECT_RATIOS = Set.of("16:9", "9:16");
+    private static final Set<String> VIDEO_RESOLUTIONS = Set.of("720p", "1080p");
+    private static final Set<Integer> VIDEO_DURATIONS = Set.of(4, 6, 8);
+    private static final Set<String> VIDEO_QUALITIES = Set.of("fast", "standard");
+    private static final Set<String> AUDIO_TYPES = Set.of("tts", "music");
+    private static final Set<String> AUDIO_VOICES = Set.of("Kore", "Aoede", "Fenrir", "Puck", "Charon");
     
     private final IntentAnalyzer intentAnalyzer;
     private final PromptEnhancer promptEnhancer;
@@ -255,7 +269,7 @@ public class RoutingAgent {
             return;
         }
 
-        ContentType contentType = ContentType.valueOf(contentTypeHint.trim().toUpperCase());
+        ContentType contentType = parseContentTypeHint(contentTypeHint);
         intent.setContentType(contentType);
         switch (contentType) {
             case IMAGE -> {
@@ -296,28 +310,67 @@ public class RoutingAgent {
 
     private void applyImageParams(AnalyzedIntent intent, Map<String, Object> params) {
         var imageParams = intent.getEffectiveImageParams();
-        getString(params, "aspectRatio").ifPresent(imageParams::setAspectRatio);
-        getString(params, "imageSize").ifPresent(imageParams::setImageSize);
+        getString(params, "aspectRatio").ifPresent(value ->
+                imageParams.setAspectRatio(requireAllowed("aspectRatio", value, IMAGE_ASPECT_RATIOS)));
+        getString(params, "imageSize").ifPresent(value ->
+                imageParams.setImageSize(requireAllowed("imageSize", value.toUpperCase(), IMAGE_SIZES)));
         getString(params, "style").ifPresent(imageParams::setStyle);
         intent.setImageParams(imageParams);
     }
 
     private void applyVideoParams(AnalyzedIntent intent, Map<String, Object> params) {
         var videoParams = intent.getEffectiveVideoParams();
-        getString(params, "aspectRatio").ifPresent(videoParams::setAspectRatio);
-        getString(params, "resolution").ifPresent(videoParams::setResolution);
-        getInteger(params, "duration").ifPresent(videoParams::setDuration);
-        getString(params, "quality").ifPresent(videoParams::setQuality);
+        getString(params, "aspectRatio").ifPresent(value ->
+                videoParams.setAspectRatio(requireAllowed("aspectRatio", value, VIDEO_ASPECT_RATIOS)));
+        getString(params, "resolution").ifPresent(value ->
+                videoParams.setResolution(requireAllowed("resolution", value, VIDEO_RESOLUTIONS)));
+        getInteger(params, "duration").ifPresent(value ->
+                videoParams.setDuration(requireAllowed("duration", value, VIDEO_DURATIONS)));
+        getString(params, "quality").ifPresent(value ->
+                videoParams.setQuality(requireAllowed("quality", value, VIDEO_QUALITIES)));
         intent.setVideoParams(videoParams);
     }
 
     private void applyAudioParams(AnalyzedIntent intent, Map<String, Object> params) {
         var audioParams = intent.getEffectiveAudioParams();
-        getString(params, "audioType").ifPresent(audioParams::setType);
-        getString(params, "voice").ifPresent(audioParams::setVoice);
-        getInteger(params, "bpm").ifPresent(audioParams::setBpm);
+        getString(params, "audioType").ifPresent(value ->
+                audioParams.setType(requireAllowed("audioType", value, AUDIO_TYPES)));
+        getString(params, "voice").ifPresent(value ->
+                audioParams.setVoice(requireAllowed("voice", value, AUDIO_VOICES)));
+        getInteger(params, "bpm").ifPresent(value -> {
+            if (value < 60 || value > 200) {
+                throw invalidParam("bpm", "60-200", value);
+            }
+            audioParams.setBpm(value);
+        });
         getString(params, "mood").ifPresent(audioParams::setMood);
         intent.setAudioParams(audioParams);
+    }
+
+    private ContentType parseContentTypeHint(String contentTypeHint) {
+        try {
+            ContentType contentType = ContentType.valueOf(contentTypeHint.trim().toUpperCase());
+            if (contentType == ContentType.TEXT) {
+                throw invalidParam("contentTypeHint", "IMAGE/VIDEO/AUDIO", contentTypeHint);
+            }
+            return contentType;
+        } catch (IllegalArgumentException e) {
+            throw invalidParam("contentTypeHint", "IMAGE/VIDEO/AUDIO", contentTypeHint);
+        }
+    }
+
+    private <T> T requireAllowed(String key, T value, Set<T> allowedValues) {
+        if (!allowedValues.contains(value)) {
+            throw invalidParam(key, allowedValues.toString(), value);
+        }
+        return value;
+    }
+
+    private AigcException invalidParam(String key, String allowed, Object value) {
+        return new AigcException(
+                AigcErrorCode.GENERATION_PARAM_INVALID,
+                "生成参数不合法: " + key + "=" + value + ", 可选值: " + allowed
+        );
     }
 
     private java.util.Optional<String> getString(Map<String, Object> params, String key) {
@@ -339,7 +392,7 @@ public class RoutingAgent {
         try {
             return java.util.Optional.of(Integer.parseInt(value.toString()));
         } catch (NumberFormatException e) {
-            return java.util.Optional.empty();
+            throw invalidParam(key, "整数", value);
         }
     }
     
