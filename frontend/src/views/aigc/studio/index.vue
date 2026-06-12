@@ -138,13 +138,17 @@ const handleCreate = async () => {
     generationResult.value = null
     currentTask.value = null
 
+    const uploadedMaterials = await uploadReferenceMaterials(uploadedFiles.value)
+
     // 构建请求 - 不指定模型，让Agent自动决策
     const request: GenerateRequest = {
       prompt: userInput.value.trim(),
       contentTypeHint: contentTypeHint.value || undefined,
       generationParams: normalizeGenerationParams(generationParams.value),
-      // 如果有上传文件，转换为base64或URL
-      referenceImages: await convertFilesToUrls(uploadedFiles.value)
+      referenceImages: uploadedMaterials.map(item => item.url),
+      referenceMaterialIds: uploadedMaterials
+        .map(item => item.materialId)
+        .filter((id): id is string => Boolean(id))
     }
 
     const response = await fetchGenerate(request)
@@ -169,16 +173,24 @@ const handleCreate = async () => {
   }
 }
 
-/** 将文件上传为可访问 URL */
-const convertFilesToUrls = async (files: File[]): Promise<string[]> => {
+type UploadedMaterialRef = {
+  url: string
+  materialId?: string
+}
+
+/** 将文件上传为可访问 URL，并保留素材ID用于任务追踪 */
+const uploadReferenceMaterials = async (files: File[]): Promise<UploadedMaterialRef[]> => {
   if (files.length === 0) return []
 
-  const urls: string[] = []
+  const materials: UploadedMaterialRef[] = []
   for (const file of files) {
     const uploaded = await fetchUploadMaterial(file)
-    urls.push(uploaded.url)
+    materials.push({
+      url: uploaded.url,
+      materialId: uploaded.materialId
+    })
   }
-  return urls
+  return materials
 }
 
 /** 轮询任务状态 */

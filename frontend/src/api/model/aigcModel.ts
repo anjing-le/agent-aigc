@@ -25,6 +25,8 @@ export interface GenerateRequest {
   generationParams?: Record<string, string | number | boolean>
   /** 参考素材URL列表（可选，支持图片/视频，用于图生图、图生视频等场景） */
   referenceImages?: string[]
+  /** 参考素材ID列表（可选，用于任务历史追踪素材来源） */
+  referenceMaterialIds?: string[]
 }
 
 /** 生成响应 */
@@ -82,6 +84,8 @@ export interface TaskStatusResponse {
   progress: number
   /** Agent分析结果 */
   agentAnalysis?: AgentAnalysis
+  /** 参考素材ID列表 */
+  referenceMaterialIds?: string[]
   /** 生成结果（完成时返回） */
   result?: GenerationResult
   /** 错误信息（失败时返回） */

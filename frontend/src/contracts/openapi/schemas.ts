@@ -253,6 +253,7 @@ export interface GenerateRequest {
   generationParams?: Record<string, unknown>
   prompt: string
   referenceImages?: string[]
+  referenceMaterialIds?: string[]
 }
 
 export interface GenerateResponse {
@@ -412,6 +413,7 @@ export interface TaskStatusResponse {
   createdAt?: string
   errorMessage?: string
   progress?: number
+  referenceMaterialIds?: string[]
   result?: GenerationResult
   status?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
   taskId?: string

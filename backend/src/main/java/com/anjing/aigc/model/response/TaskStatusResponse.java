@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 任务状态响应
@@ -31,6 +32,9 @@ public class TaskStatusResponse {
     /** 生成结果（完成时返回） */
     private GenerationResult result;
 
+    /** 参考素材ID列表 */
+    private List<String> referenceMaterialIds;
+
     /** 错误信息（失败时返回） */
     private String errorMessage;
 
@@ -40,4 +44,3 @@ public class TaskStatusResponse {
     /** 更新时间 */
     private LocalDateTime updatedAt;
 }
-

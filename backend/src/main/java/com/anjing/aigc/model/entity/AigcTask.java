@@ -50,6 +50,11 @@ public class AigcTask {
     @Convert(converter = StringListConverter.class)
     private List<String> referenceImages;
 
+    /** 参考素材ID列表（JSON格式存储） */
+    @Column(name = "reference_material_ids", columnDefinition = "TEXT")
+    @Convert(converter = StringListConverter.class)
+    private List<String> referenceMaterialIds;
+
     /** 内容类型 */
     @Enumerated(EnumType.STRING)
     @Column(name = "content_type", length = 20)

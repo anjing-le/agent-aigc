@@ -60,4 +60,11 @@ public class GenerateRequest {
      * </ul>
      */
     private List<String> referenceImages;
+
+    /**
+     * 参考素材ID列表（可选）
+     *
+     * <p>由素材库上传接口返回，用于在任务历史中追踪素材引用关系；生成 provider 仍使用 referenceImages 中的 URL。</p>
+     */
+    private List<String> referenceMaterialIds;
 }

@@ -70,6 +70,7 @@ public class AigcServiceImpl implements AigcService {
         task.setPrompt(request.getPrompt());
         task.setOptimizedPrompt(analysis.getOptimizedPrompt());
         task.setReferenceImages(request.getReferenceImages());
+        task.setReferenceMaterialIds(request.getReferenceMaterialIds());
         task.setContentType(analysis.getContentType());
         task.setIntent(analysis.getIntent());
         task.setModel(analysis.getSelectedModel());
@@ -100,6 +101,7 @@ public class AigcServiceImpl implements AigcService {
                 .taskId(task.getTaskId())
                 .status(task.getStatus())
                 .progress(task.getProgress())
+                .referenceMaterialIds(task.getReferenceMaterialIds())
                 .errorMessage(task.getErrorMessage())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
