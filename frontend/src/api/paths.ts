@@ -59,6 +59,8 @@ export const ApiPaths = {
     generate: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.generate,
     taskStatus: (taskId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.taskStatus, { taskId }),
+    taskRetry: (taskId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.taskRetry, { taskId }),
     models: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.models,
     materials: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materials,
     materialDetail: (materialId: string | number) =>

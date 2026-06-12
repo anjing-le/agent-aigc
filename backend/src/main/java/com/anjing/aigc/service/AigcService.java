@@ -34,6 +34,14 @@ public interface AigcService {
     TaskStatusResponse getTaskStatus(String taskId);
 
     /**
+     * 基于历史任务重新创建生成任务
+     *
+     * @param taskId 原任务ID
+     * @return 新生成任务响应
+     */
+    GenerateResponse retryTask(String taskId);
+
+    /**
      * 按素材反查引用它的任务
      *
      * @param materialId 素材ID

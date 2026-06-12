@@ -230,6 +230,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "taskRetry",
+          "backendConstant": "TASK_RETRY_FULL",
+          "frontendKey": "taskRetry",
+          "path": "/api/aigc/task/{taskId}/retry",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
           "name": "models",
           "backendConstant": "MODELS_FULL",
           "frontendKey": "models",
@@ -373,6 +382,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "materialTasks": "/api/aigc/materials/{materialId}/tasks",
     "materialUpload": "/api/aigc/materials/upload",
     "models": "/api/aigc/models",
+    "taskRetry": "/api/aigc/task/{taskId}/retry",
     "taskStatus": "/api/aigc/task/{taskId}"
   },
   "auth": {

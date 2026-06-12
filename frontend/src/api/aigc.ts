@@ -45,6 +45,16 @@ export function fetchGetTaskStatus(taskId: string) {
 }
 
 /**
+ * 基于历史任务重新创建生成任务
+ * @param taskId 原任务ID
+ */
+export function fetchRetryTask(taskId: string) {
+  return request.post<GenerateResponse>({
+    url: ApiPaths.aigc.taskRetry(taskId)
+  })
+}
+
+/**
  * 获取灵感广场作品列表
  * @param params 搜索参数
  */

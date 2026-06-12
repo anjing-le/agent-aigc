@@ -129,6 +129,32 @@
       </div>
     </div>
 
+    <!-- 失败状态 -->
+    <div v-else-if="isFailed" class="generation-preview__failed">
+      <div class="generation-preview__failed-icon">
+        <el-icon :size="56"><WarningFilled /></el-icon>
+      </div>
+      <div class="generation-preview__failed-title">创作失败</div>
+      <div class="generation-preview__failed-desc">
+        {{ task?.errorMessage || '模型调用暂时不可用，请稍后重试' }}
+      </div>
+      <div v-if="task?.taskId" class="generation-preview__failed-task">
+        任务 {{ task.taskId }}
+      </div>
+      <div class="generation-preview__actions">
+        <el-button type="primary" :icon="Refresh" @click="handleRetry">
+          重试任务
+        </el-button>
+        <el-button
+          v-if="task?.agentAnalysis?.optimizedPrompt"
+          :icon="Edit"
+          @click="handleRegenerateFromTask"
+        >
+          修改 Prompt
+        </el-button>
+      </div>
+    </div>
+
     <!-- 结果展示 -->
     <div v-else-if="result" class="generation-preview__result">
       <!-- 图片结果 (后端返回大写 IMAGE) -->
@@ -221,7 +247,8 @@ import {
   Headset,
   Picture,
   VideoPlay,
-  Edit
+  Edit,
+  WarningFilled
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { TaskStatusResponse, AssetItem, ContentType } from '@/api/model/aigcModel'
@@ -238,6 +265,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   regenerate: [prompt: string]
+  retry: [taskId: string]
 }>()
 
 // 进度百分比
@@ -270,6 +298,7 @@ const isImage = computed(() => props.result?.contentType?.toUpperCase() === 'IMA
 const isVideo = computed(() => props.result?.contentType?.toUpperCase() === 'VIDEO')
 const isAudio = computed(() => props.result?.contentType?.toUpperCase() === 'AUDIO')
 const isVisualPreview = computed(() => props.result?.url?.startsWith('data:image/') || false)
+const isFailed = computed(() => props.task?.status?.toUpperCase() === 'FAILED')
 const referenceMaterials = computed(() => props.task?.referenceMaterials || [])
 
 const agentParamsText = computed(() => {
@@ -356,6 +385,17 @@ const handleRegenerate = () => {
     return
   }
   emit('regenerate', props.result.prompt)
+}
+
+const handleRetry = () => {
+  if (!props.task?.taskId) return
+  emit('retry', props.task.taskId)
+}
+
+const handleRegenerateFromTask = () => {
+  const prompt = props.task?.agentAnalysis?.optimizedPrompt
+  if (!prompt) return
+  emit('regenerate', prompt)
 }
 </script>
 
@@ -566,6 +606,42 @@ const handleRegenerate = () => {
     gap: 20px;
     max-width: 100%;
     max-height: 100%;
+  }
+
+  &__failed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: min(520px, 100%);
+    padding: 32px;
+    text-align: center;
+  }
+
+  &__failed-icon {
+    color: var(--el-color-danger);
+  }
+
+  &__failed-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+
+  &__failed-desc {
+    max-width: 420px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--el-text-color-regular);
+  }
+
+  &__failed-task {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__image {

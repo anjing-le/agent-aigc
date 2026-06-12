@@ -11,6 +11,7 @@
           :result="generationResult"
           :loading="generating"
           @regenerate="handleReusePrompt"
+          @retry="handleRetryTask"
         />
       </div>
 
@@ -62,7 +63,8 @@ import {
   fetchGetTaskStatus,
   fetchGetAssetList,
   fetchGetModelList,
-  fetchUploadMaterial
+  fetchUploadMaterial,
+  fetchRetryTask
 } from '@/api/aigc'
 import type {
   GenerateRequest,
@@ -258,6 +260,30 @@ const handleHistorySelect = (item: AssetItem) => {
 const handleReusePrompt = (prompt: string) => {
   userInput.value = prompt
   generationResult.value = null
+}
+
+const handleRetryTask = async (taskId: string) => {
+  try {
+    generating.value = true
+    generationResult.value = null
+
+    const response = await fetchRetryTask(taskId)
+    currentTask.value = {
+      taskId: response.taskId,
+      status: response.status,
+      progress: 0,
+      agentAnalysis: response.agentAnalysis,
+      createdAt: nowIsoString(),
+      updatedAt: nowIsoString()
+    }
+
+    await pollTaskStatus(response.taskId)
+  } catch (error) {
+    console.error('重试任务失败:', error)
+    ElMessage.error('重试任务失败，请稍后再试')
+  } finally {
+    generating.value = false
+  }
 }
 
 const handleHistoryReuse = (item: AssetItem) => {

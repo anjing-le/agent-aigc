@@ -105,6 +105,20 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    @Transactional
+    public GenerateResponse retryTask(String taskId) {
+        AigcTask sourceTask = taskRepository.findByTaskId(taskId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.TASK_NOT_FOUND));
+
+        GenerateRequest request = new GenerateRequest();
+        request.setPrompt(sourceTask.getPrompt());
+        request.setContentTypeHint(sourceTask.getContentType() == null ? null : sourceTask.getContentType().name());
+        request.setReferenceImages(sourceTask.getReferenceImages());
+        request.setReferenceMaterialIds(sourceTask.getReferenceMaterialIds());
+        return generate(request);
+    }
+
+    @Override
     public PageResult<TaskStatusResponse> getTasksByMaterial(String materialId, Integer current, Integer size) {
         materialRepository.findByMaterialId(materialId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));

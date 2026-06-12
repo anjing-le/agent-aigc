@@ -83,6 +83,13 @@ public class AigcController {
         return APIResponse.success(status);
     }
 
+    @PostMapping(ApiConstants.Aigc.TASK_RETRY)
+    @Operation(summary = "基于历史任务重新创建 AIGC 生成任务")
+    public APIResponse<GenerateResponse> retryTask(@PathVariable String taskId) {
+        GenerateResponse response = aigcService.retryTask(taskId);
+        return APIResponse.success(response);
+    }
+
     /**
      * 获取可用模型列表
      *
