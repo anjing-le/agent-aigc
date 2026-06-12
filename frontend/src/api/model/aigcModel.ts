@@ -92,6 +92,8 @@ export interface TaskStatusResponse {
   result?: GenerationResult
   /** 错误信息（失败时返回） */
   errorMessage?: string
+  /** 错误码（失败时返回） */
+  errorCode?: string
   /** 创建时间 */
   createdAt: string
   /** 更新时间 */

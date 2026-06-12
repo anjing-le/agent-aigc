@@ -229,7 +229,7 @@ const pollTaskStatus = async (taskId: string) => {
       }
 
       if (status.status === 'FAILED') {
-        ElMessage.error(status.errorMessage || '创作失败，请重试')
+        ElMessage.error(formatTaskError(status))
         return
       }
 
@@ -250,6 +250,11 @@ const normalizeGenerationParams = (params: Record<string, string | number | bool
     }
   })
   return Object.keys(normalized).length > 0 ? normalized : undefined
+}
+
+const formatTaskError = (status: TaskStatusResponse) => {
+  const message = status.errorMessage || '创作失败，请重试'
+  return status.errorCode ? `${message}（${status.errorCode}）` : message
 }
 
 /** 处理历史记录选择 */

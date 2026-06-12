@@ -144,6 +144,7 @@ public class AigcServiceImpl implements AigcService {
                 .referenceMaterialIds(task.getReferenceMaterialIds())
                 .referenceMaterials(getReferenceMaterials(task.getReferenceMaterialIds()))
                 .errorMessage(task.getErrorMessage())
+                .errorCode(task.getErrorCode())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
                 .build();

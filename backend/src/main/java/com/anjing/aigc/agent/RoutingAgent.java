@@ -159,9 +159,20 @@ public class RoutingAgent {
             log.info("[RoutingAgent] ✅ 生成完成: taskId={}", task.getTaskId());
             return result;
             
+        } catch (IllegalStateException e) {
+            log.error("[RoutingAgent] ❌ Provider不可用: taskId={}", task.getTaskId(), e);
+            return GenerationResult.failure(
+                    task.getTaskId(),
+                    AigcErrorCode.PROVIDER_UNAVAILABLE.getCode(),
+                    e.getMessage()
+            );
         } catch (Exception e) {
             log.error("[RoutingAgent] ❌ 生成失败: taskId={}", task.getTaskId(), e);
-            return GenerationResult.failure(task.getTaskId(), "GENERATION_FAILED", e.getMessage());
+            return GenerationResult.failure(
+                    task.getTaskId(),
+                    AigcErrorCode.PROVIDER_CALL_FAILED.getCode(),
+                    e.getMessage()
+            );
         }
     }
     

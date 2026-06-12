@@ -9,6 +9,7 @@ import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.model.errorcode.AigcErrorCode;
+import com.anjing.model.exception.BizException;
 import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +49,7 @@ public class AigcTaskExecutor {
                 task.setStatus(TaskStatus.FAILED);
                 task.setDurationMs(durationMs);
                 task.setErrorMessage(result.getErrorMessage());
+                task.setErrorCode(result.getErrorCode());
                 task.setUpdatedAt(DateUtils.nowLocalDateTime());
                 taskRepository.save(task);
                 return;
@@ -79,9 +81,17 @@ public class AigcTaskExecutor {
             taskRepository.findByTaskId(taskId).ifPresent(task -> {
                 task.setStatus(TaskStatus.FAILED);
                 task.setErrorMessage(e.getMessage());
+                task.setErrorCode(resolveErrorCode(e));
                 task.setUpdatedAt(DateUtils.nowLocalDateTime());
                 taskRepository.save(task);
             });
         }
+    }
+
+    private String resolveErrorCode(Exception e) {
+        if (e instanceof BizException bizException && bizException.getErrorCode() != null) {
+            return bizException.getErrorCode().getCode();
+        }
+        return AigcErrorCode.PROVIDER_CALL_FAILED.getCode();
     }
 }

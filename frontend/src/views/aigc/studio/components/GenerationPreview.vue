@@ -138,6 +138,9 @@
       <div class="generation-preview__failed-desc">
         {{ task?.errorMessage || '模型调用暂时不可用，请稍后重试' }}
       </div>
+      <el-tag v-if="task?.errorCode" type="danger" effect="plain">
+        {{ task.errorCode }}
+      </el-tag>
       <div v-if="task?.taskId" class="generation-preview__failed-task">
         任务 {{ task.taskId }}
       </div>

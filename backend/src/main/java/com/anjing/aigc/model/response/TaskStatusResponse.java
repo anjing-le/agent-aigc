@@ -42,6 +42,9 @@ public class TaskStatusResponse {
     /** 错误信息（失败时返回） */
     private String errorMessage;
 
+    /** 错误码（失败时返回） */
+    private String errorCode;
+
     /** 创建时间 */
     private LocalDateTime createdAt;
 

@@ -94,6 +94,10 @@ public class AigcTask {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
+    /** 错误码 */
+    @Column(name = "error_code", length = 64)
+    private String errorCode;
+
     /** 耗时（毫秒） */
     @Column(name = "duration_ms")
     private Long durationMs;
