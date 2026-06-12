@@ -414,6 +414,7 @@ export interface TaskStatusResponse {
   errorMessage?: string
   progress?: number
   referenceMaterialIds?: string[]
+  referenceMaterials?: MaterialDTO[]
   result?: GenerationResult
   status?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
   taskId?: string

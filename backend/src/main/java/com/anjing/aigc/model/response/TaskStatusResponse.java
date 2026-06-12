@@ -1,5 +1,6 @@
 package com.anjing.aigc.model.response;
 
+import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.enums.TaskStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +35,9 @@ public class TaskStatusResponse {
 
     /** 参考素材ID列表 */
     private List<String> referenceMaterialIds;
+
+    /** 参考素材详情 */
+    private List<MaterialDTO> referenceMaterials;
 
     /** 错误信息（失败时返回） */
     private String errorMessage;

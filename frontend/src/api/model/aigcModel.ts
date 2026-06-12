@@ -86,6 +86,8 @@ export interface TaskStatusResponse {
   agentAnalysis?: AgentAnalysis
   /** 参考素材ID列表 */
   referenceMaterialIds?: string[]
+  /** 参考素材详情 */
+  referenceMaterials?: MaterialItem[]
   /** 生成结果（完成时返回） */
   result?: GenerationResult
   /** 错误信息（失败时返回） */

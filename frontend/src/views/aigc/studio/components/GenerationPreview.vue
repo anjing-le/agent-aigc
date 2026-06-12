@@ -95,6 +95,37 @@
           </div>
           <div class="prompt-content">{{ task.agentAnalysis.optimizedPrompt }}</div>
         </div>
+
+        <div v-if="referenceMaterials.length > 0" class="generation-preview__references">
+          <div class="generation-preview__references-title">参考素材</div>
+          <div class="generation-preview__references-list">
+            <button
+              v-for="material in referenceMaterials"
+              :key="material.id"
+              class="generation-preview__reference"
+              type="button"
+              @click="openMaterial(material.url)"
+            >
+              <el-image
+                v-if="isImageMaterial(material.contentType)"
+                :src="material.url"
+                fit="cover"
+                class="generation-preview__reference-media"
+              />
+              <video
+                v-else-if="isVideoMaterial(material.contentType)"
+                :src="material.url"
+                muted
+                playsinline
+                class="generation-preview__reference-media"
+              />
+              <div v-else class="generation-preview__reference-file">
+                <el-icon><Headset /></el-icon>
+              </div>
+              <span>{{ material.originalFileName || material.fileName }}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -145,6 +176,37 @@
       <div class="generation-preview__actions">
         <el-button :icon="Download" @click="handleDownload">下载</el-button>
         <el-button :icon="Refresh" @click="handleRegenerate">重新生成</el-button>
+      </div>
+
+      <div v-if="referenceMaterials.length > 0" class="generation-preview__references generation-preview__references--result">
+        <div class="generation-preview__references-title">参考素材</div>
+        <div class="generation-preview__references-list">
+          <button
+            v-for="material in referenceMaterials"
+            :key="material.id"
+            class="generation-preview__reference"
+            type="button"
+            @click="openMaterial(material.url)"
+          >
+            <el-image
+              v-if="isImageMaterial(material.contentType)"
+              :src="material.url"
+              fit="cover"
+              class="generation-preview__reference-media"
+            />
+            <video
+              v-else-if="isVideoMaterial(material.contentType)"
+              :src="material.url"
+              muted
+              playsinline
+              class="generation-preview__reference-media"
+            />
+            <div v-else class="generation-preview__reference-file">
+              <el-icon><Headset /></el-icon>
+            </div>
+            <span>{{ material.originalFileName || material.fileName }}</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -208,6 +270,7 @@ const isImage = computed(() => props.result?.contentType?.toUpperCase() === 'IMA
 const isVideo = computed(() => props.result?.contentType?.toUpperCase() === 'VIDEO')
 const isAudio = computed(() => props.result?.contentType?.toUpperCase() === 'AUDIO')
 const isVisualPreview = computed(() => props.result?.url?.startsWith('data:image/') || false)
+const referenceMaterials = computed(() => props.task?.referenceMaterials || [])
 
 const agentParamsText = computed(() => {
   const analysis = props.task?.agentAnalysis
@@ -258,6 +321,13 @@ const getContentTypeLabel = (type: ContentType) => {
 }
 
 const formatConfidence = (confidence: number) => `${Math.round(confidence * 100)}%`
+
+const isImageMaterial = (contentType: string) => contentType.startsWith('image/')
+const isVideoMaterial = (contentType: string) => contentType.startsWith('video/')
+
+const openMaterial = (url: string) => {
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
 
 /** 处理下载 */
 const handleDownload = () => {
@@ -409,6 +479,66 @@ const handleRegenerate = () => {
       color: var(--el-text-color-primary);
       line-height: 1.6;
     }
+  }
+
+  &__references {
+    width: min(500px, 100%);
+    margin: 16px auto 0;
+
+    &--result {
+      margin-top: 0;
+    }
+
+    &-title {
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      text-align: left;
+    }
+
+    &-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 10px;
+    }
+  }
+
+  &__reference {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+
+    span {
+      overflow: hidden;
+      padding: 0 8px 8px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__reference-media {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: var(--el-fill-color-light);
+  }
+
+  &__reference-file {
+    display: grid;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    color: var(--el-text-color-secondary);
+    place-items: center;
+    background: var(--el-fill-color-light);
   }
 
   &__progress-text {

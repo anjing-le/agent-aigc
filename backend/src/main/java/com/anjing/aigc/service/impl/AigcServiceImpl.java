@@ -3,8 +3,10 @@ package com.anjing.aigc.service.impl;
 import com.anjing.aigc.agent.RoutingAgent;
 import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
+import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.dto.ModelInfo;
 import com.anjing.aigc.model.entity.AigcAsset;
+import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
@@ -17,6 +19,7 @@ import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
+import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
@@ -55,6 +58,7 @@ public class AigcServiceImpl implements AigcService {
     private final ProviderRouter providerRouter;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
+    private final AigcMaterialRepository materialRepository;
 
     @Override
     @Transactional
@@ -102,6 +106,7 @@ public class AigcServiceImpl implements AigcService {
                 .status(task.getStatus())
                 .progress(task.getProgress())
                 .referenceMaterialIds(task.getReferenceMaterialIds())
+                .referenceMaterials(getReferenceMaterials(task.getReferenceMaterialIds()))
                 .errorMessage(task.getErrorMessage())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
@@ -255,6 +260,27 @@ public class AigcServiceImpl implements AigcService {
 
     private String normalizeFilter(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private List<MaterialDTO> getReferenceMaterials(List<String> materialIds) {
+        if (materialIds == null || materialIds.isEmpty()) {
+            return List.of();
+        }
+        return materialRepository.findByMaterialIdIn(materialIds).stream()
+                .map(this::toMaterialDTO)
+                .toList();
+    }
+
+    private MaterialDTO toMaterialDTO(AigcMaterial material) {
+        return MaterialDTO.builder()
+                .id(material.getMaterialId())
+                .url(material.getUrl())
+                .fileName(material.getFileName())
+                .originalFileName(material.getOriginalFileName())
+                .contentType(material.getContentType())
+                .size(material.getSize())
+                .createdAt(material.getCreatedAt().toString())
+                .build();
     }
 
     private void dispatchGenerationAfterCommit(String taskId) {
