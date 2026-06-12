@@ -1,6 +1,7 @@
 package com.anjing.aigc.provider;
 
 import com.anjing.aigc.config.AigcProperties;
+import com.anjing.aigc.model.enums.ContentType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -84,42 +85,42 @@ public class ProviderRouter {
      * 获取激活的图片生成提供商
      */
     public ImageGenerationProvider getImageProvider() {
-        String activeProvider = aigcProperties.getImage().getActiveProvider();
-        
-        return imageProviders.stream()
-                .filter(p -> matchesProvider(p, activeProvider))
-                .filter(ContentProvider::isAvailable)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "没有可用的图片生成提供商: " + activeProvider));
+        return (ImageGenerationProvider) getProvider(ContentType.IMAGE);
     }
     
     /**
      * 获取激活的视频生成提供商
      */
     public VideoGenerationProvider getVideoProvider() {
-        String activeProvider = aigcProperties.getVideo().getActiveProvider();
-        
-        return videoProviders.stream()
-                .filter(p -> matchesProvider(p, activeProvider))
-                .filter(ContentProvider::isAvailable)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "没有可用的视频生成提供商: " + activeProvider));
+        return (VideoGenerationProvider) getProvider(ContentType.VIDEO);
     }
     
     /**
      * 获取激活的音频生成提供商
      */
     public AudioGenerationProvider getAudioProvider() {
-        String activeProvider = aigcProperties.getAudio().getActiveProvider();
-        
-        return audioProviders.stream()
+        return (AudioGenerationProvider) getProvider(ContentType.AUDIO);
+    }
+
+    /**
+     * 按内容类型获取当前激活 Provider，用于任务执行与调用观测。
+     */
+    public ContentProvider getProvider(ContentType contentType) {
+        return switch (contentType) {
+            case IMAGE -> findProvider(imageProviders, aigcProperties.getImage().getActiveProvider(), "图片");
+            case VIDEO -> findProvider(videoProviders, aigcProperties.getVideo().getActiveProvider(), "视频");
+            case AUDIO -> findProvider(audioProviders, aigcProperties.getAudio().getActiveProvider(), "音频");
+            case TEXT -> throw new IllegalStateException("文本生成暂未开放 Provider");
+        };
+    }
+
+    private ContentProvider findProvider(List<? extends ContentProvider> providers, String activeProvider, String label) {
+        return providers.stream()
                 .filter(p -> matchesProvider(p, activeProvider))
                 .filter(ContentProvider::isAvailable)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
-                        "没有可用的音频生成提供商: " + activeProvider));
+                        "没有可用的" + label + "生成提供商: " + activeProvider));
     }
     
     /**

@@ -107,6 +107,12 @@
             <span>进度</span>
             <strong>{{ previewTask.progress }}%</strong>
           </div>
+          <div v-if="providerExecutionItems.length" class="asset-preview__observe">
+            <div v-for="item in providerExecutionItems" :key="item.label" class="asset-preview__observe-item">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+          </div>
           <div v-if="previewTask.agentAnalysis" class="asset-preview__agent">
             <div class="asset-preview__section-title">Agent 决策</div>
             <div class="asset-preview__task-grid">
@@ -300,6 +306,33 @@ const formatConfidence = (confidence?: number) => {
   return `${Math.round(confidence * 100)}%`
 }
 
+const providerExecutionItems = computed(() => {
+  const execution = previewTask.value?.providerExecution
+  if (!execution) return []
+
+  return [
+    { label: 'Provider', value: execution.providerName || execution.providerType },
+    { label: '模型', value: execution.model },
+    { label: '耗时', value: formatDuration(execution.durationMs) },
+    { label: '成本', value: formatCostStatus(execution.costStatus) }
+  ].filter((item): item is { label: string; value: string } => Boolean(item.value))
+})
+
+const formatDuration = (durationMs?: number) => {
+  if (durationMs === undefined || durationMs === null) return ''
+  if (durationMs < 1000) return `${durationMs}ms`
+  return `${(durationMs / 1000).toFixed(1)}s`
+}
+
+const formatCostStatus = (status?: string) => {
+  const map: Record<string, string> = {
+    PENDING: '统计中',
+    MOCK_FREE: '模拟免费',
+    UNTRACKED: '待接入'
+  }
+  return status ? map[status] || status : ''
+}
+
 const agentParamsText = computed(() => {
   const analysis = previewTask.value?.agentAnalysis
   const intent = analysis?.analyzedIntent
@@ -477,6 +510,38 @@ onMounted(() => {
 
   &__agent {
     margin-top: 16px;
+  }
+
+  &__observe {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  &__observe-item {
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 6px;
+    background: var(--el-fill-color-lighter);
+
+    span {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    strong {
+      display: block;
+      overflow: hidden;
+      font-size: 13px;
+      color: var(--el-text-color-primary);
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &__material-list {

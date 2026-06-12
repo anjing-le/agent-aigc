@@ -16,6 +16,7 @@ import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.ProviderExecutionSummary;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ProviderRouter;
@@ -152,6 +153,7 @@ public class AigcServiceImpl implements AigcService {
                 .status(task.getStatus())
                 .progress(task.getProgress())
                 .agentAnalysis(resolveAgentAnalysis(task))
+                .providerExecution(resolveProviderExecution(task))
                 .referenceMaterialIds(task.getReferenceMaterialIds())
                 .referenceMaterials(getReferenceMaterials(task.getReferenceMaterialIds()))
                 .errorMessage(task.getErrorMessage())
@@ -356,6 +358,31 @@ public class AigcServiceImpl implements AigcService {
                 .originalPrompt(task.getPrompt())
                 .optimizedPrompt(task.getOptimizedPrompt())
                 .build();
+    }
+
+    private ProviderExecutionSummary resolveProviderExecution(AigcTask task) {
+        if (task.getProviderName() == null && task.getProviderType() == null && task.getDurationMs() == null) {
+            return null;
+        }
+        return ProviderExecutionSummary.builder()
+                .providerName(task.getProviderName())
+                .providerType(task.getProviderType())
+                .model(task.getModel())
+                .durationMs(task.getDurationMs())
+                .costStatus(resolveCostStatus(task))
+                .build();
+    }
+
+    private String resolveCostStatus(AigcTask task) {
+        if (task.getDurationMs() == null) {
+            return "PENDING";
+        }
+        if ("OTHER".equals(task.getProviderType())
+                && task.getProviderName() != null
+                && task.getProviderName().toLowerCase().contains("mock")) {
+            return "MOCK_FREE";
+        }
+        return "UNTRACKED";
     }
 
     private List<MaterialDTO> getReferenceMaterials(List<String> materialIds) {

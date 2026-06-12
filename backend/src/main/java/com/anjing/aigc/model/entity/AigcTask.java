@@ -69,6 +69,14 @@ public class AigcTask {
     @Column(name = "model", length = 64)
     private String model;
 
+    /** 实际调用的 Provider 名称 */
+    @Column(name = "provider_name", length = 128)
+    private String providerName;
+
+    /** 实际调用的 Provider 类型 */
+    @Column(name = "provider_type", length = 32)
+    private String providerType;
+
     /** 任务状态 */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)

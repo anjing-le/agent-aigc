@@ -78,6 +78,20 @@ export interface AgentAnalysis {
   confidence?: number
 }
 
+/** Provider 调用观测摘要 */
+export interface ProviderExecutionSummary {
+  /** 实际调用的 Provider 名称 */
+  providerName?: string
+  /** Provider 类型 */
+  providerType?: string
+  /** 实际使用的模型 */
+  model?: string
+  /** 任务耗时（毫秒） */
+  durationMs?: number
+  /** 成本统计状态 */
+  costStatus?: 'PENDING' | 'MOCK_FREE' | 'UNTRACKED' | string
+}
+
 /** 任务状态响应 */
 export interface TaskStatusResponse {
   /** 任务ID */
@@ -88,6 +102,8 @@ export interface TaskStatusResponse {
   progress: number
   /** Agent分析结果 */
   agentAnalysis?: AgentAnalysis
+  /** Provider 调用观测摘要 */
+  providerExecution?: ProviderExecutionSummary
   /** 参考素材ID列表 */
   referenceMaterialIds?: string[]
   /** 参考素材详情 */

@@ -33,6 +33,9 @@ public class TaskStatusResponse {
     /** Agent 分析结果 */
     private AgentAnalysis agentAnalysis;
 
+    /** Provider 调用观测摘要 */
+    private ProviderExecutionSummary providerExecution;
+
     /** 生成结果（完成时返回） */
     private GenerationResult result;
 

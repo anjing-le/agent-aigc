@@ -6,6 +6,8 @@ import com.anjing.aigc.model.entity.AigcAsset;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.response.GenerationResult;
+import com.anjing.aigc.provider.ContentProvider;
+import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.model.errorcode.AigcErrorCode;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AigcTaskExecutor {
 
     private final RoutingAgent routingAgent;
+    private final ProviderRouter providerRouter;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
 
@@ -37,6 +40,7 @@ public class AigcTaskExecutor {
 
             task.setStatus(TaskStatus.PROCESSING);
             task.setProgress(10);
+            recordProviderExecutionStart(task);
             task.setUpdatedAt(DateUtils.nowLocalDateTime());
             taskRepository.save(task);
 
@@ -80,6 +84,7 @@ public class AigcTaskExecutor {
             log.error("任务执行失败: taskId={}", taskId, e);
             taskRepository.findByTaskId(taskId).ifPresent(task -> {
                 task.setStatus(TaskStatus.FAILED);
+                task.setDurationMs(System.currentTimeMillis() - startTime);
                 task.setErrorMessage(e.getMessage());
                 task.setErrorCode(resolveErrorCode(e));
                 task.setUpdatedAt(DateUtils.nowLocalDateTime());
@@ -93,5 +98,11 @@ public class AigcTaskExecutor {
             return bizException.getErrorCode().getCode();
         }
         return AigcErrorCode.PROVIDER_CALL_FAILED.getCode();
+    }
+
+    private void recordProviderExecutionStart(AigcTask task) {
+        ContentProvider provider = providerRouter.getProvider(task.getContentType());
+        task.setProviderName(provider.getProviderName());
+        task.setProviderType(provider.getProviderType().name());
     }
 }

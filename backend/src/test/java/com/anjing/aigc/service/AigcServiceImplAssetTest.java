@@ -74,8 +74,11 @@ class AigcServiceImplAssetTest {
         task.setPrompt("prompt");
         task.setOptimizedPrompt("optimized prompt");
         task.setContentType(ContentType.IMAGE);
+        task.setProviderName("Mock Image Provider");
+        task.setProviderType("OTHER");
         task.setStatus(TaskStatus.COMPLETED);
         task.setProgress(100);
+        task.setDurationMs(1200L);
         task.setAgentAnalysis(AgentAnalysis.builder()
                 .intent("text_to_image")
                 .contentType(ContentType.IMAGE)
@@ -95,6 +98,8 @@ class AigcServiceImplAssetTest {
         assertEquals(TaskStatus.COMPLETED, detail.getTask().getStatus());
         assertEquals("clean prompt", detail.getTask().getAgentAnalysis().getCleanPrompt());
         assertEquals(0.8, detail.getTask().getAgentAnalysis().getConfidence());
+        assertEquals("Mock Image Provider", detail.getTask().getProviderExecution().getProviderName());
+        assertEquals("MOCK_FREE", detail.getTask().getProviderExecution().getCostStatus());
     }
 
     @Test

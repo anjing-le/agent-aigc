@@ -72,6 +72,13 @@
           </div>
         </div>
 
+        <div v-if="providerExecutionItems.length" class="generation-preview__provider-observe">
+          <div v-for="item in providerExecutionItems" :key="item.label" class="observe-item">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+          </div>
+        </div>
+
         <div v-if="task?.agentAnalysis?.cleanPrompt" class="generation-preview__optimized-prompt">
           <div class="prompt-label">
             <el-icon><Edit /></el-icon>
@@ -144,6 +151,12 @@
       <div v-if="task?.taskId" class="generation-preview__failed-task">
         任务 {{ task.taskId }}
       </div>
+      <div v-if="providerExecutionItems.length" class="generation-preview__provider-observe">
+        <div v-for="item in providerExecutionItems" :key="item.label" class="observe-item">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
       <div class="generation-preview__actions">
         <el-button type="primary" :icon="Refresh" @click="handleRetry">
           重试任务
@@ -205,6 +218,13 @@
       <div class="generation-preview__actions">
         <el-button :icon="Download" @click="handleDownload">下载</el-button>
         <el-button :icon="Refresh" @click="handleRegenerate">重新生成</el-button>
+      </div>
+
+      <div v-if="providerExecutionItems.length" class="generation-preview__provider-observe generation-preview__provider-observe--result">
+        <div v-for="item in providerExecutionItems" :key="item.label" class="observe-item">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </div>
       </div>
 
       <div v-if="referenceMaterials.length > 0" class="generation-preview__references generation-preview__references--result">
@@ -305,6 +325,18 @@ const isVisualPreview = computed(() => props.result?.url?.startsWith('data:image
 const isFailed = computed(() => props.task?.status?.toUpperCase() === 'FAILED')
 const referenceMaterials = computed(() => props.task?.referenceMaterials || [])
 
+const providerExecutionItems = computed(() => {
+  const execution = props.task?.providerExecution
+  if (!execution) return []
+
+  return [
+    { label: 'Provider', value: execution.providerName || execution.providerType },
+    { label: '模型', value: execution.model },
+    { label: '耗时', value: formatDuration(execution.durationMs) },
+    { label: '成本', value: formatCostStatus(execution.costStatus) }
+  ].filter((item): item is { label: string; value: string } => Boolean(item.value))
+})
+
 const agentParamsText = computed(() => {
   const analysis = props.task?.agentAnalysis
   const intent = analysis?.analyzedIntent
@@ -354,6 +386,21 @@ const getContentTypeLabel = (type: ContentType) => {
 }
 
 const formatConfidence = (confidence: number) => `${Math.round(confidence * 100)}%`
+
+const formatDuration = (durationMs?: number) => {
+  if (durationMs === undefined || durationMs === null) return ''
+  if (durationMs < 1000) return `${durationMs}ms`
+  return `${(durationMs / 1000).toFixed(1)}s`
+}
+
+const formatCostStatus = (status?: string) => {
+  const map: Record<string, string> = {
+    PENDING: '统计中',
+    MOCK_FREE: '模拟免费',
+    UNTRACKED: '待接入'
+  }
+  return status ? map[status] || status : ''
+}
 
 const isImageMaterial = (contentType: string) => contentType.startsWith('image/')
 const isVideoMaterial = (contentType: string) => contentType.startsWith('video/')
@@ -508,6 +555,43 @@ const handleRegenerateFromTask = () => {
       font-size: 14px;
       color: var(--el-text-color-primary);
       line-height: 1.6;
+    }
+  }
+
+  &__provider-observe {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 auto 18px;
+
+    &--result {
+      margin-top: -4px;
+    }
+
+    .observe-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 4px 8px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
+      background: var(--el-fill-color-blank);
+      font-size: 12px;
+
+      span {
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        max-width: 180px;
+        overflow: hidden;
+        color: var(--el-text-color-primary);
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
   }
 
