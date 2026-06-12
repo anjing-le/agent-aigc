@@ -59,6 +59,28 @@ public class LocalAigcStorageService {
         return deleted;
     }
 
+    public boolean deleteByUrl(String url) throws IOException {
+        if (url == null || url.isBlank()) {
+            return false;
+        }
+
+        String prefix = aigcProperties.getStorage().getLocal().getUrlPrefix();
+        String normalizedPrefix = prefix.endsWith("/") ? prefix : prefix + "/";
+        if (!url.startsWith(normalizedPrefix)) {
+            return false;
+        }
+
+        String relativePath = url.substring(normalizedPrefix.length());
+        int separatorIndex = relativePath.indexOf('/');
+        if (separatorIndex <= 0 || separatorIndex == relativePath.length() - 1) {
+            return false;
+        }
+
+        String directory = relativePath.substring(0, separatorIndex);
+        String fileName = relativePath.substring(separatorIndex + 1);
+        return deleteFile(directory, fileName);
+    }
+
     private String buildUrl(String directory, String fileName) {
         String prefix = aigcProperties.getStorage().getLocal().getUrlPrefix();
         String normalizedPrefix = prefix.endsWith("/") ? prefix.substring(0, prefix.length() - 1) : prefix;

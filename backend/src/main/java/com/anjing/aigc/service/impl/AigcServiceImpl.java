@@ -24,6 +24,7 @@ import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
+import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.anjing.aigc.exception.AigcException;
 import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.model.response.PageResult;
@@ -39,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,6 +64,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcAssetRepository assetRepository;
     private final AigcMaterialRepository materialRepository;
     private final AigcReferenceMaterialPolicy referenceMaterialPolicy;
+    private final LocalAigcStorageService localAigcStorageService;
 
     @Override
     @Transactional
@@ -273,7 +276,10 @@ public class AigcServiceImpl implements AigcService {
     @Override
     @Transactional
     public void deleteAsset(String assetId) {
-        assetRepository.deleteByAssetId(assetId);
+        AigcAsset asset = assetRepository.findByAssetId(assetId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
+        deleteLocalAssetFiles(asset);
+        assetRepository.deleteByAssetId(asset.getAssetId());
     }
 
     /**
@@ -302,6 +308,22 @@ public class AigcServiceImpl implements AigcService {
 
     private String normalizeFilter(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private void deleteLocalAssetFiles(AigcAsset asset) {
+        deleteLocalAssetFile(asset.getUrl(), asset.getAssetId(), "url");
+        if (asset.getThumbnailUrl() != null && !asset.getThumbnailUrl().equals(asset.getUrl())) {
+            deleteLocalAssetFile(asset.getThumbnailUrl(), asset.getAssetId(), "thumbnailUrl");
+        }
+    }
+
+    private void deleteLocalAssetFile(String url, String assetId, String fieldName) {
+        try {
+            localAigcStorageService.deleteByUrl(url);
+        } catch (IOException e) {
+            log.warn("资产本地文件删除失败，继续删除资产记录: assetId={}, field={}, url={}",
+                    assetId, fieldName, url, e);
+        }
     }
 
     private List<MaterialDTO> getReferenceMaterials(List<String> materialIds) {
