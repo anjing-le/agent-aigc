@@ -15,7 +15,8 @@ public enum AigcErrorCode implements ErrorCode {
     MATERIAL_NOT_FOUND("2407", "素材不存在"),
     GENERATION_PARAM_INVALID("2408", "生成参数不合法"),
     PROVIDER_UNAVAILABLE("2409", "模型 Provider 暂不可用"),
-    PROVIDER_CALL_FAILED("2410", "模型 Provider 调用失败");
+    PROVIDER_CALL_FAILED("2410", "模型 Provider 调用失败"),
+    MATERIAL_USAGE_UNSUPPORTED("2411", "素材不适用于当前创作类型");
 
     private final String code;
     private final String message;

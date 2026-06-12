@@ -69,7 +69,14 @@
         :key="index"
         class="creation-input__file-item"
       >
-        <img :src="file.preview" :alt="file.name" />
+        <img v-if="file.kind === 'image'" :src="file.preview" :alt="file.name" />
+        <video
+          v-else
+          :src="file.preview"
+          muted
+          playsinline
+          class="creation-input__file-video"
+        />
         <el-icon class="creation-input__file-remove" @click="removeFile(index)">
           <Close />
         </el-icon>
@@ -77,6 +84,10 @@
       <div class="creation-input__file-tip">
         已添加 {{ localFiles.length }} 个素材，AI将基于这些素材创作
       </div>
+    </div>
+
+    <div v-if="materialIssue" class="creation-input__warning">
+      {{ materialIssue }}
     </div>
 
     <!-- 输入区域 -->
@@ -155,6 +166,7 @@
 
 <script setup lang="ts">
 import { Close, FolderAdd, Promotion, Loading, MagicStick } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import type { UploadFile } from 'element-plus'
 import type { ContentType } from '@/api/model/aigcModel'
 
@@ -181,6 +193,7 @@ interface FilePreview {
   file: File
   name: string
   preview: string
+  kind: 'image' | 'video'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -228,7 +241,18 @@ const placeholder = computed(() => {
 
 // 是否可以提交
 const canSubmit = computed(() => {
-  return (inputValue.value.trim() || localFiles.value.length > 0) && !props.loading
+  return (inputValue.value.trim() || localFiles.value.length > 0) && !props.loading && !materialIssue.value
+})
+
+const materialIssue = computed(() => {
+  if (localFiles.value.length === 0) return ''
+  if (contentMode.value === 'AUDIO') {
+    return '音频创作暂不支持引用图片或视频素材'
+  }
+  if (contentMode.value === 'IMAGE' && localFiles.value.some(file => isVideoFile(file))) {
+    return '图片创作仅支持引用图片素材'
+  }
+  return ''
 })
 
 // 示例提示词
@@ -255,18 +279,28 @@ const defaultParams = (mode: ContentMode): GenerationParams => {
 /** 处理文件选择 */
 const handleFileChange = (file: UploadFile) => {
   if (file.raw && localFiles.value.length < 4) {
+    if (!isSupportedReferenceFile(file.raw)) {
+      ElMessage.warning('仅支持上传图片或视频素材')
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       filesPreviews.value.push({
         file: file.raw!,
         name: file.name,
-        preview: e.target?.result as string
+        preview: e.target?.result as string,
+        kind: isVideoFile(file.raw!) ? 'video' : 'image'
       })
       emit('update:files', [...localFiles.value, file.raw!])
     }
     reader.readAsDataURL(file.raw)
   }
 }
+
+const isSupportedReferenceFile = (file: File) => isImageFile(file) || isVideoFile(file)
+const isImageFile = (file: File) => file.type.startsWith('image/')
+const isVideoFile = (file: File) => file.type.startsWith('video/')
 
 /** 移除文件 */
 const removeFile = (index: number) => {
@@ -340,6 +374,12 @@ watch(() => props.files, (newFiles) => {
     }
   }
 
+  &__file-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   &__file-remove {
     position: absolute;
     top: 4px;
@@ -364,6 +404,12 @@ watch(() => props.files, (newFiles) => {
   &__file-tip {
     font-size: 12px;
     color: var(--el-text-color-secondary);
+  }
+
+  &__warning {
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--el-color-danger);
   }
 
   &__main {

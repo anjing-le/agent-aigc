@@ -21,6 +21,7 @@ import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
+import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
 import com.anjing.aigc.exception.AigcException;
@@ -39,6 +40,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -59,6 +61,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
     private final AigcMaterialRepository materialRepository;
+    private final AigcReferenceMaterialPolicy referenceMaterialPolicy;
 
     @Override
     @Transactional
@@ -68,13 +71,15 @@ public class AigcServiceImpl implements AigcService {
         log.info("Agent分析结果: intent={}, contentType={}, model={}", 
                 analysis.getIntent(), analysis.getContentType(), analysis.getSelectedModel());
 
+        List<AigcMaterial> referenceMaterials = validateReferenceMaterials(request, analysis.getContentType());
+
         // 2. 创建任务记录
         AigcTask task = new AigcTask();
         task.setTaskId(IdUtils.uuid());
         task.setPrompt(request.getPrompt());
         task.setOptimizedPrompt(analysis.getOptimizedPrompt());
-        task.setReferenceImages(request.getReferenceImages());
-        task.setReferenceMaterialIds(request.getReferenceMaterialIds());
+        task.setReferenceImages(resolveReferenceImages(request, referenceMaterials));
+        task.setReferenceMaterialIds(resolveReferenceMaterialIds(request, referenceMaterials));
         task.setContentType(analysis.getContentType());
         task.setIntent(analysis.getIntent());
         task.setModel(analysis.getSelectedModel());
@@ -306,6 +311,48 @@ public class AigcServiceImpl implements AigcService {
         return materialRepository.findByMaterialIdIn(materialIds).stream()
                 .map(this::toMaterialDTO)
                 .toList();
+    }
+
+    private List<AigcMaterial> validateReferenceMaterials(GenerateRequest request, ContentType contentType) {
+        List<AigcMaterial> materials = loadReferenceMaterials(request.getReferenceMaterialIds());
+        referenceMaterialPolicy.validate(contentType, materials, request.getReferenceImages());
+        return materials;
+    }
+
+    private List<AigcMaterial> loadReferenceMaterials(List<String> materialIds) {
+        if (materialIds == null || materialIds.isEmpty()) {
+            return List.of();
+        }
+
+        Set<String> expectedIds = materialIds.stream()
+                .filter(id -> id != null && !id.isBlank())
+                .collect(Collectors.toSet());
+        if (expectedIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<AigcMaterial> materials = materialRepository.findByMaterialIdIn(expectedIds);
+        Set<String> foundIds = materials.stream()
+                .map(AigcMaterial::getMaterialId)
+                .collect(Collectors.toSet());
+        if (!foundIds.containsAll(expectedIds)) {
+            throw new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND, "引用素材不存在或已删除");
+        }
+        return materials;
+    }
+
+    private List<String> resolveReferenceImages(GenerateRequest request, List<AigcMaterial> materials) {
+        if (materials != null && !materials.isEmpty()) {
+            return materials.stream().map(AigcMaterial::getUrl).toList();
+        }
+        return request.getReferenceImages();
+    }
+
+    private List<String> resolveReferenceMaterialIds(GenerateRequest request, List<AigcMaterial> materials) {
+        if (materials != null && !materials.isEmpty()) {
+            return materials.stream().map(AigcMaterial::getMaterialId).toList();
+        }
+        return request.getReferenceMaterialIds();
     }
 
     private String toMaterialIdPattern(String materialId) {
