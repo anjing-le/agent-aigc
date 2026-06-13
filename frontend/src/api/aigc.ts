@@ -31,10 +31,9 @@ import type {
  * @returns 包含taskId和Agent分析结果的响应
  */
 export function fetchGenerate(data: GenerateRequest) {
-  return request.post<GenerateResponse>({
-    url: ApiPaths.aigc.generate,
-    data
-  })
+  return openApiRequest('generate', {
+    body: data
+  }) as Promise<GenerateResponse>
 }
 
 /**
@@ -43,9 +42,9 @@ export function fetchGenerate(data: GenerateRequest) {
  * @returns 任务状态（包含进度、Agent决策、生成结果）
  */
 export function fetchGetTaskStatus(taskId: string) {
-  return request.get<TaskStatusResponse>({
-    url: ApiPaths.aigc.taskStatus(taskId)
-  })
+  return openApiRequest('getTaskStatus', {
+    pathParams: { taskId }
+  }) as Promise<TaskStatusResponse>
 }
 
 /**
@@ -53,9 +52,9 @@ export function fetchGetTaskStatus(taskId: string) {
  * @param taskId 原任务ID
  */
 export function fetchRetryTask(taskId: string) {
-  return request.post<GenerateResponse>({
-    url: ApiPaths.aigc.taskRetry(taskId)
-  })
+  return openApiRequest('retryTask', {
+    pathParams: { taskId }
+  }) as Promise<GenerateResponse>
 }
 
 /**
@@ -63,10 +62,9 @@ export function fetchRetryTask(taskId: string) {
  * @param params 搜索参数
  */
 export function fetchGetGalleryList(params: GallerySearchParams) {
-  return request.get<GalleryListResponse>({
-    url: ApiPaths.aigc.gallery,
-    params
-  })
+  return openApiRequest('getGalleryList', {
+    query: params
+  }) as Promise<GalleryListResponse>
 }
 
 /**
@@ -74,10 +72,9 @@ export function fetchGetGalleryList(params: GallerySearchParams) {
  * @param params 搜索参数
  */
 export function fetchGetAssetList(params: AssetSearchParams) {
-  return request.get<AssetListResponse>({
-    url: ApiPaths.aigc.assets,
-    params
-  })
+  return openApiRequest('getAssetList', {
+    query: params
+  }) as Promise<AssetListResponse>
 }
 
 /**
@@ -85,9 +82,9 @@ export function fetchGetAssetList(params: AssetSearchParams) {
  * @param assetId 资产ID
  */
 export function fetchGetAssetDetail(assetId: string) {
-  return request.get<AssetDetailResponse>({
-    url: ApiPaths.aigc.assetDetail(assetId)
-  })
+  return openApiRequest('getAssetDetail', {
+    pathParams: { assetId }
+  }) as Promise<AssetDetailResponse>
 }
 
 /**
@@ -95,18 +92,15 @@ export function fetchGetAssetDetail(assetId: string) {
  * @param params 搜索参数
  */
 export function fetchGetMaterialList(params: MaterialSearchParams) {
-  return request.get<MaterialListResponse>({
-    url: ApiPaths.aigc.materials,
-    params
-  })
+  return openApiRequest('getMaterialList', {
+    query: params
+  }) as Promise<MaterialListResponse>
 }
 
 // 注：模型选择由Agent自动处理，用户无需关心
 // 模型列表由后端 ProviderRouter 派生，供创作页和管理后台展示可用能力。
 export function fetchGetModelList() {
-  return request.get<ModelListResponse>({
-    url: ApiPaths.aigc.models
-  })
+  return openApiRequest('getModels') as Promise<ModelListResponse>
 }
 
 export function fetchProbeProvider(data: ProviderProbeRequest) {
@@ -130,9 +124,9 @@ export function fetchUploadMaterial(file: File) {
  * @param materialId 素材ID
  */
 export function fetchDeleteMaterial(materialId: string) {
-  return request.del<void>({
-    url: ApiPaths.aigc.materialDetail(materialId)
-  })
+  return openApiRequest('deleteMaterial', {
+    pathParams: { materialId }
+  }) as unknown as Promise<void>
 }
 
 /**
@@ -141,10 +135,10 @@ export function fetchDeleteMaterial(materialId: string) {
  * @param params 分页参数
  */
 export function fetchGetMaterialTasks(materialId: string, params: Partial<MaterialTaskSearchParams> = {}) {
-  return request.get<MaterialTaskListResponse>({
-    url: ApiPaths.aigc.materialTasks(materialId),
-    params
-  })
+  return openApiRequest('getMaterialTasks', {
+    pathParams: { materialId },
+    query: params
+  }) as Promise<MaterialTaskListResponse>
 }
 
 /**
@@ -152,10 +146,9 @@ export function fetchGetMaterialTasks(materialId: string, params: Partial<Materi
  * @param assetId 资产ID
  */
 export function fetchSaveToGallery(assetId: string) {
-  return request.post<void>({
-    url: ApiPaths.aigc.gallerySave,
-    data: { assetId }
-  })
+  return openApiRequest('saveToGallery', {
+    body: { assetId }
+  }) as unknown as Promise<void>
 }
 
 /**
@@ -163,7 +156,7 @@ export function fetchSaveToGallery(assetId: string) {
  * @param assetId 资产ID
  */
 export function fetchDeleteAsset(assetId: string) {
-  return request.del<void>({
-    url: ApiPaths.aigc.assetDetail(assetId)
-  })
+  return openApiRequest('deleteAsset', {
+    pathParams: { assetId }
+  }) as unknown as Promise<void>
 }
