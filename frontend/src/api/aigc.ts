@@ -1,4 +1,5 @@
 import request from '@/utils/http'
+import { openApiRequest } from './openapiClient'
 import { ApiPaths } from './paths'
 import type {
   GenerateRequest,
@@ -14,6 +15,8 @@ import type {
   MaterialTaskSearchParams,
   MaterialSearchParams,
   ModelListResponse,
+  ProviderProbeRequest,
+  ProviderProbeResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
 
@@ -103,6 +106,12 @@ export function fetchGetMaterialList(params: MaterialSearchParams) {
 export function fetchGetModelList() {
   return request.get<ModelListResponse>({
     url: ApiPaths.aigc.models
+  })
+}
+
+export function fetchProbeProvider(data: ProviderProbeRequest) {
+  return openApiRequest('probeModel', {
+    body: data
   })
 }
 

@@ -43,6 +43,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/generate",
     operationId: "generate"
   },
+  getAssetDetail: {
+    method: "GET",
+    path: "/api/aigc/assets/{assetId}",
+    operationId: "getAssetDetail"
+  },
   getAssetList: {
     method: "GET",
     path: "/api/aigc/assets",
@@ -108,10 +113,20 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/ping",
     operationId: "ping"
   },
+  probeModel: {
+    method: "POST",
+    path: "/api/aigc/models/probe",
+    operationId: "probeModel"
+  },
   refreshToken: {
     method: "POST",
     path: "/api/auth/refresh",
     operationId: "refreshToken"
+  },
+  retryTask: {
+    method: "POST",
+    path: "/api/aigc/task/{taskId}/retry",
+    operationId: "retryTask"
   },
   saveToGallery: {
     method: "POST",
@@ -184,6 +199,13 @@ export interface OpenApiOperationTypes {
     request: Schemas.GenerateRequest
     response: Schemas.APIResponseGenerateResponse
     data: NonNullable<Schemas.APIResponseGenerateResponse['data']>
+  }
+  getAssetDetail: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseAssetDetailResponse
+    data: NonNullable<Schemas.APIResponseAssetDetailResponse['data']>
   }
   getAssetList: {
     pathParams: undefined
@@ -276,12 +298,26 @@ export interface OpenApiOperationTypes {
     response: Schemas.APIResponseString
     data: NonNullable<Schemas.APIResponseString['data']>
   }
+  probeModel: {
+    pathParams: undefined
+    query: undefined
+    request: Schemas.ProviderProbeRequest
+    response: Schemas.APIResponseProviderProbeResponse
+    data: NonNullable<Schemas.APIResponseProviderProbeResponse['data']>
+  }
   refreshToken: {
     pathParams: undefined
     query: undefined
     request: Schemas.RefreshTokenRequest
     response: Schemas.APIResponseAuthTokenResponse
     data: NonNullable<Schemas.APIResponseAuthTokenResponse['data']>
+  }
+  retryTask: {
+    pathParams: { taskId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseGenerateResponse
+    data: NonNullable<Schemas.APIResponseGenerateResponse['data']>
   }
   saveToGallery: {
     pathParams: undefined

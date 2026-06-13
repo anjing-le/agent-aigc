@@ -3,9 +3,11 @@ package com.anjing.aigc.service;
 import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
+import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.model.response.PageResult;
 
@@ -58,6 +60,14 @@ public interface AigcService {
      * @return 模型列表
      */
     ModelListResponse getAvailableModels();
+
+    /**
+     * 探测 Provider 配置和当前路由是否可运行。
+     *
+     * @param request 探测请求
+     * @return 探测结果
+     */
+    ProviderProbeResponse probeProvider(ProviderProbeRequest request);
 
     /**
      * 获取灵感广场作品列表

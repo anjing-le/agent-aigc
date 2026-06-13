@@ -1,4 +1,5 @@
 import type { PaginatedResponse, CommonSearchParams } from '@/types/common/response'
+import type { OpenApiOperationData, OpenApiOperationRequest } from '@/contracts/openapi/operations'
 
 /** ==================== 生成相关类型 ==================== */
 
@@ -266,6 +267,12 @@ export interface ModelInfo {
   /** 模型图标 */
   icon?: string
 }
+
+/** Provider 探测请求 */
+export type ProviderProbeRequest = OpenApiOperationRequest<'probeModel'>
+
+/** Provider 探测响应 */
+export type ProviderProbeResponse = OpenApiOperationData<'probeModel'>
 
 /** 模型列表响应 */
 export interface ModelListResponse {

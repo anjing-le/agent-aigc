@@ -12,12 +12,14 @@ import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.request.GenerateRequest;
+import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderExecutionSummary;
+import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ProviderRouter;
@@ -222,6 +224,56 @@ public class AigcServiceImpl implements AigcService {
                 .build();
     }
 
+    @Override
+    public ProviderProbeResponse probeProvider(ProviderProbeRequest request) {
+        ContentType contentType = request.getContentType();
+        String activeProvider = getActiveProvider(contentType);
+        ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
+
+        if (provider == null) {
+            return ProviderProbeResponse.builder()
+                    .contentType(contentType)
+                    .requestedProvider(request.getProvider())
+                    .activeProvider(activeProvider)
+                    .registered(false)
+                    .active(false)
+                    .available(false)
+                    .routable(false)
+                    .configurationComplete(false)
+                    .defaultParams(Map.of())
+                    .missingConfig("未找到已注册 Provider")
+                    .statusReason("Provider 未注册到 Spring 容器")
+                    .message("探测失败：Provider 未注册")
+                    .checkedAt(DateUtils.nowIso())
+                    .build();
+        }
+
+        boolean active = isActiveProvider(provider, activeProvider);
+        boolean available = provider.isAvailable();
+        String missingConfig = resolveMissingConfig(provider);
+        boolean configurationComplete = missingConfig == null;
+        boolean routable = active && available && configurationComplete;
+
+        return ProviderProbeResponse.builder()
+                .contentType(contentType)
+                .requestedProvider(request.getProvider())
+                .providerName(provider.getProviderName())
+                .providerType(provider.getProviderType().name())
+                .activeProvider(activeProvider)
+                .registered(true)
+                .active(active)
+                .available(available)
+                .routable(routable)
+                .configurationComplete(configurationComplete)
+                .configuredModel(resolveConfiguredModel(provider, contentType))
+                .defaultParams(resolveDefaultParams(provider, contentType))
+                .missingConfig(missingConfig)
+                .statusReason(resolveModelStatusReason(provider, active))
+                .message(resolveProbeMessage(routable, active, available, configurationComplete))
+                .checkedAt(DateUtils.nowIso())
+                .build();
+    }
+
     private String toModelId(ContentProvider provider, ContentType contentType) {
         String normalizedProvider = provider.getProviderName()
                 .toLowerCase()
@@ -250,6 +302,36 @@ public class AigcServiceImpl implements AigcService {
             case AUDIO -> aigcProperties.getAudio().getActiveProvider();
             case TEXT -> "";
         };
+    }
+
+    private ContentProvider findProviderForProbe(ContentType contentType, String providerKey, String providerName) {
+        return getProviders(contentType).stream()
+                .filter(provider -> matchesProbeProvider(provider, providerKey, providerName))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<? extends ContentProvider> getProviders(ContentType contentType) {
+        return switch (contentType) {
+            case IMAGE -> providerRouter.getImageProviders();
+            case VIDEO -> providerRouter.getVideoProviders();
+            case AUDIO -> providerRouter.getAudioProviders();
+            case TEXT -> List.of();
+        };
+    }
+
+    private boolean matchesProbeProvider(ContentProvider provider, String providerKey, String providerName) {
+        if (providerName != null && !providerName.isBlank()
+                && provider.getProviderName().equalsIgnoreCase(providerName.trim())) {
+            return true;
+        }
+        if (providerKey == null || providerKey.isBlank()) {
+            return false;
+        }
+        String normalizedKey = providerKey.trim();
+        return provider.getProviderType().name().equalsIgnoreCase(normalizedKey)
+                || provider.getProviderName().equalsIgnoreCase(normalizedKey)
+                || provider.getProviderName().toLowerCase().contains(normalizedKey.toLowerCase());
     }
 
     private boolean isActiveProvider(ContentProvider provider, String activeProvider) {
@@ -331,6 +413,22 @@ public class AigcServiceImpl implements AigcService {
             return "当前路由会优先使用此 Provider";
         }
         return "已注册，可通过 active-provider 切换";
+    }
+
+    private String resolveProbeMessage(boolean routable, boolean active, boolean available, boolean configurationComplete) {
+        if (routable) {
+            return "探测通过：当前路由可用";
+        }
+        if (!active) {
+            return "探测通过：Provider 已注册，但不是当前路由";
+        }
+        if (!configurationComplete) {
+            return "探测未通过：配置不完整";
+        }
+        if (!available) {
+            return "探测未通过：Provider 当前不可用";
+        }
+        return "探测未通过：路由不可用";
     }
 
     @Override

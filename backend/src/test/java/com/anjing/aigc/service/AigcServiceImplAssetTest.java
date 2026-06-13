@@ -7,9 +7,11 @@ import com.anjing.aigc.model.entity.AigcAsset;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.provider.ProviderRouter;
@@ -111,20 +113,7 @@ class AigcServiceImplAssetTest {
 
     @Test
     void getAvailableModelsReturnsConfigurationStatus() {
-        aigcProperties.getImage().setActiveProvider("google");
-        aigcProperties.getProviders().getGoogle().setApiKey(null);
-
-        ImageGenerationProvider googleProvider = mock(ImageGenerationProvider.class);
-        when(googleProvider.getProviderName()).thenReturn("Google Nano Banana");
-        when(googleProvider.getProviderType()).thenReturn(ContentProvider.ProviderType.GOOGLE);
-        when(googleProvider.isAvailable()).thenReturn(false);
-
-        ImageGenerationProvider mockProvider = mock(ImageGenerationProvider.class);
-        when(mockProvider.getProviderName()).thenReturn("Mock Image Provider");
-        when(mockProvider.getProviderType()).thenReturn(ContentProvider.ProviderType.OTHER);
-        when(mockProvider.isAvailable()).thenReturn(true);
-
-        when(providerRouter.getImageProviders()).thenReturn(List.of(googleProvider, mockProvider));
+        givenImageProviders();
         when(providerRouter.getVideoProviders()).thenReturn(List.of());
         when(providerRouter.getAudioProviders()).thenReturn(List.of());
 
@@ -135,6 +124,41 @@ class AigcServiceImplAssetTest {
         assertEquals(true, models.getImageModels().get(0).getActive());
         assertEquals("mock-image-preview", models.getImageModels().get(1).getConfiguredModel());
         assertEquals("local-demo", models.getImageModels().get(1).getDefaultParams().get("mode"));
+    }
+
+    @Test
+    void probeProviderReportsMissingGoogleConfiguration() {
+        givenImageProviders();
+
+        ProviderProbeRequest request = new ProviderProbeRequest();
+        request.setContentType(ContentType.IMAGE);
+        request.setProvider("GOOGLE");
+        request.setProviderName("Google Nano Banana");
+
+        ProviderProbeResponse response = aigcService.probeProvider(request);
+
+        assertEquals(false, response.getRoutable());
+        assertEquals(true, response.getActive());
+        assertEquals("缺少 aigc.providers.google.api-key", response.getMissingConfig());
+        assertEquals("探测未通过：配置不完整", response.getMessage());
+    }
+
+    @Test
+    void probeProviderReportsRegisteredButInactiveProvider() {
+        givenImageProviders();
+
+        ProviderProbeRequest request = new ProviderProbeRequest();
+        request.setContentType(ContentType.IMAGE);
+        request.setProvider("OTHER");
+        request.setProviderName("Mock Image Provider");
+
+        ProviderProbeResponse response = aigcService.probeProvider(request);
+
+        assertEquals(true, response.getRegistered());
+        assertEquals(false, response.getActive());
+        assertEquals(true, response.getAvailable());
+        assertEquals(false, response.getRoutable());
+        assertEquals("探测通过：Provider 已注册，但不是当前路由", response.getMessage());
     }
 
     @Test
@@ -166,5 +190,22 @@ class AigcServiceImplAssetTest {
         asset.setModel("mock-image-preview");
         asset.setIsPublished(false);
         return asset;
+    }
+
+    private void givenImageProviders() {
+        aigcProperties.getImage().setActiveProvider("google");
+        aigcProperties.getProviders().getGoogle().setApiKey(null);
+
+        ImageGenerationProvider googleProvider = mock(ImageGenerationProvider.class);
+        when(googleProvider.getProviderName()).thenReturn("Google Nano Banana");
+        when(googleProvider.getProviderType()).thenReturn(ContentProvider.ProviderType.GOOGLE);
+        when(googleProvider.isAvailable()).thenReturn(false);
+
+        ImageGenerationProvider mockProvider = mock(ImageGenerationProvider.class);
+        when(mockProvider.getProviderName()).thenReturn("Mock Image Provider");
+        when(mockProvider.getProviderType()).thenReturn(ContentProvider.ProviderType.OTHER);
+        when(mockProvider.isAvailable()).thenReturn(true);
+
+        when(providerRouter.getImageProviders()).thenReturn(List.of(googleProvider, mockProvider));
     }
 }

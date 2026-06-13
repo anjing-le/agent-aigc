@@ -72,6 +72,24 @@
               <el-tag size="small" :type="model.available ? 'success' : 'danger'" effect="plain">
                 {{ model.available ? '可用' : '不可用' }}
               </el-tag>
+              <el-button
+                size="small"
+                :icon="Connection"
+                :loading="probingKey === model.id"
+                @click="handleProbe(model)"
+              >
+                探测
+              </el-button>
+            </div>
+            <div v-if="probeResults[model.id]" class="aigc-models__probe">
+              <el-tag
+                size="small"
+                :type="probeResults[model.id].routable ? 'success' : 'warning'"
+                effect="plain"
+              >
+                {{ probeResults[model.id].message }}
+              </el-tag>
+              <span>{{ formatProbeTime(probeResults[model.id].checkedAt) }}</span>
             </div>
           </div>
         </div>
@@ -81,9 +99,11 @@
 </template>
 
 <script setup lang="ts">
-import { Refresh } from '@element-plus/icons-vue'
-import { fetchGetModelList } from '@/api/aigc'
-import type { ContentType, ModelInfo, ModelListResponse } from '@/api/model/aigcModel'
+import { Connection, Refresh } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { fetchGetModelList, fetchProbeProvider } from '@/api/aigc'
+import type { ContentType, ModelInfo, ModelListResponse, ProviderProbeResponse } from '@/api/model/aigcModel'
+import { formatDateTime } from '@/utils/time'
 
 defineOptions({ name: 'AIGCModels' })
 
@@ -93,6 +113,8 @@ const models = ref<ModelListResponse>({
   videoModels: [],
   audioModels: []
 })
+const probingKey = ref('')
+const probeResults = ref<Record<string, ProviderProbeResponse>>({})
 
 const modelGroups = computed<Array<{
   type: ContentType
@@ -128,6 +150,33 @@ const formatDefaultParams = (model: ModelInfo) => {
   const params = model.defaultParams || {}
   return Object.entries(params).map(([key, value]) => `${key}: ${value}`)
 }
+
+const handleProbe = async (model: ModelInfo) => {
+  try {
+    probingKey.value = model.id
+    const result = await fetchProbeProvider({
+      contentType: model.contentType,
+      provider: model.provider,
+      providerName: model.name
+    })
+    probeResults.value = {
+      ...probeResults.value,
+      [model.id]: result
+    }
+    if (result.routable) {
+      ElMessage.success(result.message || '探测通过')
+    } else {
+      ElMessage.warning(result.message || '探测完成')
+    }
+  } catch (error) {
+    console.error('Provider 探测失败:', error)
+    ElMessage.error('Provider 探测失败')
+  } finally {
+    probingKey.value = ''
+  }
+}
+
+const formatProbeTime = (time?: string) => (time ? formatDateTime(time) : '')
 
 const loadModels = async () => {
   try {
@@ -223,6 +272,7 @@ onMounted(() => {
 
   &__item {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
@@ -267,6 +317,20 @@ onMounted(() => {
     align-items: flex-end;
     gap: 6px;
     flex-shrink: 0;
+  }
+
+  &__probe {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding-top: 10px;
+    border-top: 1px dashed var(--el-border-color-lighter);
+
+    span {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
   }
 
   &__item-config {

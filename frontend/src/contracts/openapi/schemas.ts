@@ -37,6 +37,15 @@ export interface AnalyzedIntent {
   videoParams?: VideoParams
 }
 
+export interface APIResponseAssetDetailResponse {
+  code?: string
+  data?: AssetDetailResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseAuthTokenResponse {
   code?: string
   data?: AuthTokenResponse
@@ -136,6 +145,15 @@ export interface APIResponsePageResultTaskStatusResponse {
   timestamp?: number
 }
 
+export interface APIResponseProviderProbeResponse {
+  code?: string
+  data?: ProviderProbeResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseString {
   code?: string
   data?: string
@@ -161,6 +179,11 @@ export interface APIResponseVoid {
   requestId?: string
   success?: boolean
   timestamp?: number
+}
+
+export interface AssetDetailResponse {
+  asset?: AssetDTO
+  task?: TaskStatusResponse
 }
 
 export interface AssetDTO {
@@ -362,13 +385,19 @@ export interface MiddlewareSummary {
 }
 
 export interface ModelInfo {
+  active?: boolean
+  activeProvider?: string
   available?: boolean
+  configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  defaultParams?: Record<string, unknown>
   description?: string
   icon?: string
   id?: string
+  missingConfig?: string
   name?: string
   provider?: string
+  statusReason?: string
 }
 
 export interface ModelListResponse {
@@ -405,6 +434,51 @@ export interface PageResultTaskStatusResponse {
   total?: number
 }
 
+export interface ProviderExecutionSummary {
+  costStatus?: string
+  durationMs?: number
+  model?: string
+  providerName?: string
+  providerType?: string
+}
+
+/**
+ * Provider 运行前探测请求
+ */
+export interface ProviderProbeRequest {
+  /**
+   * 内容类型
+   */
+  contentType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Provider 类型或名称
+   */
+  provider: string
+  /**
+   * Provider 展示名称
+   */
+  providerName?: string
+}
+
+export interface ProviderProbeResponse {
+  active?: boolean
+  activeProvider?: string
+  available?: boolean
+  checkedAt?: string
+  configurationComplete?: boolean
+  configuredModel?: string
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  defaultParams?: Record<string, unknown>
+  message?: string
+  missingConfig?: string
+  providerName?: string
+  providerType?: string
+  registered?: boolean
+  requestedProvider?: string
+  routable?: boolean
+  statusReason?: string
+}
+
 /**
  * Refresh token request
  */
@@ -426,9 +500,12 @@ export interface SaveToGalleryRequest {
 }
 
 export interface TaskStatusResponse {
+  agentAnalysis?: AgentAnalysis
   createdAt?: string
+  errorCode?: string
   errorMessage?: string
   progress?: number
+  providerExecution?: ProviderExecutionSummary
   referenceMaterialIds?: string[]
   referenceMaterials?: MaterialDTO[]
   result?: GenerationResult
@@ -450,6 +527,7 @@ export interface VideoParams {
 export interface OpenApiSchemas {
   AgentAnalysis: AgentAnalysis
   AnalyzedIntent: AnalyzedIntent
+  APIResponseAssetDetailResponse: APIResponseAssetDetailResponse
   APIResponseAuthTokenResponse: APIResponseAuthTokenResponse
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
   APIResponseGenerateResponse: APIResponseGenerateResponse
@@ -461,9 +539,11 @@ export interface OpenApiSchemas {
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
   APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
+  APIResponseProviderProbeResponse: APIResponseProviderProbeResponse
   APIResponseString: APIResponseString
   APIResponseTaskStatusResponse: APIResponseTaskStatusResponse
   APIResponseVoid: APIResponseVoid
+  AssetDetailResponse: AssetDetailResponse
   AssetDTO: AssetDTO
   AudioParams: AudioParams
   AuthTokenResponse: AuthTokenResponse
@@ -485,6 +565,9 @@ export interface OpenApiSchemas {
   PageResultGalleryDTO: PageResultGalleryDTO
   PageResultMaterialDTO: PageResultMaterialDTO
   PageResultTaskStatusResponse: PageResultTaskStatusResponse
+  ProviderExecutionSummary: ProviderExecutionSummary
+  ProviderProbeRequest: ProviderProbeRequest
+  ProviderProbeResponse: ProviderProbeResponse
   RefreshTokenRequest: RefreshTokenRequest
   SaveToGalleryRequest: SaveToGalleryRequest
   TaskStatusResponse: TaskStatusResponse
