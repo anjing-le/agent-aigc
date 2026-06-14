@@ -145,7 +145,8 @@ export const readHttpHeader = (headers: unknown, name: string): string | undefin
   }
 
   const record = headers as Record<string, unknown>
-  const directValue = normalizeHeaderValue(record[name]) || normalizeHeaderValue(record[name.toLowerCase()])
+  const directValue =
+    normalizeHeaderValue(record[name]) || normalizeHeaderValue(record[name.toLowerCase()])
   if (directValue) return directValue
 
   const expectedName = name.toLowerCase()

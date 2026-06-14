@@ -14,7 +14,12 @@
  * @author Art Design Pro Team
  */
 
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  AxiosError,
+  AxiosRequestConfig,
+  AxiosResponse,
+  InternalAxiosRequestConfig
+} from 'axios'
 import { useUserStore } from '@/store/modules/user'
 import { ApiStatus } from './status'
 import {
@@ -36,7 +41,7 @@ import { $t } from '@/locales'
 import { BaseResponse } from '@/types'
 
 /** 请求配置常量 */
-const REQUEST_TIMEOUT = 120000  // 默认120秒（支持AIGC长时间生成）
+const REQUEST_TIMEOUT = 120000 // 默认120秒（支持AIGC长时间生成）
 const LOGOUT_DELAY = 500
 const MAX_RETRIES = 0
 const RETRY_DELAY = 1000
