@@ -1,29 +1,73 @@
 <!-- 我的资产页面 -->
 <template>
   <div class="aigc-assets">
+    <div class="aigc-assets__header">
+      <div>
+        <div class="aigc-assets__eyebrow">Asset Center</div>
+        <h2 class="aigc-assets__title">我的资产</h2>
+        <p class="aigc-assets__subtitle">统一管理生成作品、来源任务、发布状态和下载分发</p>
+      </div>
+      <div class="aigc-assets__header-actions">
+        <el-button :icon="Refresh" :loading="loading" @click="loadData">刷新</el-button>
+        <el-button type="primary" :icon="MagicStick" @click="$router.push('/aigc/studio')">
+          去创作
+        </el-button>
+      </div>
+    </div>
+
+    <div class="aigc-assets__stats">
+      <div v-for="item in assetStats" :key="item.label" class="aigc-assets__stat">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+      </div>
+    </div>
+
     <!-- 筛选区 (后端使用大写枚举) -->
     <div class="aigc-assets__filter">
-      <el-radio-group v-model="filterContentType" @change="handleFilter">
-        <el-radio-button value="">全部</el-radio-button>
-        <el-radio-button value="IMAGE">图片</el-radio-button>
-        <el-radio-button value="VIDEO">视频</el-radio-button>
-        <el-radio-button value="AUDIO">音频</el-radio-button>
-      </el-radio-group>
+      <div class="aigc-assets__filter-left">
+        <el-radio-group v-model="filterContentType" @change="handleFilter">
+          <el-radio-button value="">全部</el-radio-button>
+          <el-radio-button value="IMAGE">图片</el-radio-button>
+          <el-radio-button value="VIDEO">视频</el-radio-button>
+          <el-radio-button value="AUDIO">音频</el-radio-button>
+        </el-radio-group>
+
+        <el-select v-model="publishStatus" placeholder="发布状态" class="aigc-assets__status">
+          <el-option label="全部状态" value="ALL" />
+          <el-option label="已发布" value="PUBLISHED" />
+          <el-option label="未发布" value="UNPUBLISHED" />
+        </el-select>
+
+        <el-input
+          v-model="keyword"
+          :prefix-icon="Search"
+          clearable
+          placeholder="搜索 Prompt / 模型"
+          class="aigc-assets__search"
+        />
+      </div>
 
       <div class="aigc-assets__filter-right">
-        <el-button :icon="Refresh" @click="loadData">刷新</el-button>
+        <el-radio-group v-model="viewMode" size="small">
+          <el-radio-button value="card" title="卡片视图">
+            <el-icon><Grid /></el-icon>
+          </el-radio-button>
+          <el-radio-button value="table" title="表格视图">
+            <el-icon><List /></el-icon>
+          </el-radio-button>
+        </el-radio-group>
       </div>
     </div>
 
     <!-- 资产列表 -->
     <div v-loading="loading" class="aigc-assets__content">
-      <el-empty v-if="!loading && assetList.length === 0" description="暂无作品">
+      <el-empty v-if="!loading && filteredAssetList.length === 0" description="暂无作品">
         <el-button type="primary" @click="$router.push('/aigc/studio')"> 去创作 </el-button>
       </el-empty>
 
-      <div v-else class="aigc-assets__grid">
+      <div v-else-if="viewMode === 'card'" class="aigc-assets__grid">
         <AssetCard
-          v-for="item in assetList"
+          v-for="item in filteredAssetList"
           :key="item.id"
           :item="item"
           @preview="handlePreview(item)"
@@ -31,6 +75,69 @@
           @publish="handlePublish(item)"
           @delete="handleDelete(item)"
         />
+      </div>
+
+      <div v-else class="aigc-assets__table">
+        <el-table :data="filteredAssetList" row-key="id">
+          <el-table-column label="作品" min-width="280">
+            <template #default="{ row }">
+              <div class="aigc-assets__table-asset">
+                <div class="aigc-assets__table-thumb">
+                  <el-image
+                    v-if="isImage(row) || hasVisualPreview(row)"
+                    :src="row.thumbnailUrl || row.url"
+                    fit="cover"
+                  />
+                  <el-icon v-else-if="row.contentType === 'VIDEO'"><VideoPlay /></el-icon>
+                  <el-icon v-else><Headset /></el-icon>
+                </div>
+                <div class="aigc-assets__table-main">
+                  <span>{{ row.prompt }}</span>
+                  <small>{{ row.id }}</small>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="类型" width="92">
+            <template #default="{ row }">
+              <el-tag :type="getContentTypeTag(row.contentType)" size="small" effect="plain">
+                {{ getContentTypeLabel(row.contentType) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="model" label="模型" min-width="150" show-overflow-tooltip />
+          <el-table-column label="发布" width="92">
+            <template #default="{ row }">
+              <el-tag :type="row.isPublished ? 'success' : 'info'" size="small" effect="plain">
+                {{ row.isPublished ? '已发布' : '未发布' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="创建时间" width="180">
+            <template #default="{ row }">
+              {{ formatTime(row.createdAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="260" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" :icon="View" @click="handlePreview(row)">预览</el-button>
+              <el-button size="small" :icon="Download" @click="handleDownload(row)">下载</el-button>
+              <el-button
+                v-if="!row.isPublished"
+                size="small"
+                type="primary"
+                plain
+                :icon="Share"
+                @click="handlePublish(row)"
+              >
+                发布
+              </el-button>
+              <el-button size="small" type="danger" plain :icon="Delete" @click="handleDelete(row)">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
 
       <!-- 分页 -->
@@ -167,7 +274,19 @@
 </template>
 
 <script setup lang="ts">
-  import { Download, Refresh, Share } from '@element-plus/icons-vue'
+  import {
+    Delete,
+    Download,
+    Grid,
+    Headset,
+    List,
+    MagicStick,
+    Refresh,
+    Search,
+    Share,
+    VideoPlay,
+    View
+  } from '@element-plus/icons-vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import AssetCard from './components/AssetCard.vue'
   import {
@@ -194,12 +313,49 @@
   const currentPage = ref(1)
   const pageSize = ref(24)
   const filterContentType = ref<ContentType | ''>('')
+  const publishStatus = ref<'ALL' | 'PUBLISHED' | 'UNPUBLISHED'>('ALL')
+  const keyword = ref('')
+  const viewMode = ref<'card' | 'table'>('card')
 
   // 预览
   const previewVisible = ref(false)
   const previewItem = ref<AssetItem | null>(null)
   const previewTask = ref<TaskStatusResponse | null>(null)
   const previewLoading = ref(false)
+
+  const filteredAssetList = computed(() => {
+    const searchText = keyword.value.trim().toLowerCase()
+    return assetList.value.filter((item) => {
+      const matchesKeyword =
+        !searchText ||
+        item.prompt.toLowerCase().includes(searchText) ||
+        item.model.toLowerCase().includes(searchText)
+      const matchesPublishStatus =
+        publishStatus.value === 'ALL' ||
+        (publishStatus.value === 'PUBLISHED' && item.isPublished) ||
+        (publishStatus.value === 'UNPUBLISHED' && !item.isPublished)
+      return matchesKeyword && matchesPublishStatus
+    })
+  })
+
+  const assetStats = computed(() => [
+    {
+      label: '当前页作品',
+      value: `${assetList.value.length}`
+    },
+    {
+      label: '已发布',
+      value: `${assetList.value.filter((item) => item.isPublished).length}`
+    },
+    {
+      label: '待发布',
+      value: `${assetList.value.filter((item) => !item.isPublished).length}`
+    },
+    {
+      label: '筛选结果',
+      value: `${filteredAssetList.value.length}`
+    }
+  ])
 
   // ==================== 方法 ====================
 
@@ -291,6 +447,31 @@
 
   /** 格式化时间 */
   const formatTime = (time: string) => formatDateTime(time)
+
+  const isImage = (item: AssetItem) => item.contentType?.toUpperCase() === 'IMAGE'
+  const hasVisualPreview = (item: AssetItem) => {
+    return item.url?.startsWith('data:image/') || item.thumbnailUrl?.startsWith('data:image/')
+  }
+
+  const getContentTypeTag = (type: ContentType) => {
+    const typeUpper = type?.toUpperCase()
+    const map: Record<string, 'success' | 'warning' | 'info'> = {
+      IMAGE: 'success',
+      VIDEO: 'warning',
+      AUDIO: 'info'
+    }
+    return map[typeUpper]
+  }
+
+  const getContentTypeLabel = (type: ContentType) => {
+    const typeUpper = type?.toUpperCase()
+    const map: Record<string, string> = {
+      IMAGE: '图片',
+      VIDEO: '视频',
+      AUDIO: '音频'
+    }
+    return map[typeUpper] || type
+  }
 
   const getTaskStatusLabel = (status: TaskStatus) => {
     const map: Record<TaskStatus, string> = {
@@ -387,15 +568,101 @@
     background: var(--el-bg-color-page);
     min-height: calc(100vh - 120px);
 
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    &__eyebrow {
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--el-color-primary);
+      text-transform: uppercase;
+    }
+
+    &__title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    &__subtitle {
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    &__stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    &__stat {
+      min-height: 72px;
+      padding: 14px 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+
+      span {
+        display: block;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 24px;
+        line-height: 1;
+        color: var(--el-text-color-primary);
+      }
+    }
+
     &__filter {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 16px;
       margin-bottom: 20px;
       padding: 16px;
       background: var(--el-bg-color);
-      border-radius: 12px;
       border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__filter-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    &__filter-right {
+      flex-shrink: 0;
+    }
+
+    &__status {
+      width: 130px;
+    }
+
+    &__search {
+      width: 260px;
     }
 
     &__content {
@@ -408,13 +675,101 @@
       gap: 20px;
     }
 
+    &__table {
+      overflow: hidden;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__table-asset {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    &__table-thumb {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      background: var(--el-fill-color-light);
+      border-radius: 6px;
+      color: var(--el-text-color-secondary);
+
+      .el-image {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    &__table-main {
+      min-width: 0;
+
+      span,
+      small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      span {
+        font-size: 13px;
+        color: var(--el-text-color-primary);
+      }
+
+      small {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
     &__pagination {
       display: flex;
       justify-content: center;
       margin-top: 24px;
       padding: 16px;
       background: var(--el-bg-color);
-      border-radius: 12px;
+      border-radius: 8px;
+    }
+  }
+
+  @media screen and (max-width: 1200px) {
+    .aigc-assets {
+      &__stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      &__filter {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .aigc-assets {
+      padding: 12px;
+
+      &__header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      &__header-actions,
+      &__search {
+        width: 100%;
+      }
+
+      &__stats {
+        grid-template-columns: 1fr;
+      }
     }
   }
 
