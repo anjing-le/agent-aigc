@@ -75,7 +75,12 @@
             background: getMenuTheme.background
           }"
         >
-          <ArtLogo v-if="!isDualMenu" class="logo" :menuOpen="menuOpen" :size="menuOpen ? 110 : 31" />
+          <ArtLogo
+            v-if="!isDualMenu"
+            class="logo"
+            :menuOpen="menuOpen"
+            :size="menuOpen ? 110 : 31"
+          />
 
           <!-- <p
             :class="{ 'is-dual-menu-name': isDualMenu }"
@@ -130,7 +135,6 @@
 </template>
 
 <script setup lang="ts">
-  import AppConfig from '@/config'
   import { useSettingStore } from '@/store/modules/setting'
   import { MenuTypeEnum, MenuWidth } from '@/enums/appEnum'
   import { useMenuStore } from '@/store/modules/menu'
