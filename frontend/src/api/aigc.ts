@@ -16,17 +16,16 @@ import type {
   MaterialSearchParams,
   ModelListResponse,
   ProviderProbeRequest,
-  ProviderProbeResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
 
 /**
  * AIGC 生成接口 - 智能路由Agent入口
- * 
+ *
  * 设计理念：用户只需描述需求，系统自动处理一切
  * - 用户提供：需求描述 + 可选素材
  * - Agent自动：意图识别 → 模型选择 → 提示词优化 → 生成内容
- * 
+ *
  * @param data 生成请求参数（prompt + 可选referenceImages）
  * @returns 包含taskId和Agent分析结果的响应
  */
@@ -134,7 +133,10 @@ export function fetchDeleteMaterial(materialId: string) {
  * @param materialId 素材ID
  * @param params 分页参数
  */
-export function fetchGetMaterialTasks(materialId: string, params: Partial<MaterialTaskSearchParams> = {}) {
+export function fetchGetMaterialTasks(
+  materialId: string,
+  params: Partial<MaterialTaskSearchParams> = {}
+) {
   return openApiRequest('getMaterialTasks', {
     pathParams: { materialId },
     query: params
