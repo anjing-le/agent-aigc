@@ -181,6 +181,7 @@
           </div>
           <div class="asset-preview__actions">
             <el-button :icon="Download" @click="handleDownload(previewItem)">下载</el-button>
+            <el-button :icon="MagicStick" @click="handleReuse(previewItem)">复用 Prompt</el-button>
             <el-button
               v-if="!previewItem.isPublished"
               type="primary"
@@ -306,6 +307,8 @@
 
   defineOptions({ name: 'AIGCAssets' })
 
+  const router = useRouter()
+
   // ==================== 状态 ====================
   const loading = ref(false)
   const assetList = ref<AssetItem[]>([])
@@ -409,6 +412,16 @@
   /** 下载 */
   const handleDownload = (item: AssetItem) => {
     downloadAigcAsset(item)
+  }
+
+  const handleReuse = (item: AssetItem) => {
+    router.push({
+      path: '/aigc/studio',
+      query: {
+        prompt: item.prompt,
+        contentType: item.contentType
+      }
+    })
   }
 
   /** 发布到广场 */

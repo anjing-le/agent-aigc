@@ -312,7 +312,10 @@
   const handleUse = (item: GalleryItem) => {
     router.push({
       path: '/aigc/studio',
-      query: { prompt: item.prompt }
+      query: {
+        prompt: item.prompt,
+        contentType: item.contentType
+      }
     })
   }
 

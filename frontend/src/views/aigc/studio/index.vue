@@ -114,6 +114,8 @@
 
   defineOptions({ name: 'AIGCStudio' })
 
+  const route = useRoute()
+
   // ==================== 状态管理 ====================
   // 用户输入（文本 + 文件，仅此而已）
   const userInput = ref('')
@@ -174,6 +176,35 @@
   })
 
   // ==================== 方法 ====================
+
+  const applyRoutePrompt = () => {
+    const prompt = normalizeQueryValue(route.query.prompt)
+    if (!prompt || prompt === userInput.value) return
+
+    userInput.value = prompt
+    generationResult.value = null
+
+    const contentType = normalizeContentType(normalizeQueryValue(route.query.contentType))
+    if (contentType) {
+      contentTypeHint.value = contentType
+      generationParams.value = defaultParamsForType(contentType)
+    }
+
+    ElMessage.success('已填入复用 Prompt')
+  }
+
+  const normalizeQueryValue = (value: unknown) => {
+    if (Array.isArray(value)) return value[0] || ''
+    return typeof value === 'string' ? value : ''
+  }
+
+  const normalizeContentType = (value: string): ContentType | null => {
+    const contentType = value.toUpperCase()
+    if (contentType === 'IMAGE' || contentType === 'VIDEO' || contentType === 'AUDIO') {
+      return contentType
+    }
+    return null
+  }
 
   /** 加载历史记录 */
   const loadHistory = async () => {
@@ -401,9 +432,17 @@
 
   // ==================== 生命周期 ====================
   onMounted(() => {
+    applyRoutePrompt()
     loadHistory()
     loadModels()
   })
+
+  watch(
+    () => [route.query.prompt, route.query.contentType],
+    () => {
+      applyRoutePrompt()
+    }
+  )
 </script>
 
 <style lang="scss" scoped>
