@@ -56,6 +56,12 @@ function relative(file) {
   return path.relative(root, file)
 }
 
+function requireAbsentInFiles(relativeFiles, pattern, description) {
+  for (const relativeFile of relativeFiles) {
+    requireAbsent(relativeFile, pattern, description)
+  }
+}
+
 const manifest = readJson('contracts/service-boundaries.json')
 const aigcBoundary = (manifest.boundaries || []).find((boundary) => boundary.id === 'aigc')
 
@@ -104,6 +110,29 @@ for (const token of [
   'saveActiveProvider'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderRouteConfigService.java', token)
+}
+
+requireAbsentInFiles([
+  'backend/src/main/java/com/anjing/aigc/model/dto/ModelInfo.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/ModelListResponse.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/ProviderProbeResponse.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/ProviderRouteUpdateResponse.java',
+  'frontend/src/api/model/aigcModel.ts',
+  'frontend/src/views/aigc/models/index.vue'
+], /\b(apiKey|accessKey|secretKey|accessKeySecret)\b/i, 'provider secret field exposed to frontend contracts')
+
+requireAbsent(
+  'backend/src/main/java/com/anjing/aigc/provider/ProviderRouter.java',
+  /substring\(0,\s*Math\.min\(8,\s*key\.length\(\)\)|key\.substring\(key\.length\(\)\s*-\s*4\)/,
+  'provider secret prefix/suffix logging'
+)
+
+for (const token of [
+  'describeSecret',
+  'configured(length=',
+  '不输出任何密钥片段'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/provider/ProviderRouter.java', token)
 }
 
 for (const token of [

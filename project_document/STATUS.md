@@ -39,6 +39,7 @@
 - 模型配置页已升级为 Provider 配置视图，可展示 active provider、可用性、配置模型、缺失配置和默认参数模板。
 - Provider 配置页已接入运行前探测接口，按 service-boundary、ApiConstants、明确 DTO/VO、OpenAPI 生成类型和 `openApiRequest` 贯通脚手架契约。
 - Provider 配置页已支持持久化切换 active provider：页面调用 `/api/aigc/models/active-provider`，后端写入 `aigc_provider_route_config`，列表返回 `routeConfigSource` 区分环境配置和页面保存。
+- Provider 密钥边界已收口：模型配置接口只返回配置状态、缺失说明和来源，不返回 API Key；启动日志只输出密钥存在性和长度。
 - AIGC 本地文件保存已收口到 `LocalAigcStorageService`，Google 图片/视频/音频 provider 不再各自硬编码上传目录和访问前缀。
 - Google 图片 Provider 已加入 429/5xx 短重试、统一 Provider 调用错误码和本地保存失败兜底。
 - 删除资产时会清理本地生成文件和缩略图；清理失败只记录 warning，不阻断资产记录删除。
@@ -61,7 +62,7 @@
 
 - 视频/音频 mock 当前是可视化占位，不是真实媒体文件。
 - 素材库和资产库已具备本地文件清理；OSS 清理和权限隔离仍待产品化。
-- Provider 配置已有运行前探测、页面持久化切换和配置来源展示；密钥、参数模板编辑和权限审计仍主要通过环境变量或后续管理能力承接。
+- Provider 配置已有运行前探测、页面持久化切换、配置来源展示和密钥脱敏边界；密钥写入、参数模板编辑和权限审计仍主要通过环境变量或后续管理能力承接。
 - 历史记录和作品广场缺少用户维度、收藏、点赞等产品能力。
 - 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口和基础 Provider 调用观测；真实成本金额仍需继续产品化。
 

@@ -63,17 +63,10 @@ public class ProviderRouter {
         log.info("  视频: {}", routeConfigService.getActiveProvider(ContentType.VIDEO));
         log.info("  音频: {}", routeConfigService.getActiveProvider(ContentType.AUDIO));
         
-        // 打印 Google 配置状态
-        log.info("Google 配置状态: isGoogleConfigured={}", aigcProperties.isGoogleConfigured());
-        if (aigcProperties.getProviders().getGoogle().getApiKey() != null) {
-            String key = aigcProperties.getProviders().getGoogle().getApiKey();
-            log.info("  API Key: {}...{} (长度:{})", 
-                    key.substring(0, Math.min(8, key.length())), 
-                    key.length() > 4 ? key.substring(key.length() - 4) : "",
-                    key.length());
-        } else {
-            log.warn("  API Key: null");
-        }
+        // 打印 Google 配置状态，只输出存在性和长度，不输出任何密钥片段。
+        log.info("Google 配置状态: isGoogleConfigured={}, apiKey={}",
+                aigcProperties.isGoogleConfigured(),
+                describeSecret(aigcProperties.getProviders().getGoogle().getApiKey()));
         
         // 打印 Agent 使用的 LLM
         if (aigcProperties.isOneRouterConfigured()) {
@@ -81,6 +74,16 @@ public class ProviderRouter {
         } else {
             log.warn("  Agent LLM: 未配置 OneRouter，将使用降级策略");
         }
+    }
+
+    private String describeSecret(String secret) {
+        if (secret == null) {
+            return "missing";
+        }
+        if (secret.isBlank()) {
+            return "blank";
+        }
+        return "configured(length=" + secret.length() + ")";
     }
     
     /**
