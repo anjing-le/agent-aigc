@@ -1,0 +1,173 @@
+#!/usr/bin/env node
+const fs = require('fs')
+const path = require('path')
+
+const root = path.resolve(__dirname, '..')
+
+function fail(message) {
+  console.error(`check-aigc-scaffold-boundaries: ${message}`)
+  process.exit(1)
+}
+
+function read(relativeFile) {
+  const file = path.join(root, relativeFile)
+  if (!fs.existsSync(file)) {
+    fail(`missing required file: ${relativeFile}`)
+  }
+  return fs.readFileSync(file, 'utf8')
+}
+
+function readJson(relativeFile) {
+  try {
+    return JSON.parse(read(relativeFile))
+  } catch (error) {
+    fail(`invalid ${relativeFile}: ${error.message}`)
+  }
+}
+
+function requireToken(relativeFile, token) {
+  const source = read(relativeFile)
+  if (!source.includes(token)) {
+    fail(`${relativeFile} is missing token: ${token}`)
+  }
+}
+
+function requireAbsent(relativeFile, pattern, description) {
+  const source = read(relativeFile)
+  if (pattern.test(source)) {
+    fail(`${relativeFile} contains ${description}: ${pattern}`)
+  }
+}
+
+function walk(dir, matcher, files = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (['node_modules', 'dist', 'target'].includes(entry.name)) continue
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      walk(fullPath, matcher, files)
+    } else if (matcher(entry.name)) {
+      files.push(fullPath)
+    }
+  }
+  return files
+}
+
+function relative(file) {
+  return path.relative(root, file)
+}
+
+const manifest = readJson('contracts/service-boundaries.json')
+const aigcBoundary = (manifest.boundaries || []).find((boundary) => boundary.id === 'aigc')
+
+if (!aigcBoundary) {
+  fail('contracts/service-boundaries.json must declare the aigc boundary')
+}
+
+if (aigcBoundary.basePath !== '/api/aigc') {
+  fail(`aigc basePath must be /api/aigc, got ${aigcBoundary.basePath}`)
+}
+
+if (aigcBoundary.apiConstantsClass !== 'Aigc' || aigcBoundary.apiPathsKey !== 'aigc') {
+  fail('aigc boundary must map to ApiConstants.Aigc and ApiPaths.aigc')
+}
+
+for (const route of aigcBoundary.routes || []) {
+  if (!route.backendConstant || !route.frontendKey || !route.path || !route.methods?.length) {
+    fail(`aigc route ${route.name || '<unknown>'} must declare backendConstant, frontendKey, path and methods`)
+  }
+  if (!route.path.startsWith('/api/aigc')) {
+    fail(`aigc route ${route.name} must stay under /api/aigc, got ${route.path}`)
+  }
+}
+
+for (const token of [
+  'public static class Aigc',
+  'public static final String BASE = API_PREFIX + "/aigc"',
+  'public static final String GENERATE_FULL = BASE + GENERATE',
+  'public static final String ASSET_DETAIL_FULL = BASE + ASSET_DETAIL'
+]) {
+  requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
+}
+
+for (const token of [
+  'import com.anjing.model.constants.ApiConstants;',
+  'import com.anjing.model.response.APIResponse;',
+  'import com.anjing.model.response.PageResult;',
+  '@RequestMapping(ApiConstants.Aigc.BASE)',
+  '@Tag(name = "AIGC Creation"',
+  'APIResponse<GenerateResponse>',
+  'APIResponse<PageResult<GalleryDTO>>',
+  'APIResponse<PageResult<AssetDTO>>',
+  'APIResponse<PageResult<MaterialDTO>>'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/controller/AigcController.java', token)
+}
+
+requireAbsent(
+  'backend/src/main/java/com/anjing/aigc/controller/AigcController.java',
+  /@(RequestMapping|GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)\(\s*["'`]\/api/,
+  'direct /api mapping instead of ApiConstants.Aigc'
+)
+
+for (const token of [
+  'aigc: {',
+  'generate: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.generate',
+  'assetDetail: (assetId: string | number)',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
+]) {
+  requireToken('frontend/src/api/paths.ts', token)
+}
+
+for (const token of [
+  "import { openApiRequest } from './openapiClient'",
+  "openApiRequest('generate'",
+  "openApiRequest('getTaskStatus'",
+  "openApiRequest('getGalleryList'",
+  "openApiRequest('getAssetList'",
+  "openApiRequest('uploadMaterial'"
+]) {
+  requireToken('frontend/src/api/aigc.ts', token)
+}
+
+for (const token of [
+  "import type {",
+  'OpenApiOperationData',
+  'OpenApiOperationQuery',
+  'OpenApiOperationRequest',
+  "import type * as Schemas from '@/contracts/openapi/schemas'",
+  "OpenApiOperationRequest<'generate'>",
+  "OpenApiOperationData<'getGalleryList'>",
+  "OpenApiOperationData<'getAssetList'>"
+]) {
+  requireToken('frontend/src/api/model/aigcModel.ts', token)
+}
+
+requireAbsent('frontend/src/api/aigc.ts', /from ['"]@\/utils\/http|from ['"]\.\/paths|request\./, 'manual HTTP client or ApiPaths usage')
+requireAbsent('frontend/src/api/model/aigcModel.ts', /interface\s+\w+\s*{/, 'handwritten interface blocks instead of OpenAPI-derived type aliases')
+
+const aigcViewFiles = walk(path.join(root, 'frontend/src/views/aigc'), (name) => /\.(ts|vue)$/.test(name))
+for (const file of aigcViewFiles) {
+  const relativeFile = relative(file)
+  const source = fs.readFileSync(file, 'utf8')
+  if (/['"`]\/api\/aigc/.test(source)) {
+    fail(`${relativeFile} must not hardcode /api/aigc paths`)
+  }
+  if (source.includes('openApiRequest(')) {
+    fail(`${relativeFile} must call frontend/src/api/aigc.ts instead of openApiRequest directly`)
+  }
+  if (/from ['"]@\/utils\/http|from ['"]@\/api\/openapiClient|from ['"]@\/api\/paths/.test(source)) {
+    fail(`${relativeFile} must keep HTTP/OpenAPI/path details inside API modules`)
+  }
+}
+
+for (const token of [
+  'com.anjing.aigc',
+  'frontend/src/views/aigc',
+  'ApiConstants.Aigc',
+  'openApiRequest',
+  './scripts/check-aigc-scaffold-boundaries.js'
+]) {
+  requireToken('project_document/SCAFFOLD_INHERITANCE_MAP.md', token)
+}
+
+console.log('check-aigc-scaffold-boundaries: ok')

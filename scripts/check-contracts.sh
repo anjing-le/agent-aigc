@@ -97,6 +97,7 @@ require_file scripts/generate-openapi-frontend-types.js
 require_file scripts/check-service-boundaries.js
 require_file scripts/check-shared-kernel.js
 require_file scripts/check-remote-http-contract.js
+require_file scripts/check-aigc-scaffold-boundaries.js
 
 # URL contract: backend Controller mappings use ApiConstants; frontend API modules use ApiPaths.
 require_absent '@(RequestMapping|GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)\(\s*"/api' \
@@ -238,5 +239,6 @@ node scripts/check-openapi-contract.js
 node scripts/check-service-boundaries.js
 node scripts/check-shared-kernel.js
 node scripts/check-remote-http-contract.js
+node scripts/check-aigc-scaffold-boundaries.js
 
 echo "check-contracts: ok"

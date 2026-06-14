@@ -45,11 +45,11 @@ AIGC 业务只放在 `com.anjing.aigc`：
 
 AIGC 页面只聚焦创作体验：
 
-- `views/aigc/studio`：一句话创作、任务状态、Agent 决策、结果预览。
-- `views/aigc/materials`：参考素材上传、筛选、引用任务反查。
-- `views/aigc/assets`：个人资产、下载、删除、发布、Prompt 复用。
-- `views/aigc/gallery`：已发布作品、筛选、Prompt 复用到工作台。
-- `views/aigc/models`：Provider 配置、模型能力和运行前探测。
+- `frontend/src/views/aigc/studio`：一句话创作、任务状态、Agent 决策、结果预览。
+- `frontend/src/views/aigc/materials`：参考素材上传、筛选、引用任务反查。
+- `frontend/src/views/aigc/assets`：个人资产、下载、删除、发布、Prompt 复用。
+- `frontend/src/views/aigc/gallery`：已发布作品、筛选、Prompt 复用到工作台。
+- `frontend/src/views/aigc/models`：Provider 配置、模型能力和运行前探测。
 
 ## API 生长方式
 
@@ -61,6 +61,8 @@ AIGC 页面只聚焦创作体验：
 4. 运行 OpenAPI 类型生成或检查。
 5. 前端通过 `ApiPaths` / `openApiRequest` / `api/model` 调用，不在页面里手写 URL。
 6. 运行 `./scripts/check-contracts.sh`，必要时再跑 `./scripts/quality-gate.sh`。
+
+其中 `./scripts/check-aigc-scaffold-boundaries.js` 是 AIGC 专属守卫：它检查后端 AIGC Controller 是否继续使用 `ApiConstants.Aigc`、`APIResponse` 和 `PageResult`，前端 AIGC API 是否继续通过 `openApiRequest` 与 OpenAPI 派生类型调用，页面是否没有直接拼接 `/api/aigc` 或绕过 API 模块。
 
 ## 教学视角
 
