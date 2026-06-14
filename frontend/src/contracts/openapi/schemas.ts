@@ -154,6 +154,15 @@ export interface APIResponseProviderCredentialUpdateResponse {
   timestamp?: number
 }
 
+export interface APIResponseProviderParamUpdateResponse {
+  code?: string
+  data?: ProviderParamUpdateResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseProviderProbeResponse {
   code?: string
   data?: ProviderProbeResponse
@@ -416,6 +425,8 @@ export interface ModelInfo {
   id?: string
   missingConfig?: string
   name?: string
+  paramConfigSource?: string
+  paramConfigUpdatedAt?: string
   provider?: string
   routeConfigSource?: string
   statusReason?: string
@@ -498,6 +509,38 @@ export interface ProviderExecutionSummary {
 }
 
 /**
+ * Provider 默认参数模板更新请求
+ */
+export interface ProviderParamUpdateRequest {
+  /**
+   * 内容类型
+   */
+  contentType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * 默认参数模板
+   */
+  defaultParams: Record<string, unknown>
+  /**
+   * Provider 类型或名称
+   */
+  provider: string
+  /**
+   * Provider 展示名称
+   */
+  providerName?: string
+}
+
+export interface ProviderParamUpdateResponse {
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  defaultParams?: Record<string, unknown>
+  message?: string
+  paramConfigSource?: string
+  providerName?: string
+  providerType?: string
+  updatedAt?: string
+}
+
+/**
  * Provider 运行前探测请求
  */
 export interface ProviderProbeRequest {
@@ -527,6 +570,8 @@ export interface ProviderProbeResponse {
   defaultParams?: Record<string, unknown>
   message?: string
   missingConfig?: string
+  paramConfigSource?: string
+  paramConfigUpdatedAt?: string
   providerName?: string
   providerType?: string
   registered?: boolean
@@ -563,6 +608,8 @@ export interface ProviderRouteUpdateResponse {
   defaultParams?: Record<string, unknown>
   message?: string
   missingConfig?: string
+  paramConfigSource?: string
+  paramConfigUpdatedAt?: string
   providerName?: string
   providerType?: string
   routable?: boolean
@@ -632,6 +679,7 @@ export interface OpenApiSchemas {
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
   APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
   APIResponseProviderCredentialUpdateResponse: APIResponseProviderCredentialUpdateResponse
+  APIResponseProviderParamUpdateResponse: APIResponseProviderParamUpdateResponse
   APIResponseProviderProbeResponse: APIResponseProviderProbeResponse
   APIResponseProviderRouteUpdateResponse: APIResponseProviderRouteUpdateResponse
   APIResponseString: APIResponseString
@@ -662,6 +710,8 @@ export interface OpenApiSchemas {
   ProviderCredentialUpdateRequest: ProviderCredentialUpdateRequest
   ProviderCredentialUpdateResponse: ProviderCredentialUpdateResponse
   ProviderExecutionSummary: ProviderExecutionSummary
+  ProviderParamUpdateRequest: ProviderParamUpdateRequest
+  ProviderParamUpdateResponse: ProviderParamUpdateResponse
   ProviderProbeRequest: ProviderProbeRequest
   ProviderProbeResponse: ProviderProbeResponse
   ProviderRouteUpdateRequest: ProviderRouteUpdateRequest

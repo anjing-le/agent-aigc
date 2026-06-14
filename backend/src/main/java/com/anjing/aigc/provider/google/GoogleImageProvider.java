@@ -9,6 +9,7 @@ import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
+import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -52,6 +53,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
     
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigService credentialConfigService;
+    private final AigcProviderParamConfigService paramConfigService;
     private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -83,7 +85,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
         if (isAvailable()) {
             log.info("✅ Google Image Provider (Nano Banana) 初始化成功");
             log.info("   模型: {}", aigcProperties.getImage().getGoogle().getModel());
-            log.info("   默认宽高比: {}", aigcProperties.getImage().getGoogle().getDefaultAspectRatio());
+            log.info("   默认宽高比: {}", paramConfigService.getGoogleImageAspectRatio());
             log.info("   API Base: {}", googleConfig.getBaseUrl());
         } else {
             log.warn("⚠️ Google Image Provider 未配置或已禁用");
@@ -142,7 +144,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
                     : request.getPrompt();
             String aspectRatio = request.getAspectRatio() != null 
                     ? request.getAspectRatio() 
-                    : aigcProperties.getImage().getGoogle().getDefaultAspectRatio();
+                    : paramConfigService.getGoogleImageAspectRatio();
             
             // 构建请求 URL（直连 Google API）
             String apiKey = credentialConfigService.getGoogleCredential()
@@ -352,7 +354,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
             
             // Gemini 3 Pro 支持 imageSize
             if (model.contains("gemini-3-pro")) {
-                String imageSize = aigcProperties.getImage().getGoogle().getDefaultImageSize();
+                String imageSize = paramConfigService.getGoogleImageSize();
                 if (imageSize != null && !imageSize.isBlank()) {
                     imageConfig.put("imageSize", imageSize.toUpperCase());
                 }

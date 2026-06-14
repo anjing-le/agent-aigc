@@ -20,6 +20,7 @@ import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcProviderCredentialConfigRepository;
+import com.anjing.aigc.repository.AigcProviderParamConfigRepository;
 import com.anjing.aigc.repository.AigcProviderRouteConfigRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.impl.AigcServiceImpl;
@@ -48,6 +49,10 @@ class AigcServiceImplAssetTest {
             mock(AigcProviderCredentialConfigRepository.class);
     private final AigcProviderCredentialConfigService credentialConfigService =
             new AigcProviderCredentialConfigService(aigcProperties, credentialConfigRepository);
+    private final AigcProviderParamConfigRepository paramConfigRepository =
+            mock(AigcProviderParamConfigRepository.class);
+    private final AigcProviderParamConfigService paramConfigService =
+            new AigcProviderParamConfigService(aigcProperties, paramConfigRepository);
     private final AigcProviderRouteConfigRepository routeConfigRepository =
             mock(AigcProviderRouteConfigRepository.class);
     private final AigcProviderRouteConfigService routeConfigService =
@@ -63,6 +68,7 @@ class AigcServiceImplAssetTest {
             providerRouter,
             aigcProperties,
             credentialConfigService,
+            paramConfigService,
             routeConfigService,
             taskRepository,
             assetRepository,
@@ -136,10 +142,12 @@ class AigcServiceImplAssetTest {
         assertEquals(2, models.getImageModels().size());
         assertEquals("缺少 Google Provider 凭证", models.getImageModels().get(0).getMissingConfig());
         assertEquals("missing", models.getImageModels().get(0).getCredentialSource());
+        assertEquals("configuration", models.getImageModels().get(0).getParamConfigSource());
         assertEquals(true, models.getImageModels().get(0).getActive());
         assertEquals("configuration", models.getImageModels().get(0).getRouteConfigSource());
         assertEquals("mock-image-preview", models.getImageModels().get(1).getConfiguredModel());
         assertEquals("not-required", models.getImageModels().get(1).getCredentialSource());
+        assertEquals("not-required", models.getImageModels().get(1).getParamConfigSource());
         assertEquals("local-demo", models.getImageModels().get(1).getDefaultParams().get("mode"));
     }
 
@@ -248,6 +256,8 @@ class AigcServiceImplAssetTest {
         aigcProperties.getImage().setActiveProvider("google");
         aigcProperties.getProviders().getGoogle().setApiKey(null);
         when(credentialConfigRepository.findByProviderKey("google")).thenReturn(Optional.empty());
+        when(paramConfigRepository.findByContentTypeAndProviderKey(ContentType.IMAGE, "google"))
+                .thenReturn(Optional.empty());
         when(routeConfigRepository.findByContentType(ContentType.IMAGE)).thenReturn(Optional.empty());
 
         ImageGenerationProvider googleProvider = mock(ImageGenerationProvider.class);

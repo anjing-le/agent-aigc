@@ -13,6 +13,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
+import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
@@ -22,6 +23,7 @@ import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderExecutionSummary;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
+import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
@@ -31,6 +33,7 @@ import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
+import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
 import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import com.anjing.aigc.service.AigcService;
@@ -74,6 +77,7 @@ public class AigcServiceImpl implements AigcService {
     private final ProviderRouter providerRouter;
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigService credentialConfigService;
+    private final AigcProviderParamConfigService paramConfigService;
     private final AigcProviderRouteConfigService routeConfigService;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
@@ -229,6 +233,8 @@ public class AigcServiceImpl implements AigcService {
                 .available(provider.isAvailable())
                 .configuredModel(resolveConfiguredModel(provider, contentType))
                 .defaultParams(resolveDefaultParams(provider, contentType))
+                .paramConfigSource(resolveParamConfigSource(provider, contentType))
+                .paramConfigUpdatedAt(resolveParamConfigUpdatedAt(provider, contentType))
                 .missingConfig(resolveMissingConfig(provider))
                 .statusReason(resolveModelStatusReason(provider, active))
                 .icon(contentType.name().toLowerCase())
@@ -253,6 +259,7 @@ public class AigcServiceImpl implements AigcService {
                     .routable(false)
                     .configurationComplete(false)
                     .defaultParams(Map.of())
+                    .paramConfigSource("missing")
                     .missingConfig("未找到已注册 Provider")
                     .statusReason("Provider 未注册到 Spring 容器")
                     .message("探测失败：Provider 未注册")
@@ -280,6 +287,8 @@ public class AigcServiceImpl implements AigcService {
                 .configurationComplete(configurationComplete)
                 .configuredModel(resolveConfiguredModel(provider, contentType))
                 .defaultParams(resolveDefaultParams(provider, contentType))
+                .paramConfigSource(resolveParamConfigSource(provider, contentType))
+                .paramConfigUpdatedAt(resolveParamConfigUpdatedAt(provider, contentType))
                 .missingConfig(missingConfig)
                 .statusReason(resolveModelStatusReason(provider, active))
                 .message(resolveProbeMessage(routable, active, available, configurationComplete))
@@ -315,9 +324,35 @@ public class AigcServiceImpl implements AigcService {
                 .configurationComplete(configurationComplete)
                 .configuredModel(resolveConfiguredModel(provider, contentType))
                 .defaultParams(resolveDefaultParams(provider, contentType))
+                .paramConfigSource(resolveParamConfigSource(provider, contentType))
+                .paramConfigUpdatedAt(resolveParamConfigUpdatedAt(provider, contentType))
                 .missingConfig(missingConfig)
                 .statusReason(resolveModelStatusReason(provider, true))
                 .message(resolveRouteUpdateMessage(routable, configurationComplete, available))
+                .updatedAt(DateUtils.nowIso())
+                .build();
+    }
+
+    @Override
+    public ProviderParamUpdateResponse updateProviderParams(ProviderParamUpdateRequest request) {
+        ContentType contentType = request.getContentType();
+        ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
+        if (provider == null) {
+            throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "Provider 未注册，无法更新参数模板");
+        }
+        if (provider.getProviderType() != ContentProvider.ProviderType.GOOGLE) {
+            throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "当前 V1 仅支持更新 Google Provider 参数模板");
+        }
+
+        paramConfigService.saveGoogleDefaultParams(contentType, request.getDefaultParams(), provider);
+
+        return ProviderParamUpdateResponse.builder()
+                .contentType(contentType)
+                .providerName(provider.getProviderName())
+                .providerType(provider.getProviderType().name())
+                .paramConfigSource(resolveParamConfigSource(provider, contentType))
+                .defaultParams(resolveDefaultParams(provider, contentType))
+                .message("Provider 参数模板已保存")
                 .updatedAt(DateUtils.nowIso())
                 .build();
     }
@@ -453,33 +488,17 @@ public class AigcServiceImpl implements AigcService {
     }
 
     private Map<String, Object> resolveDefaultParams(ContentProvider provider, ContentType contentType) {
-        if (provider.getProviderType() == ContentProvider.ProviderType.OTHER
-                && provider.getProviderName().toLowerCase().contains("mock")) {
-            return Map.of("mode", "local-demo", "externalKey", false);
-        }
-        if (provider.getProviderType() != ContentProvider.ProviderType.GOOGLE) {
-            return Map.of();
-        }
-        return switch (contentType) {
-            case IMAGE -> Map.of(
-                    "aspectRatio", aigcProperties.getImage().getGoogle().getDefaultAspectRatio(),
-                    "imageSize", aigcProperties.getImage().getGoogle().getDefaultImageSize(),
-                    "timeoutMs", aigcProperties.getImage().getGoogle().getTimeout()
-            );
-            case VIDEO -> Map.of(
-                    "aspectRatio", aigcProperties.getVideo().getGoogle().getDefaultAspectRatio(),
-                    "resolution", aigcProperties.getVideo().getGoogle().getDefaultResolution(),
-                    "duration", aigcProperties.getVideo().getGoogle().getDefaultDuration(),
-                    "timeoutMs", aigcProperties.getVideo().getGoogle().getTimeout()
-            );
-            case AUDIO -> Map.of(
-                    "voice", aigcProperties.getAudio().getGoogle().getDefaultVoice(),
-                    "bpm", aigcProperties.getAudio().getGoogle().getDefaultBpm(),
-                    "temperature", aigcProperties.getAudio().getGoogle().getDefaultTemperature(),
-                    "timeoutMs", aigcProperties.getAudio().getGoogle().getTimeout()
-            );
-            case TEXT -> Map.of();
-        };
+        return paramConfigService.getDefaultParams(provider, contentType);
+    }
+
+    private String resolveParamConfigSource(ContentProvider provider, ContentType contentType) {
+        return paramConfigService.getParamConfigSource(provider, contentType);
+    }
+
+    private String resolveParamConfigUpdatedAt(ContentProvider provider, ContentType contentType) {
+        return paramConfigService.getParamConfigUpdatedAt(provider, contentType) == null
+                ? null
+                : paramConfigService.getParamConfigUpdatedAt(provider, contentType).toString();
     }
 
     private String resolveMissingConfig(ContentProvider provider) {

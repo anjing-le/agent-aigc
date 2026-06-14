@@ -30,6 +30,8 @@ public class ProviderProbeResponse {
     private Boolean configurationComplete;
     private String configuredModel;
     private Map<String, Object> defaultParams;
+    private String paramConfigSource;
+    private String paramConfigUpdatedAt;
     private String missingConfig;
     private String statusReason;
     private String message;

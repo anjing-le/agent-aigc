@@ -7,6 +7,7 @@ import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.AudioGenerationProvider;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
+import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,13 +61,12 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
     
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigService credentialConfigService;
+    private final AigcProviderParamConfigService paramConfigService;
     private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     private static final String GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
-    
-    private static final String DEFAULT_VOICE = "Kore";
     
     private static final Map<String, String> VOICE_MAP = Map.of(
             "puck", "Puck",
@@ -340,7 +340,7 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
             return "Charon";
         }
         
-        return DEFAULT_VOICE;
+        return paramConfigService.getGoogleAudioVoice();
     }
     
     private String getExtensionFromMimeType(String mimeType) {

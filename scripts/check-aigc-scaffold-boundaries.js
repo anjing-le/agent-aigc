@@ -112,6 +112,14 @@ for (const token of [
 }
 
 for (const token of [
+  'AigcProviderParamConfigRepository',
+  'findByContentTypeAndProviderKey',
+  'JpaRepository'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcProviderParamConfigRepository.java', token)
+}
+
+for (const token of [
   'getActiveProvider',
   'getConfiguredActiveProvider',
   'getRouteConfigSource',
@@ -127,6 +135,17 @@ for (const token of [
   'saveGoogleCredential'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderCredentialConfigService.java', token)
+}
+
+for (const token of [
+  'getDefaultParams',
+  'saveGoogleDefaultParams',
+  'getParamConfigSource',
+  'getGoogleImageAspectRatio',
+  'getGoogleVideoDuration',
+  'getGoogleAudioVoice'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderParamConfigService.java', token)
 }
 
 requireAbsentInFiles([
@@ -172,6 +191,19 @@ for (const relativeFile of [
   requireAbsent(relativeFile, /getProviders\(\)\.getGoogle\(\)\.getApiKey\(\)/, 'direct Google credential access')
 }
 
+requireToken(
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleImageProvider.java',
+  'paramConfigService.getGoogleImageAspectRatio()'
+)
+requireToken(
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleVideoProvider.java',
+  'paramConfigService.getGoogleVideoDuration()'
+)
+requireToken(
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleAudioProvider.java',
+  'paramConfigService.getGoogleAudioVoice()'
+)
+
 for (const token of [
   'import com.anjing.model.constants.ApiConstants;',
   'import com.anjing.model.response.APIResponse;',
@@ -197,6 +229,7 @@ for (const token of [
   'generate: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.generate',
   'modelActiveProvider: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelActiveProvider',
   'modelProviderCredential: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderCredential',
+  'modelProviderParams: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderParams',
   'assetDetail: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
 ]) {
@@ -211,6 +244,7 @@ for (const token of [
   "openApiRequest('getAssetList'",
   "openApiRequest('updateActiveProvider'",
   "openApiRequest('updateProviderCredential'",
+  "openApiRequest('updateProviderParams'",
   "openApiRequest('uploadMaterial'"
 ]) {
   requireToken('frontend/src/api/aigc.ts', token)
@@ -226,7 +260,8 @@ for (const token of [
   "OpenApiOperationData<'getGalleryList'>",
   "OpenApiOperationData<'getAssetList'>",
   "OpenApiOperationData<'updateActiveProvider'>",
-  "OpenApiOperationData<'updateProviderCredential'>"
+  "OpenApiOperationData<'updateProviderCredential'>",
+  "OpenApiOperationData<'updateProviderParams'>"
 ]) {
   requireToken('frontend/src/api/model/aigcModel.ts', token)
 }

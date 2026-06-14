@@ -62,9 +62,9 @@ AIGC 页面只聚焦创作体验：
 5. 前端通过 `ApiPaths` / `openApiRequest` / `api/model` 调用，不在页面里手写 URL。
 6. 运行 `./scripts/check-contracts.sh`，必要时再跑 `./scripts/quality-gate.sh`。
 
-其中 `./scripts/check-aigc-scaffold-boundaries.js` 是 AIGC 专属守卫：它检查后端 AIGC Controller 是否继续使用 `ApiConstants.Aigc`、`APIResponse` 和 `PageResult`，前端 AIGC API 是否继续通过 `openApiRequest` 与 OpenAPI 派生类型调用，页面是否没有直接拼接 `/api/aigc` 或绕过 API 模块。比如 Provider 持久化切换接口 `/api/aigc/models/active-provider` 也必须先进入 service-boundary，再生成前后端常量和 OpenAPI 类型，并通过 `AigcProviderRouteConfigService` 统一处理数据库配置和环境配置的优先级。
+其中 `./scripts/check-aigc-scaffold-boundaries.js` 是 AIGC 专属守卫：它检查后端 AIGC Controller 是否继续使用 `ApiConstants.Aigc`、`APIResponse` 和 `PageResult`，前端 AIGC API 是否继续通过 `openApiRequest` 与 OpenAPI 派生类型调用，页面是否没有直接拼接 `/api/aigc` 或绕过 API 模块。比如 Provider 持久化切换接口 `/api/aigc/models/active-provider`、默认参数模板接口 `/api/aigc/models/provider-params` 都必须先进入 service-boundary，再生成前后端常量和 OpenAPI 类型，并分别通过 `AigcProviderRouteConfigService`、`AigcProviderParamConfigService` 统一处理数据库配置和环境配置的优先级。
 
-Provider 管理还必须遵守密钥边界：配置页只能展示配置状态、缺失说明、默认参数和来源，不能返回或渲染 `apiKey`、`accessKey`、`secretKey`、`accessKeySecret` 等明文字段；日志也只能记录密钥存在性和长度，不能打印前缀或后缀。Provider 凭证写入通过 `/api/aigc/models/provider-credential` 进入 AIGC service-boundary，前端只能调用 `frontend/src/api/aigc.ts`，后端由 `AigcProviderCredentialConfigService` 统一处理“页面保存优先、环境配置兜底”的来源规则。
+Provider 管理还必须遵守密钥边界：配置页只能展示配置状态、缺失说明、默认参数和来源，不能返回或渲染 `apiKey`、`accessKey`、`secretKey`、`accessKeySecret` 等明文字段；日志也只能记录密钥存在性和长度，不能打印前缀或后缀。Provider 凭证写入通过 `/api/aigc/models/provider-credential` 进入 AIGC service-boundary，前端只能调用 `frontend/src/api/aigc.ts`，后端由 `AigcProviderCredentialConfigService` 统一处理“页面保存优先、环境配置兜底”的来源规则。Provider 默认参数写入同样通过 service-boundary 和 OpenAPI 类型进入页面，不允许在前端页面手写 URL 或绕过 API 模块。
 
 ## 教学视角
 

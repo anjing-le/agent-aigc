@@ -60,6 +60,14 @@
                   <span>更新</span>
                   <strong>{{ formatProbeTime(model.credentialUpdatedAt) }}</strong>
                 </div>
+                <div>
+                  <span>参数</span>
+                  <strong>{{ formatConfigSource(model.paramConfigSource) }}</strong>
+                </div>
+                <div v-if="model.paramConfigUpdatedAt">
+                  <span>调参</span>
+                  <strong>{{ formatProbeTime(model.paramConfigUpdatedAt) }}</strong>
+                </div>
               </div>
               <div v-if="model.missingConfig" class="aigc-models__missing">
                 {{ model.missingConfig }}
@@ -96,6 +104,15 @@
                 @click="openCredentialDialog(model)"
               >
                 凭证
+              </el-button>
+              <el-button
+                v-if="supportsParamUpdate(model)"
+                size="small"
+                :icon="Setting"
+                plain
+                @click="openParamDialog(model)"
+              >
+                参数
               </el-button>
               <el-button
                 v-if="!model.active"
@@ -152,20 +169,74 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="paramDialogVisible" title="Provider 参数模板" width="520px">
+      <el-form label-position="top">
+        <el-form-item label="Provider">
+          <el-input :model-value="paramForm.providerName" disabled />
+        </el-form-item>
+        <el-form-item
+          v-for="entry in paramForm.entries"
+          :key="entry.key"
+          :label="formatParamLabel(entry.key)"
+        >
+          <el-input-number
+            v-if="entry.valueType === 'number'"
+            :model-value="numberParamValue(entry)"
+            :min="0"
+            :precision="entry.key === 'temperature' ? 1 : 0"
+            controls-position="right"
+            class="aigc-models__param-input"
+            @update:model-value="setParamEntryValue(entry, $event || 0)"
+          />
+          <el-switch
+            v-else-if="entry.valueType === 'boolean'"
+            :model-value="Boolean(entry.value)"
+            @update:model-value="setParamEntryValue(entry, $event)"
+          />
+          <el-select
+            v-else-if="paramOptions(entry).length"
+            :model-value="stringParamValue(entry)"
+            filterable
+            @update:model-value="setParamEntryValue(entry, $event)"
+          >
+            <el-option
+              v-for="option in paramOptions(entry)"
+              :key="option"
+              :label="option"
+              :value="option"
+            />
+          </el-select>
+          <el-input
+            v-else
+            :model-value="stringParamValue(entry)"
+            @update:model-value="setParamEntryValue(entry, $event)"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeParamDialog">取消</el-button>
+        <el-button type="primary" :loading="savingParams" @click="handleSaveParams">
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { Connection, Key, Refresh } from '@element-plus/icons-vue'
+  import { Connection, Key, Refresh, Setting } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
   import {
     fetchGetModelList,
     fetchProbeProvider,
     fetchUpdateActiveProvider,
-    fetchUpdateProviderCredential
+    fetchUpdateProviderCredential,
+    fetchUpdateProviderParams
   } from '@/api/aigc'
   import type {
     ContentType,
+    GenerationParams,
     ModelInfo,
     ModelListResponse,
     ProviderProbeResponse
@@ -173,6 +244,12 @@
   import { formatDateTime } from '@/utils/time'
 
   defineOptions({ name: 'AIGCModels' })
+
+  type ParamEntry = {
+    key: string
+    value: string | number | boolean
+    valueType: 'string' | 'number' | 'boolean'
+  }
 
   const loading = ref(false)
   const models = ref<ModelListResponse>({
@@ -183,12 +260,25 @@
   const probingKey = ref('')
   const switchingKey = ref('')
   const savingCredential = ref(false)
+  const savingParams = ref(false)
   const credentialDialogVisible = ref(false)
+  const paramDialogVisible = ref(false)
   const credentialForm = ref({
     contentType: 'IMAGE' as ContentType,
     provider: '',
     providerName: '',
     credential: ''
+  })
+  const paramForm = ref<{
+    contentType: ContentType
+    provider: string
+    providerName: string
+    entries: ParamEntry[]
+  }>({
+    contentType: 'IMAGE',
+    provider: '',
+    providerName: '',
+    entries: []
   })
   const probeResults = ref<Record<string, ProviderProbeResponse>>({})
 
@@ -230,12 +320,14 @@
   }
 
   const formatRouteConfigSource = (source?: string) => {
-    if (source === 'database') return '页面保存'
-    if (source === 'configuration') return '环境配置'
-    return '-'
+    return formatConfigSource(source)
   }
 
   const formatCredentialSource = (source?: string) => {
+    return formatConfigSource(source)
+  }
+
+  const formatConfigSource = (source?: string) => {
     if (source === 'database') return '页面保存'
     if (source === 'configuration') return '环境配置'
     if (source === 'not-required') return '无需配置'
@@ -244,6 +336,7 @@
   }
 
   const supportsCredentialUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
+  const supportsParamUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
 
   const openCredentialDialog = (model: ModelInfo) => {
     credentialForm.value = {
@@ -258,6 +351,71 @@
   const closeCredentialDialog = () => {
     credentialDialogVisible.value = false
     credentialForm.value.credential = ''
+  }
+
+  const openParamDialog = (model: ModelInfo) => {
+    paramForm.value = {
+      contentType: model.contentType,
+      provider: model.provider,
+      providerName: model.name,
+      entries: Object.entries(model.defaultParams || {}).map(([key, value]) => ({
+        key,
+        value,
+        valueType: typeof value as ParamEntry['valueType']
+      }))
+    }
+    paramDialogVisible.value = true
+  }
+
+  const closeParamDialog = () => {
+    paramDialogVisible.value = false
+    paramForm.value.entries = []
+  }
+
+  const formatParamLabel = (key: string) => {
+    const labels: Record<string, string> = {
+      aspectRatio: '宽高比',
+      imageSize: '图片尺寸',
+      timeoutMs: '超时毫秒',
+      resolution: '分辨率',
+      duration: '视频时长',
+      voice: '音色',
+      bpm: 'BPM',
+      temperature: '温度'
+    }
+    return labels[key] || key
+  }
+
+  const paramOptions = (entry: { key: string }) => {
+    const optionMap: Record<string, string[]> = {
+      aspectRatio:
+        paramForm.value.contentType === 'VIDEO'
+          ? ['16:9', '9:16']
+          : ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'],
+      imageSize: ['1K', '2K', '4K'],
+      resolution: ['720p', '1080p'],
+      voice: ['Kore', 'Aoede', 'Fenrir', 'Puck', 'Charon']
+    }
+    return optionMap[entry.key] || []
+  }
+
+  const numberParamValue = (entry: ParamEntry) => {
+    return typeof entry.value === 'number' ? entry.value : Number(entry.value || 0)
+  }
+
+  const stringParamValue = (entry: ParamEntry) => {
+    return String(entry.value ?? '')
+  }
+
+  const setParamEntryValue = (entry: ParamEntry, value: string | number | boolean) => {
+    entry.value = value
+  }
+
+  const buildParamPayload = () => {
+    return paramForm.value.entries.reduce<GenerationParams>((params, entry) => {
+      params[entry.key] = entry.value
+      return params
+    }, {})
   }
 
   const handleProbe = async (model: ModelInfo) => {
@@ -334,6 +492,26 @@
       ElMessage.error('Provider 路由切换失败')
     } finally {
       switchingKey.value = ''
+    }
+  }
+
+  const handleSaveParams = async () => {
+    try {
+      savingParams.value = true
+      const result = await fetchUpdateProviderParams({
+        contentType: paramForm.value.contentType,
+        provider: paramForm.value.provider,
+        providerName: paramForm.value.providerName,
+        defaultParams: buildParamPayload()
+      })
+      ElMessage.success(result.message || 'Provider 参数模板已保存')
+      closeParamDialog()
+      await loadModels()
+    } catch (error) {
+      console.error('Provider 参数模板保存失败:', error)
+      ElMessage.error('Provider 参数模板保存失败')
+    } finally {
+      savingParams.value = false
     }
   }
 
@@ -538,6 +716,10 @@
       flex-wrap: wrap;
       gap: 6px;
       margin-top: 10px;
+    }
+
+    &__param-input {
+      width: 100%;
     }
 
     @media (max-width: 1180px) {

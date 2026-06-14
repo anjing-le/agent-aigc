@@ -4,12 +4,14 @@ import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
+import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
+import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
@@ -88,6 +90,14 @@ public interface AigcService {
      * @return 更新后的非敏感配置摘要
      */
     ProviderCredentialUpdateResponse updateProviderCredential(ProviderCredentialUpdateRequest request);
+
+    /**
+     * 更新 Provider 默认参数模板。
+     *
+     * @param request 参数模板更新请求
+     * @return 更新后的参数模板摘要
+     */
+    ProviderParamUpdateResponse updateProviderParams(ProviderParamUpdateRequest request);
 
     /**
      * 获取灵感广场作品列表

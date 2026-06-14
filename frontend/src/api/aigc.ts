@@ -16,6 +16,8 @@ import type {
   ProviderProbeRequest,
   ProviderCredentialUpdateRequest,
   ProviderCredentialUpdateResponse,
+  ProviderParamUpdateRequest,
+  ProviderParamUpdateResponse,
   ProviderRouteUpdateRequest,
   ProviderRouteUpdateResponse,
   MaterialUploadResponse
@@ -120,6 +122,12 @@ export function fetchUpdateProviderCredential(data: ProviderCredentialUpdateRequ
   return openApiRequest('updateProviderCredential', {
     body: data
   }) as Promise<ProviderCredentialUpdateResponse>
+}
+
+export function fetchUpdateProviderParams(data: ProviderParamUpdateRequest) {
+  return openApiRequest('updateProviderParams', {
+    body: data
+  }) as Promise<ProviderParamUpdateResponse>
 }
 
 export function fetchUploadMaterial(file: File) {

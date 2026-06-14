@@ -58,6 +58,12 @@ public class ModelInfo {
     /** 默认生成参数 */
     private Map<String, Object> defaultParams;
 
+    /** 默认参数模板来源：configuration、database、not-required 或 missing */
+    private String paramConfigSource;
+
+    /** 默认参数模板更新时间，仅数据库来源时返回 */
+    private String paramConfigUpdatedAt;
+
     /** 缺失配置说明 */
     private String missingConfig;
 

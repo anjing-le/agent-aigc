@@ -7,6 +7,7 @@ import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.VideoGenerationProvider;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
+import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +51,7 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
     
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigService credentialConfigService;
+    private final AigcProviderParamConfigService paramConfigService;
     private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -86,7 +88,7 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
             var config = aigcProperties.getVideo().getGoogle();
             log.info("✅ Google Video Provider (Veo) 初始化成功");
             log.info("   模型: {}", config.getModel());
-            log.info("   默认时长: {}秒", config.getDefaultDuration());
+            log.info("   默认时长: {}秒", paramConfigService.getGoogleVideoDuration());
         } else {
             log.warn("⚠️ Google Video Provider 未配置或已禁用");
         }
@@ -143,7 +145,8 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
             String requestBody = buildVideoRequestBody(prompt, config, referenceImages);
             
             boolean hasRef = referenceImages != null && !referenceImages.isEmpty();
-            log.info("调用 Veo API: model={}, duration={}s, 图生视频={}", model, config.getDefaultDuration(), hasRef);
+            log.info("调用 Veo API: model={}, duration={}s, 图生视频={}",
+                    model, paramConfigService.getGoogleVideoDuration(), hasRef);
             
             // 发送请求
             Request httpRequest = new Request.Builder()
@@ -258,11 +261,11 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
         
         // parameters 对象
         ObjectNode parameters = root.putObject("parameters");
-        parameters.put("aspectRatio", config.getDefaultAspectRatio());
-        parameters.put("durationSeconds", config.getDefaultDuration());
+        parameters.put("aspectRatio", paramConfigService.getGoogleVideoAspectRatio());
+        parameters.put("durationSeconds", paramConfigService.getGoogleVideoDuration());
         
-        if (config.getDefaultResolution() != null) {
-            parameters.put("resolution", config.getDefaultResolution());
+        if (paramConfigService.getGoogleVideoResolution() != null) {
+            parameters.put("resolution", paramConfigService.getGoogleVideoResolution());
         }
         
         return objectMapper.writeValueAsString(root);

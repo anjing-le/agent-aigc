@@ -16,7 +16,7 @@ type PageResult<TPage, TRecord> = Omit<TPage, 'records' | 'current' | 'size' | '
   total: number
 }
 
-type GenerationParams = Record<string, string | number | boolean>
+export type GenerationParams = Record<string, string | number | boolean>
 type AigcContentType = NonNullable<Schemas.GenerationResult['contentType']>
 
 /** ==================== 生成相关类型 ==================== */
@@ -316,6 +316,20 @@ export type ProviderCredentialUpdateRequest = Omit<
 
 /** Provider 凭证更新响应 */
 export type ProviderCredentialUpdateResponse = OpenApiOperationData<'updateProviderCredential'>
+
+/** Provider 默认参数模板更新请求 */
+export type ProviderParamUpdateRequest = Omit<
+  OpenApiOperationRequest<'updateProviderParams'>,
+  'contentType' | 'defaultParams'
+> & {
+  /** 内容类型 */
+  contentType: ContentType
+  /** 默认参数模板 */
+  defaultParams: GenerationParams
+}
+
+/** Provider 默认参数模板更新响应 */
+export type ProviderParamUpdateResponse = OpenApiOperationData<'updateProviderParams'>
 
 /** 模型列表响应 */
 export type ModelListResponse = Omit<
