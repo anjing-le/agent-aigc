@@ -21,11 +21,7 @@
       </div>
 
       <!-- 空状态 -->
-      <el-empty
-        v-else-if="items.length === 0"
-        description="暂无创作记录"
-        :image-size="80"
-      />
+      <el-empty v-else-if="items.length === 0" description="暂无创作记录" :image-size="80" />
 
       <!-- 列表 -->
       <div v-else class="history-panel__list">
@@ -100,257 +96,257 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Picture,
-  VideoPlay,
-  Headset,
-  MoreFilled,
-  Download,
-  CopyDocument,
-  Share,
-  Delete
-} from '@element-plus/icons-vue'
-import { ElMessageBox, ElMessage } from 'element-plus'
-import type { AssetItem, ContentType } from '@/api/model/aigcModel'
-import { fetchSaveToGallery, fetchDeleteAsset } from '@/api/aigc'
-import { formatDate } from '@/utils/time'
-import { downloadAigcAsset } from '@/utils/aigcAsset'
+  import {
+    Picture,
+    VideoPlay,
+    Headset,
+    MoreFilled,
+    Download,
+    CopyDocument,
+    Share,
+    Delete
+  } from '@element-plus/icons-vue'
+  import { ElMessageBox, ElMessage } from 'element-plus'
+  import type { AssetItem, ContentType } from '@/api/model/aigcModel'
+  import { fetchSaveToGallery, fetchDeleteAsset } from '@/api/aigc'
+  import { formatDate } from '@/utils/time'
+  import { downloadAigcAsset } from '@/utils/aigcAsset'
 
-interface Props {
-  items: AssetItem[]
-  loading?: boolean
-}
-
-interface Emits {
-  select: [item: AssetItem]
-  reuse: [item: AssetItem]
-  delete: [item: AssetItem]
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  loading: false
-})
-
-const emit = defineEmits<Emits>()
-
-/** 判断内容类型 (忽略大小写) */
-const isImage = (type: ContentType) => type?.toUpperCase() === 'IMAGE'
-const isVideo = (type: ContentType) => type?.toUpperCase() === 'VIDEO'
-const hasVisualPreview = (item: AssetItem) => {
-  return item.url?.startsWith('data:image/') || item.thumbnailUrl?.startsWith('data:image/')
-}
-
-/** 获取内容类型标签 */
-const getContentTypeTag = (type: ContentType) => {
-  const typeUpper = type?.toUpperCase()
-  const map: Record<string, 'success' | 'warning' | 'info'> = {
-    IMAGE: 'success',
-    VIDEO: 'warning',
-    AUDIO: 'info'
+  interface Props {
+    items: AssetItem[]
+    loading?: boolean
   }
-  return map[typeUpper]
-}
 
-/** 获取内容类型文本 */
-const getContentTypeLabel = (type: ContentType) => {
-  const typeUpper = type?.toUpperCase()
-  const map: Record<string, string> = {
-    IMAGE: '图片',
-    VIDEO: '视频',
-    AUDIO: '音频'
+  interface Emits {
+    select: [item: AssetItem]
+    reuse: [item: AssetItem]
+    delete: [item: AssetItem]
   }
-  return map[typeUpper] || type
-}
 
-/** 格式化时间 */
-const formatTime = (time: string) => {
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
+  withDefaults(defineProps<Props>(), {
+    loading: false
+  })
 
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
+  const emit = defineEmits<Emits>()
 
-  return formatDate(time)
-}
-
-/** 处理选择 */
-const handleSelect = (item: AssetItem) => {
-  emit('select', item)
-}
-
-/** 处理命令 */
-const handleCommand = async (command: string, item: AssetItem) => {
-  switch (command) {
-    case 'download':
-      handleDownload(item)
-      break
-    case 'reuse':
-      emit('reuse', item)
-      break
-    case 'share':
-      await handleShare(item)
-      break
-    case 'delete':
-      await handleDelete(item)
-      break
+  /** 判断内容类型 (忽略大小写) */
+  const isImage = (type: ContentType) => type?.toUpperCase() === 'IMAGE'
+  const isVideo = (type: ContentType) => type?.toUpperCase() === 'VIDEO'
+  const hasVisualPreview = (item: AssetItem) => {
+    return item.url?.startsWith('data:image/') || item.thumbnailUrl?.startsWith('data:image/')
   }
-}
 
-/** 处理下载 */
-const handleDownload = (item: AssetItem) => {
-  downloadAigcAsset(item)
-}
-
-/** 处理分享 */
-const handleShare = async (item: AssetItem) => {
-  try {
-    await fetchSaveToGallery(item.id)
-    item.isPublished = true
-    ElMessage.success('已分享到灵感广场')
-  } catch (error) {
-    console.error('分享失败:', error)
-    ElMessage.error('分享失败')
+  /** 获取内容类型标签 */
+  const getContentTypeTag = (type: ContentType) => {
+    const typeUpper = type?.toUpperCase()
+    const map: Record<string, 'success' | 'warning' | 'info'> = {
+      IMAGE: 'success',
+      VIDEO: 'warning',
+      AUDIO: 'info'
+    }
+    return map[typeUpper]
   }
-}
 
-/** 处理删除 */
-const handleDelete = async (item: AssetItem) => {
-  try {
-    await ElMessageBox.confirm('确定要删除这个作品吗？', '提示', {
-      type: 'warning'
-    })
+  /** 获取内容类型文本 */
+  const getContentTypeLabel = (type: ContentType) => {
+    const typeUpper = type?.toUpperCase()
+    const map: Record<string, string> = {
+      IMAGE: '图片',
+      VIDEO: '视频',
+      AUDIO: '音频'
+    }
+    return map[typeUpper] || type
+  }
 
-    await fetchDeleteAsset(item.id)
-    emit('delete', item)
-    ElMessage.success('删除成功')
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+  /** 格式化时间 */
+  const formatTime = (time: string) => {
+    const date = new Date(time)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+
+    if (diff < 60000) return '刚刚'
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
+
+    return formatDate(time)
+  }
+
+  /** 处理选择 */
+  const handleSelect = (item: AssetItem) => {
+    emit('select', item)
+  }
+
+  /** 处理命令 */
+  const handleCommand = async (command: string, item: AssetItem) => {
+    switch (command) {
+      case 'download':
+        handleDownload(item)
+        break
+      case 'reuse':
+        emit('reuse', item)
+        break
+      case 'share':
+        await handleShare(item)
+        break
+      case 'delete':
+        await handleDelete(item)
+        break
     }
   }
-}
+
+  /** 处理下载 */
+  const handleDownload = (item: AssetItem) => {
+    downloadAigcAsset(item)
+  }
+
+  /** 处理分享 */
+  const handleShare = async (item: AssetItem) => {
+    try {
+      await fetchSaveToGallery(item.id)
+      item.isPublished = true
+      ElMessage.success('已分享到灵感广场')
+    } catch (error) {
+      console.error('分享失败:', error)
+      ElMessage.error('分享失败')
+    }
+  }
+
+  /** 处理删除 */
+  const handleDelete = async (item: AssetItem) => {
+    try {
+      await ElMessageBox.confirm('确定要删除这个作品吗？', '提示', {
+        type: 'warning'
+      })
+
+      await fetchDeleteAsset(item.id)
+      emit('delete', item)
+      ElMessage.success('删除成功')
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('删除失败:', error)
+        ElMessage.error('删除失败')
+      }
+    }
+  }
 </script>
 
 <style lang="scss" scoped>
-.history-panel {
-  height: 100%;
-  background: var(--el-bg-color);
-  border-radius: 12px;
-  border: 1px solid var(--el-border-color-light);
-  display: flex;
-  flex-direction: column;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--el-border-color-light);
-  }
-
-  &__title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--el-text-color-primary);
-  }
-
-  &__content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-  }
-
-  &__loading {
-    padding: 16px;
-  }
-
-  &__list {
+  .history-panel {
+    height: 100%;
+    background: var(--el-bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--el-border-color-light);
     display: flex;
     flex-direction: column;
-    gap: 12px;
-  }
 
-  &__item {
-    display: flex;
-    gap: 12px;
-    padding: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-      background: var(--el-fill-color-light);
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--el-border-color-light);
     }
 
-    &-thumb {
-      width: 60px;
-      height: 60px;
-      border-radius: 6px;
-      overflow: hidden;
-      flex-shrink: 0;
+    &__title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--el-text-color-primary);
+    }
 
-      .el-image {
-        width: 100%;
-        height: 100%;
+    &__content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    &__loading {
+      padding: 16px;
+    }
+
+    &__list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    &__item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:hover {
+        background: var(--el-fill-color-light);
       }
 
-      &-icon {
-        width: 100%;
-        height: 100%;
+      &-thumb {
+        width: 60px;
+        height: 60px;
+        border-radius: 6px;
+        overflow: hidden;
+        flex-shrink: 0;
+
+        .el-image {
+          width: 100%;
+          height: 100%;
+        }
+
+        &-icon {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--el-fill-color);
+          color: var(--el-text-color-secondary);
+        }
+
+        &-error {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--el-fill-color);
+          color: var(--el-text-color-placeholder);
+        }
+      }
+
+      &-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      &-prompt {
+        font-size: 13px;
+        color: var(--el-text-color-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-bottom: 6px;
+      }
+
+      &-meta {
         display: flex;
         align-items: center;
-        justify-content: center;
-        background: var(--el-fill-color);
+        gap: 8px;
+      }
+
+      &-time {
+        font-size: 12px;
         color: var(--el-text-color-secondary);
       }
 
-      &-error {
-        width: 100%;
-        height: 100%;
+      &-actions {
         display: flex;
         align-items: center;
-        justify-content: center;
-        background: var(--el-fill-color);
-        color: var(--el-text-color-placeholder);
       }
     }
-
-    &-info {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    &-prompt {
-      font-size: 13px;
-      color: var(--el-text-color-primary);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      margin-bottom: 6px;
-    }
-
-    &-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    &-time {
-      font-size: 12px;
-      color: var(--el-text-color-secondary);
-    }
-
-    &-actions {
-      display: flex;
-      align-items: center;
-    }
   }
-}
 </style>

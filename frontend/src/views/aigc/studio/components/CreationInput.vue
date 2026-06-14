@@ -12,18 +12,34 @@
 
       <div v-if="contentMode !== 'AUTO'" class="creation-input__params">
         <template v-if="contentMode === 'IMAGE'">
-          <el-select v-model="localParams.aspectRatio" size="small" placeholder="比例" :disabled="loading">
+          <el-select
+            v-model="localParams.aspectRatio"
+            size="small"
+            placeholder="比例"
+            :disabled="loading"
+          >
             <el-option label="16:9" value="16:9" />
             <el-option label="1:1" value="1:1" />
             <el-option label="9:16" value="9:16" />
             <el-option label="4:3" value="4:3" />
           </el-select>
-          <el-select v-model="localParams.imageSize" size="small" placeholder="尺寸" :disabled="loading">
+          <el-select
+            v-model="localParams.imageSize"
+            size="small"
+            placeholder="尺寸"
+            :disabled="loading"
+          >
             <el-option label="1K" value="1K" />
             <el-option label="2K" value="2K" />
             <el-option label="4K" value="4K" />
           </el-select>
-          <el-select v-model="localParams.style" size="small" placeholder="风格" clearable :disabled="loading">
+          <el-select
+            v-model="localParams.style"
+            size="small"
+            placeholder="风格"
+            clearable
+            :disabled="loading"
+          >
             <el-option label="写实" value="photorealistic" />
             <el-option label="动漫" value="anime" />
             <el-option label="水彩" value="watercolor" />
@@ -32,27 +48,52 @@
         </template>
 
         <template v-else-if="contentMode === 'VIDEO'">
-          <el-select v-model="localParams.aspectRatio" size="small" placeholder="比例" :disabled="loading">
+          <el-select
+            v-model="localParams.aspectRatio"
+            size="small"
+            placeholder="比例"
+            :disabled="loading"
+          >
             <el-option label="16:9" value="16:9" />
             <el-option label="9:16" value="9:16" />
           </el-select>
-          <el-select v-model="localParams.duration" size="small" placeholder="时长" :disabled="loading">
+          <el-select
+            v-model="localParams.duration"
+            size="small"
+            placeholder="时长"
+            :disabled="loading"
+          >
             <el-option label="4s" :value="4" />
             <el-option label="6s" :value="6" />
             <el-option label="8s" :value="8" />
           </el-select>
-          <el-select v-model="localParams.quality" size="small" placeholder="质量" :disabled="loading">
+          <el-select
+            v-model="localParams.quality"
+            size="small"
+            placeholder="质量"
+            :disabled="loading"
+          >
             <el-option label="快速" value="fast" />
             <el-option label="标准" value="standard" />
           </el-select>
         </template>
 
         <template v-else>
-          <el-select v-model="localParams.audioType" size="small" placeholder="类型" :disabled="loading">
+          <el-select
+            v-model="localParams.audioType"
+            size="small"
+            placeholder="类型"
+            :disabled="loading"
+          >
             <el-option label="配音" value="tts" />
             <el-option label="音乐" value="music" />
           </el-select>
-          <el-select v-model="localParams.voice" size="small" placeholder="音色" :disabled="loading">
+          <el-select
+            v-model="localParams.voice"
+            size="small"
+            placeholder="音色"
+            :disabled="loading"
+          >
             <el-option label="Kore" value="Kore" />
             <el-option label="Aoede" value="Aoede" />
             <el-option label="Fenrir" value="Fenrir" />
@@ -64,19 +105,9 @@
 
     <!-- 上传的素材预览 -->
     <div v-if="localFiles.length > 0" class="creation-input__files">
-      <div
-        v-for="(file, index) in filesPreviews"
-        :key="index"
-        class="creation-input__file-item"
-      >
+      <div v-for="(file, index) in filesPreviews" :key="index" class="creation-input__file-item">
         <img v-if="file.kind === 'image'" :src="file.preview" :alt="file.name" />
-        <video
-          v-else
-          :src="file.preview"
-          muted
-          playsinline
-          class="creation-input__file-video"
-        />
+        <video v-else :src="file.preview" muted playsinline class="creation-input__file-video" />
         <el-icon class="creation-input__file-remove" @click="removeFile(index)">
           <Close />
         </el-icon>
@@ -165,325 +196,333 @@
 </template>
 
 <script setup lang="ts">
-import { Close, FolderAdd, Promotion, Loading, MagicStick } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
-import type { UploadFile } from 'element-plus'
-import type { ContentType } from '@/api/model/aigcModel'
+  import { Close, FolderAdd, Promotion, Loading, MagicStick } from '@element-plus/icons-vue'
+  import { ElMessage } from 'element-plus'
+  import type { UploadFile } from 'element-plus'
+  import type { ContentType } from '@/api/model/aigcModel'
 
-type ContentMode = 'AUTO' | ContentType
-type GenerationParams = Record<string, string | number | boolean>
+  type ContentMode = 'AUTO' | ContentType
+  type GenerationParams = Record<string, string | number | boolean>
 
-interface Props {
-  modelValue: string
-  files?: File[]
-  contentTypeHint?: ContentType | null
-  generationParams?: GenerationParams
-  loading?: boolean
-}
-
-interface Emits {
-  'update:modelValue': [value: string]
-  'update:files': [files: File[]]
-  'update:contentTypeHint': [value: ContentType | null]
-  'update:generationParams': [value: GenerationParams]
-  submit: []
-}
-
-interface FilePreview {
-  file: File
-  name: string
-  preview: string
-  kind: 'image' | 'video'
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  loading: false,
-  files: () => []
-})
-
-const emit = defineEmits<Emits>()
-
-// 输入值双向绑定
-const inputValue = computed({
-  get: () => props.modelValue,
-  set: (val) => emit('update:modelValue', val)
-})
-
-// 文件列表
-const localFiles = computed({
-  get: () => props.files,
-  set: (val) => emit('update:files', val)
-})
-
-const contentMode = computed<ContentMode>({
-  get: () => props.contentTypeHint || 'AUTO',
-  set: (val) => {
-    emit('update:contentTypeHint', val === 'AUTO' ? null : val)
-    emit('update:generationParams', defaultParams(val))
+  interface Props {
+    modelValue: string
+    files?: File[]
+    contentTypeHint?: ContentType | null
+    generationParams?: GenerationParams
+    loading?: boolean
   }
-})
 
-const localParams = computed<GenerationParams>({
-  get: () => props.generationParams || {},
-  set: (val) => emit('update:generationParams', val)
-})
-
-// 文件预览列表
-const filesPreviews = ref<FilePreview[]>([])
-
-// 占位符
-const placeholder = computed(() => {
-  if (localFiles.value.length > 0) {
-    return '描述你想要的创作效果，例如：让图片中的人物动起来...'
+  interface Emits {
+    'update:modelValue': [value: string]
+    'update:files': [files: File[]]
+    'update:contentTypeHint': [value: ContentType | null]
+    'update:generationParams': [value: GenerationParams]
+    submit: []
   }
-  return '描述你想要创作的内容，例如：一只可爱的橘猫在阳光下打盹...'
-})
 
-// 是否可以提交
-const canSubmit = computed(() => {
-  return (inputValue.value.trim() || localFiles.value.length > 0) && !props.loading && !materialIssue.value
-})
+  interface FilePreview {
+    file: File
+    name: string
+    preview: string
+    kind: 'image' | 'video'
+  }
 
-const materialIssue = computed(() => {
-  if (localFiles.value.length === 0) return ''
-  if (contentMode.value === 'AUDIO') {
-    return '音频创作暂不支持引用图片或视频素材'
-  }
-  if (contentMode.value === 'IMAGE' && localFiles.value.some(file => isVideoFile(file))) {
-    return '图片创作仅支持引用图片素材'
-  }
-  return ''
-})
+  const props = withDefaults(defineProps<Props>(), {
+    loading: false,
+    files: () => []
+  })
 
-// 示例提示词
-const examples = [
-  '一只可爱的橘猫在阳光下打盹',
-  '赛博朋克风格的未来城市夜景',
-  '水彩风格的樱花树下的少女',
-  '让这张图片动起来'
-]
+  const emit = defineEmits<Emits>()
 
-const defaultParams = (mode: ContentMode): GenerationParams => {
-  if (mode === 'IMAGE') {
-    return { aspectRatio: '16:9', imageSize: '1K' }
-  }
-  if (mode === 'VIDEO') {
-    return { aspectRatio: '16:9', duration: 8, quality: 'standard' }
-  }
-  if (mode === 'AUDIO') {
-    return { audioType: 'tts', voice: 'Kore' }
-  }
-  return {}
-}
+  // 输入值双向绑定
+  const inputValue = computed({
+    get: () => props.modelValue,
+    set: (val) => emit('update:modelValue', val)
+  })
 
-/** 处理文件选择 */
-const handleFileChange = (file: UploadFile) => {
-  if (file.raw && localFiles.value.length < 4) {
-    if (!isSupportedReferenceFile(file.raw)) {
-      ElMessage.warning('仅支持上传图片或视频素材')
-      return
+  // 文件列表
+  const localFiles = computed({
+    get: () => props.files,
+    set: (val) => emit('update:files', val)
+  })
+
+  const contentMode = computed<ContentMode>({
+    get: () => props.contentTypeHint || 'AUTO',
+    set: (val) => {
+      emit('update:contentTypeHint', val === 'AUTO' ? null : val)
+      emit('update:generationParams', defaultParams(val))
     }
+  })
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      filesPreviews.value.push({
-        file: file.raw!,
-        name: file.name,
-        preview: e.target?.result as string,
-        kind: isVideoFile(file.raw!) ? 'video' : 'image'
-      })
-      emit('update:files', [...localFiles.value, file.raw!])
+  const localParams = computed<GenerationParams>({
+    get: () => props.generationParams || {},
+    set: (val) => emit('update:generationParams', val)
+  })
+
+  // 文件预览列表
+  const filesPreviews = ref<FilePreview[]>([])
+
+  // 占位符
+  const placeholder = computed(() => {
+    if (localFiles.value.length > 0) {
+      return '描述你想要的创作效果，例如：让图片中的人物动起来...'
     }
-    reader.readAsDataURL(file.raw)
+    return '描述你想要创作的内容，例如：一只可爱的橘猫在阳光下打盹...'
+  })
+
+  // 是否可以提交
+  const canSubmit = computed(() => {
+    return (
+      (inputValue.value.trim() || localFiles.value.length > 0) &&
+      !props.loading &&
+      !materialIssue.value
+    )
+  })
+
+  const materialIssue = computed(() => {
+    if (localFiles.value.length === 0) return ''
+    if (contentMode.value === 'AUDIO') {
+      return '音频创作暂不支持引用图片或视频素材'
+    }
+    if (contentMode.value === 'IMAGE' && localFiles.value.some((file) => isVideoFile(file))) {
+      return '图片创作仅支持引用图片素材'
+    }
+    return ''
+  })
+
+  // 示例提示词
+  const examples = [
+    '一只可爱的橘猫在阳光下打盹',
+    '赛博朋克风格的未来城市夜景',
+    '水彩风格的樱花树下的少女',
+    '让这张图片动起来'
+  ]
+
+  const defaultParams = (mode: ContentMode): GenerationParams => {
+    if (mode === 'IMAGE') {
+      return { aspectRatio: '16:9', imageSize: '1K' }
+    }
+    if (mode === 'VIDEO') {
+      return { aspectRatio: '16:9', duration: 8, quality: 'standard' }
+    }
+    if (mode === 'AUDIO') {
+      return { audioType: 'tts', voice: 'Kore' }
+    }
+    return {}
   }
-}
 
-const isSupportedReferenceFile = (file: File) => isImageFile(file) || isVideoFile(file)
-const isImageFile = (file: File) => file.type.startsWith('image/')
-const isVideoFile = (file: File) => file.type.startsWith('video/')
+  /** 处理文件选择 */
+  const handleFileChange = (file: UploadFile) => {
+    if (file.raw && localFiles.value.length < 4) {
+      if (!isSupportedReferenceFile(file.raw)) {
+        ElMessage.warning('仅支持上传图片或视频素材')
+        return
+      }
 
-/** 移除文件 */
-const removeFile = (index: number) => {
-  filesPreviews.value.splice(index, 1)
-  const newFiles = [...localFiles.value]
-  newFiles.splice(index, 1)
-  emit('update:files', newFiles)
-}
-
-/** 处理提交 */
-const handleSubmit = () => {
-  if (!canSubmit.value) return
-  emit('submit')
-}
-
-// 同步文件预览
-watch(() => props.files, (newFiles) => {
-  if (newFiles.length === 0) {
-    filesPreviews.value = []
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        filesPreviews.value.push({
+          file: file.raw!,
+          name: file.name,
+          preview: e.target?.result as string,
+          kind: isVideoFile(file.raw!) ? 'video' : 'image'
+        })
+        emit('update:files', [...localFiles.value, file.raw!])
+      }
+      reader.readAsDataURL(file.raw)
+    }
   }
-}, { deep: true })
+
+  const isSupportedReferenceFile = (file: File) => isImageFile(file) || isVideoFile(file)
+  const isImageFile = (file: File) => file.type.startsWith('image/')
+  const isVideoFile = (file: File) => file.type.startsWith('video/')
+
+  /** 移除文件 */
+  const removeFile = (index: number) => {
+    filesPreviews.value.splice(index, 1)
+    const newFiles = [...localFiles.value]
+    newFiles.splice(index, 1)
+    emit('update:files', newFiles)
+  }
+
+  /** 处理提交 */
+  const handleSubmit = () => {
+    if (!canSubmit.value) return
+    emit('submit')
+  }
+
+  // 同步文件预览
+  watch(
+    () => props.files,
+    (newFiles) => {
+      if (newFiles.length === 0) {
+        filesPreviews.value = []
+      }
+    },
+    { deep: true }
+  )
 </script>
 
 <style lang="scss" scoped>
-.creation-input {
-  background: var(--el-bg-color);
-  border-radius: 16px;
-  padding: 20px;
-  border: 1px solid var(--el-border-color-light);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  .creation-input {
+    background: var(--el-bg-color);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--el-border-color-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-  &__controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-
-  &__params {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-
-    .el-select {
-      width: 96px;
+    &__controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
     }
-  }
 
-  &__files {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+    &__params {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
 
-  &__file-item {
-    position: relative;
-    width: 72px;
-    height: 72px;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 2px solid var(--el-border-color-light);
+      .el-select {
+        width: 96px;
+      }
+    }
 
-    img {
+    &__files {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    &__file-item {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--el-border-color-light);
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    &__file-video {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-  }
 
-  &__file-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  &__file-remove {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 20px;
-    height: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 50%;
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    transition: background 0.2s;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.8);
-    }
-  }
-
-  &__file-tip {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-
-  &__warning {
-    margin-bottom: 12px;
-    font-size: 12px;
-    color: var(--el-color-danger);
-  }
-
-  &__main {
-    display: flex;
-    align-items: flex-end;
-    gap: 12px;
-  }
-
-  &__upload-btn {
-    flex-shrink: 0;
-  }
-
-  &__textarea {
-    flex: 1;
-
-    :deep(.el-textarea__inner) {
-      background: var(--el-fill-color-light);
-      border: none;
-      border-radius: 12px;
-      padding: 14px 18px;
-      font-size: 15px;
-      line-height: 1.6;
-
-      &:focus {
-        box-shadow: 0 0 0 2px var(--el-color-primary-light-7);
-      }
-    }
-  }
-
-  &__send-btn {
-    flex-shrink: 0;
-  }
-
-  &__tips {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-
-    &-left {
+    &__file-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      font-size: 12px;
+      transition: background 0.2s;
 
-      .el-icon {
+      &:hover {
+        background: rgba(0, 0, 0, 0.8);
+      }
+    }
+
+    &__file-tip {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__warning {
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: var(--el-color-danger);
+    }
+
+    &__main {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    &__upload-btn {
+      flex-shrink: 0;
+    }
+
+    &__textarea {
+      flex: 1;
+
+      :deep(.el-textarea__inner) {
+        background: var(--el-fill-color-light);
+        border: none;
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-size: 15px;
+        line-height: 1.6;
+
+        &:focus {
+          box-shadow: 0 0 0 2px var(--el-color-primary-light-7);
+        }
+      }
+    }
+
+    &__send-btn {
+      flex-shrink: 0;
+    }
+
+    &__tips {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+
+      &-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .el-icon {
+          color: var(--el-color-primary);
+        }
+      }
+    }
+
+    &__examples {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+
+      &-label {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__example-tag {
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: var(--el-color-primary-light-9);
+        border-color: var(--el-color-primary);
         color: var(--el-color-primary);
       }
     }
   }
-
-  &__examples {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-
-    &-label {
-      font-size: 12px;
-      color: var(--el-text-color-secondary);
-    }
-  }
-
-  &__example-tag {
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background: var(--el-color-primary-light-9);
-      border-color: var(--el-color-primary);
-      color: var(--el-color-primary);
-    }
-  }
-}
 </style>
