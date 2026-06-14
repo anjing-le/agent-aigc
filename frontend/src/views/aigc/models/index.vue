@@ -5,7 +5,9 @@
         <h2 class="aigc-models__title">模型配置</h2>
         <p class="aigc-models__subtitle">Provider 状态来自后端配置和已注册 Bean</p>
       </div>
-      <el-button :icon="Refresh" :loading="loading" @click="loadModels">刷新</el-button>
+      <el-button :icon="Refresh" :loading="loading || auditLoading" @click="loadModelConsole">
+        刷新
+      </el-button>
     </div>
 
     <div class="aigc-models__groups">
@@ -140,6 +142,49 @@
       </section>
     </div>
 
+    <section class="aigc-models__audit">
+      <div class="aigc-models__audit-header">
+        <div>
+          <h3 class="aigc-models__audit-title">最近变更</h3>
+          <p class="aigc-models__audit-desc">Provider 路由、凭证和参数模板的运行时变更记录</p>
+        </div>
+        <el-tag size="small" effect="plain">{{ auditLogs.length }} 条</el-tag>
+      </div>
+      <el-table
+        v-loading="auditLoading"
+        :data="auditLogs"
+        size="small"
+        class="aigc-models__audit-table"
+        empty-text="暂无变更记录"
+      >
+        <el-table-column label="动作" min-width="108">
+          <template #default="{ row }">
+            <el-tag size="small" :type="auditActionTag(row.action)" effect="plain">
+              {{ formatAuditAction(row.action) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="类型" min-width="84">
+          <template #default="{ row }">{{ formatContentType(row.contentType) }}</template>
+        </el-table-column>
+        <el-table-column
+          prop="providerName"
+          label="Provider"
+          min-width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column label="变更摘要" min-width="260" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatAuditSummary(row) }}</template>
+        </el-table-column>
+        <el-table-column label="操作人" min-width="110" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.operatorName || row.operatorId || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="时间" min-width="150">
+          <template #default="{ row }">{{ formatProbeTime(row.createdAt) }}</template>
+        </el-table-column>
+      </el-table>
+    </section>
+
     <el-dialog v-model="credentialDialogVisible" title="Provider 凭证" width="440px">
       <el-form label-position="top">
         <el-form-item label="Provider">
@@ -228,6 +273,7 @@
   import { Connection, Key, Refresh, Setting } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
   import {
+    fetchGetProviderAuditLogs,
     fetchGetModelList,
     fetchProbeProvider,
     fetchUpdateActiveProvider,
@@ -239,6 +285,7 @@
     GenerationParams,
     ModelInfo,
     ModelListResponse,
+    ProviderAuditLogItem,
     ProviderProbeResponse
   } from '@/api/model/aigcModel'
   import { formatDateTime } from '@/utils/time'
@@ -252,11 +299,13 @@
   }
 
   const loading = ref(false)
+  const auditLoading = ref(false)
   const models = ref<ModelListResponse>({
     imageModels: [],
     videoModels: [],
     audioModels: []
   })
+  const auditLogs = ref<ProviderAuditLogItem[]>([])
   const probingKey = ref('')
   const switchingKey = ref('')
   const savingCredential = ref(false)
@@ -333,6 +382,27 @@
     if (source === 'not-required') return '无需配置'
     if (source === 'missing') return '未配置'
     return '-'
+  }
+
+  const formatContentType = (contentType?: string) => {
+    if (contentType === 'IMAGE') return '图片'
+    if (contentType === 'VIDEO') return '视频'
+    if (contentType === 'AUDIO') return '音频'
+    return '-'
+  }
+
+  const formatAuditAction = (action?: string) => {
+    if (action === 'active-provider') return '路由'
+    if (action === 'credential') return '凭证'
+    if (action === 'params') return '参数'
+    return action || '-'
+  }
+
+  const auditActionTag = (action?: string) => {
+    if (action === 'active-provider') return 'primary'
+    if (action === 'credential') return 'warning'
+    if (action === 'params') return 'success'
+    return 'info'
   }
 
   const supportsCredentialUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
@@ -418,6 +488,26 @@
     }, {})
   }
 
+  const formatAuditValue = (value: unknown) => {
+    if (value == null || value === '') return '-'
+    if (typeof value === 'object') {
+      return Object.entries(value as Record<string, unknown>)
+        .map(([key, item]) => `${key}: ${item}`)
+        .join(', ')
+    }
+    return String(value)
+  }
+
+  const formatAuditSummary = (row: ProviderAuditLogItem) => {
+    const before = row.beforeSummary || {}
+    const after = row.afterSummary || {}
+    const changedKeys = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]))
+    return changedKeys
+      .slice(0, 4)
+      .map((key) => `${key}: ${formatAuditValue(before[key])} -> ${formatAuditValue(after[key])}`)
+      .join('；')
+  }
+
   const handleProbe = async (model: ModelInfo) => {
     try {
       probingKey.value = model.id
@@ -464,7 +554,7 @@
         ElMessage.warning(result.message || 'Provider 凭证已保存，请继续检查配置')
       }
       closeCredentialDialog()
-      await loadModels()
+      await loadModelConsole()
     } catch (error) {
       console.error('Provider 凭证保存失败:', error)
       ElMessage.error('Provider 凭证保存失败')
@@ -486,7 +576,7 @@
       } else {
         ElMessage.warning(result.message || 'Provider 已切换，请检查配置')
       }
-      await loadModels()
+      await loadModelConsole()
     } catch (error) {
       console.error('Provider 路由切换失败:', error)
       ElMessage.error('Provider 路由切换失败')
@@ -506,7 +596,7 @@
       })
       ElMessage.success(result.message || 'Provider 参数模板已保存')
       closeParamDialog()
-      await loadModels()
+      await loadModelConsole()
     } catch (error) {
       console.error('Provider 参数模板保存失败:', error)
       ElMessage.error('Provider 参数模板保存失败')
@@ -528,8 +618,24 @@
     }
   }
 
+  const loadAuditLogs = async () => {
+    try {
+      auditLoading.value = true
+      const result = await fetchGetProviderAuditLogs({ current: 1, size: 8 })
+      auditLogs.value = result.records || []
+    } catch (error) {
+      console.error('加载 Provider 审计日志失败:', error)
+    } finally {
+      auditLoading.value = false
+    }
+  }
+
+  const loadModelConsole = async () => {
+    await Promise.all([loadModels(), loadAuditLogs()])
+  }
+
   onMounted(() => {
-    loadModels()
+    loadModelConsole()
   })
 </script>
 
@@ -564,6 +670,40 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
+    }
+
+    &__audit {
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+      background: var(--el-bg-color);
+    }
+
+    &__audit-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    &__audit-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    &__audit-desc {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      line-height: 1.5;
+    }
+
+    &__audit-table {
+      width: 100%;
     }
 
     &__group {

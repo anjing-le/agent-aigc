@@ -11,6 +11,7 @@ import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
@@ -140,6 +141,18 @@ public class AigcController {
             @Valid @RequestBody ProviderParamUpdateRequest request) {
         ProviderParamUpdateResponse response = aigcService.updateProviderParams(request);
         return APIResponse.success(response);
+    }
+
+    @GetMapping(ApiConstants.Aigc.MODEL_PROVIDER_AUDITS)
+    @Operation(summary = "获取 AIGC Provider 管理审计日志")
+    public APIResponse<PageResult<ProviderAuditLogResponse>> getProviderAuditLogs(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String contentType,
+            @RequestParam(required = false) String action) {
+        PageResult<ProviderAuditLogResponse> logs = aigcService.getProviderAuditLogs(
+                current, size, contentType, action);
+        return APIResponse.success(logs);
     }
 
     @PostMapping(ApiConstants.Aigc.MATERIAL_UPLOAD)

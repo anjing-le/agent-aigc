@@ -63,6 +63,7 @@ export const ApiPaths = {
     modelActiveProvider: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelActiveProvider,
     modelProviderCredential: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderCredential,
     modelProviderParams: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderParams,
+    modelProviderAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderAudits,
     materials: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materials,
     materialDetail: (materialId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDetail, { materialId }),

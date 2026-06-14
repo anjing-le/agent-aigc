@@ -45,6 +45,7 @@ class AigcServiceImplAssetTest {
     private final AigcTaskExecutor taskExecutor = mock(AigcTaskExecutor.class);
     private final ProviderRouter providerRouter = mock(ProviderRouter.class);
     private final AigcProperties aigcProperties = new AigcProperties();
+    private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
     private final AigcProviderCredentialConfigRepository credentialConfigRepository =
             mock(AigcProviderCredentialConfigRepository.class);
     private final AigcProviderCredentialConfigService credentialConfigService =
@@ -67,6 +68,7 @@ class AigcServiceImplAssetTest {
             taskExecutor,
             providerRouter,
             aigcProperties,
+            auditLogService,
             credentialConfigService,
             paramConfigService,
             routeConfigService,

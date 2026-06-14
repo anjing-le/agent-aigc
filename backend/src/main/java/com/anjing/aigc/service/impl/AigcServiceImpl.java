@@ -21,6 +21,7 @@ import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderExecutionSummary;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
@@ -33,6 +34,7 @@ import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
+import com.anjing.aigc.service.AigcProviderAuditLogService;
 import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
 import com.anjing.aigc.service.AigcProviderRouteConfigService;
@@ -55,6 +57,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,6 +79,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcTaskExecutor taskExecutor;
     private final ProviderRouter providerRouter;
     private final AigcProperties aigcProperties;
+    private final AigcProviderAuditLogService auditLogService;
     private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderParamConfigService paramConfigService;
     private final AigcProviderRouteConfigService routeConfigService;
@@ -304,8 +308,19 @@ public class AigcServiceImpl implements AigcService {
             throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "Provider 未注册，无法切换路由");
         }
 
+        Map<String, Object> beforeSummary = auditSummary(
+                "activeProvider", getActiveProvider(contentType),
+                "routeConfigSource", routeConfigService.getRouteConfigSource(contentType)
+        );
         String activeProvider = resolveActiveProviderKey(provider);
         routeConfigService.saveActiveProvider(contentType, activeProvider, provider);
+        Map<String, Object> afterSummary = auditSummary(
+                "activeProvider", activeProvider,
+                "routeConfigSource", routeConfigService.getRouteConfigSource(contentType),
+                "configuredModel", resolveConfiguredModel(provider, contentType)
+        );
+        recordProviderAudit(AigcProviderAuditLogService.ACTION_ACTIVE_PROVIDER,
+                contentType, activeProvider, provider, beforeSummary, afterSummary);
 
         boolean available = provider.isAvailable();
         String missingConfig = resolveMissingConfig(provider);
@@ -344,7 +359,17 @@ public class AigcServiceImpl implements AigcService {
             throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "当前 V1 仅支持更新 Google Provider 参数模板");
         }
 
+        Map<String, Object> beforeSummary = auditSummary(
+                "paramConfigSource", resolveParamConfigSource(provider, contentType),
+                "defaultParams", resolveDefaultParams(provider, contentType)
+        );
         paramConfigService.saveGoogleDefaultParams(contentType, request.getDefaultParams(), provider);
+        Map<String, Object> afterSummary = auditSummary(
+                "paramConfigSource", resolveParamConfigSource(provider, contentType),
+                "defaultParams", resolveDefaultParams(provider, contentType)
+        );
+        recordProviderAudit(AigcProviderAuditLogService.ACTION_PARAMS,
+                contentType, AigcProviderParamConfigService.GOOGLE_PROVIDER_KEY, provider, beforeSummary, afterSummary);
 
         return ProviderParamUpdateResponse.builder()
                 .contentType(contentType)
@@ -368,11 +393,22 @@ public class AigcServiceImpl implements AigcService {
             throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "当前 V1 仅支持更新 Google Provider 凭证");
         }
 
+        Map<String, Object> beforeSummary = auditSummary(
+                "credentialSource", resolveCredentialSource(provider),
+                "configurationComplete", resolveMissingConfig(provider) == null
+        );
         credentialConfigService.saveGoogleCredential(request.getCredential(), provider);
 
         boolean available = provider.isAvailable();
         String missingConfig = resolveMissingConfig(provider);
         boolean configurationComplete = missingConfig == null;
+        Map<String, Object> afterSummary = auditSummary(
+                "credentialSource", resolveCredentialSource(provider),
+                "configurationComplete", configurationComplete,
+                "available", available
+        );
+        recordProviderAudit(AigcProviderAuditLogService.ACTION_CREDENTIAL,
+                contentType, AigcProviderCredentialConfigService.GOOGLE_PROVIDER_KEY, provider, beforeSummary, afterSummary);
 
         return ProviderCredentialUpdateResponse.builder()
                 .contentType(contentType)
@@ -385,6 +421,12 @@ public class AigcServiceImpl implements AigcService {
                 .message(resolveCredentialUpdateMessage(configurationComplete, available))
                 .updatedAt(DateUtils.nowIso())
                 .build();
+    }
+
+    @Override
+    public PageResult<ProviderAuditLogResponse> getProviderAuditLogs(
+            Integer current, Integer size, String contentType, String action) {
+        return auditLogService.getAuditLogs(current, size, parseContentType(contentType), action);
     }
 
     private String toModelId(ContentProvider provider, ContentType contentType) {
@@ -576,6 +618,30 @@ public class AigcServiceImpl implements AigcService {
             return "Provider 凭证已保存，请继续检查 Provider 启用状态";
         }
         return "Provider 凭证已保存，但配置仍不完整";
+    }
+
+    private void recordProviderAudit(String action, ContentType contentType, String providerKey,
+            ContentProvider provider, Map<String, Object> beforeSummary, Map<String, Object> afterSummary) {
+        auditLogService.record(
+                action,
+                contentType,
+                providerKey,
+                provider.getProviderName(),
+                provider.getProviderType().name(),
+                beforeSummary,
+                afterSummary
+        );
+    }
+
+    private Map<String, Object> auditSummary(Object... values) {
+        Map<String, Object> summary = new LinkedHashMap<>();
+        for (int index = 0; index < values.length; index += 2) {
+            Object value = values[index + 1];
+            if (value != null) {
+                summary.put(String.valueOf(values[index]), value);
+            }
+        }
+        return summary;
     }
 
     @Override

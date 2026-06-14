@@ -10,6 +10,7 @@ import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
@@ -98,6 +99,18 @@ public interface AigcService {
      * @return 更新后的参数模板摘要
      */
     ProviderParamUpdateResponse updateProviderParams(ProviderParamUpdateRequest request);
+
+    /**
+     * 获取 Provider 管理审计日志。
+     *
+     * @param current 当前页
+     * @param size 每页大小
+     * @param contentType 内容类型
+     * @param action 审计动作
+     * @return 审计分页列表
+     */
+    PageResult<ProviderAuditLogResponse> getProviderAuditLogs(
+            Integer current, Integer size, String contentType, String action);
 
     /**
      * 获取灵感广场作品列表

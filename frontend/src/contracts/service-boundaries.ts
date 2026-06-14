@@ -284,6 +284,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "modelProviderAudits",
+          "backendConstant": "MODEL_PROVIDER_AUDITS_FULL",
+          "frontendKey": "modelProviderAudits",
+          "path": "/api/aigc/models/provider-audits",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "materials",
           "backendConstant": "MATERIALS_FULL",
           "frontendKey": "materials",
@@ -420,6 +429,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "materialUpload": "/api/aigc/materials/upload",
     "modelActiveProvider": "/api/aigc/models/active-provider",
     "modelProbe": "/api/aigc/models/probe",
+    "modelProviderAudits": "/api/aigc/models/provider-audits",
     "modelProviderCredential": "/api/aigc/models/provider-credential",
     "modelProviderParams": "/api/aigc/models/provider-params",
     "models": "/api/aigc/models",

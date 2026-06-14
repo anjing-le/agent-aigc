@@ -136,6 +136,15 @@ export interface APIResponsePageResultMaterialDTO {
   timestamp?: number
 }
 
+export interface APIResponsePageResultProviderAuditLogResponse {
+  code?: string
+  data?: PageResultProviderAuditLogResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponsePageResultTaskStatusResponse {
   code?: string
   data?: PageResultTaskStatusResponse
@@ -459,11 +468,37 @@ export interface PageResultMaterialDTO {
   total?: number
 }
 
+export interface PageResultProviderAuditLogResponse {
+  current?: number
+  records?: ProviderAuditLogResponse[]
+  size?: number
+  total?: number
+}
+
 export interface PageResultTaskStatusResponse {
   current?: number
   records?: TaskStatusResponse[]
   size?: number
   total?: number
+}
+
+export interface ProviderAuditLogResponse {
+  action?: string
+  afterSummary?: Record<string, unknown>
+  beforeSummary?: Record<string, unknown>
+  callerId?: string
+  clientIp?: string
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  createdAt?: string
+  id?: number
+  operatorId?: string
+  operatorName?: string
+  providerKey?: string
+  providerName?: string
+  providerType?: string
+  requestId?: string
+  tenantId?: string
+  traceId?: string
 }
 
 /**
@@ -677,6 +712,7 @@ export interface OpenApiSchemas {
   APIResponsePageResultAssetDTO: APIResponsePageResultAssetDTO
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
+  APIResponsePageResultProviderAuditLogResponse: APIResponsePageResultProviderAuditLogResponse
   APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
   APIResponseProviderCredentialUpdateResponse: APIResponseProviderCredentialUpdateResponse
   APIResponseProviderParamUpdateResponse: APIResponseProviderParamUpdateResponse
@@ -706,7 +742,9 @@ export interface OpenApiSchemas {
   PageResultAssetDTO: PageResultAssetDTO
   PageResultGalleryDTO: PageResultGalleryDTO
   PageResultMaterialDTO: PageResultMaterialDTO
+  PageResultProviderAuditLogResponse: PageResultProviderAuditLogResponse
   PageResultTaskStatusResponse: PageResultTaskStatusResponse
+  ProviderAuditLogResponse: ProviderAuditLogResponse
   ProviderCredentialUpdateRequest: ProviderCredentialUpdateRequest
   ProviderCredentialUpdateResponse: ProviderCredentialUpdateResponse
   ProviderExecutionSummary: ProviderExecutionSummary

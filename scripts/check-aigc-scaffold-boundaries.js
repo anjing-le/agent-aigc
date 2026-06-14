@@ -120,6 +120,14 @@ for (const token of [
 }
 
 for (const token of [
+  'AigcProviderAuditLogRepository',
+  'findByContentTypeAndAction',
+  'JpaRepository'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcProviderAuditLogRepository.java', token)
+}
+
+for (const token of [
   'getActiveProvider',
   'getConfiguredActiveProvider',
   'getRouteConfigSource',
@@ -148,12 +156,23 @@ for (const token of [
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderParamConfigService.java', token)
 }
 
+for (const token of [
+  'GlobalRequestContextHolder',
+  'ACTION_ACTIVE_PROVIDER',
+  'ACTION_CREDENTIAL',
+  'ACTION_PARAMS',
+  'getAuditLogs'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderAuditLogService.java', token)
+}
+
 requireAbsentInFiles([
   'backend/src/main/java/com/anjing/aigc/model/dto/ModelInfo.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ModelListResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderProbeResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderRouteUpdateResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderCredentialUpdateResponse.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/ProviderAuditLogResponse.java',
   'frontend/src/api/model/aigcModel.ts',
   'frontend/src/views/aigc/models/index.vue'
 ], /\b(apiKey|accessKey|secretKey|accessKeySecret)\b/i, 'provider secret field exposed to frontend contracts')
@@ -230,6 +249,7 @@ for (const token of [
   'modelActiveProvider: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelActiveProvider',
   'modelProviderCredential: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderCredential',
   'modelProviderParams: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderParams',
+  'modelProviderAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderAudits',
   'assetDetail: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
 ]) {
@@ -245,6 +265,7 @@ for (const token of [
   "openApiRequest('updateActiveProvider'",
   "openApiRequest('updateProviderCredential'",
   "openApiRequest('updateProviderParams'",
+  "openApiRequest('getProviderAuditLogs'",
   "openApiRequest('uploadMaterial'"
 ]) {
   requireToken('frontend/src/api/aigc.ts', token)
@@ -262,6 +283,13 @@ for (const token of [
   "OpenApiOperationData<'updateActiveProvider'>",
   "OpenApiOperationData<'updateProviderCredential'>",
   "OpenApiOperationData<'updateProviderParams'>"
+]) {
+  requireToken('frontend/src/api/model/aigcModel.ts', token)
+}
+
+for (const token of [
+  "OpenApiOperationQuery<'getProviderAuditLogs'>",
+  "OpenApiOperationData<'getProviderAuditLogs'>"
 ]) {
   requireToken('frontend/src/api/model/aigcModel.ts', token)
 }

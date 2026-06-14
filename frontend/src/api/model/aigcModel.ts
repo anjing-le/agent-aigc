@@ -331,6 +331,23 @@ export type ProviderParamUpdateRequest = Omit<
 /** Provider 默认参数模板更新响应 */
 export type ProviderParamUpdateResponse = OpenApiOperationData<'updateProviderParams'>
 
+/** Provider 管理审计日志项 */
+export type ProviderAuditLogItem = Schemas.ProviderAuditLogResponse
+
+/** Provider 管理审计日志查询参数 */
+export type ProviderAuditLogSearchParams = OpenApiOperationQuery<'getProviderAuditLogs'> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 审计动作筛选 */
+  action?: string
+}
+
+/** Provider 管理审计日志列表响应 */
+export type ProviderAuditLogListResponse = PageResult<
+  OpenApiOperationData<'getProviderAuditLogs'>,
+  ProviderAuditLogItem
+>
+
 /** 模型列表响应 */
 export type ModelListResponse = Omit<
   OpenApiOperationData<'getModels'>,

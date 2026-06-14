@@ -18,6 +18,8 @@ import type {
   ProviderCredentialUpdateResponse,
   ProviderParamUpdateRequest,
   ProviderParamUpdateResponse,
+  ProviderAuditLogListResponse,
+  ProviderAuditLogSearchParams,
   ProviderRouteUpdateRequest,
   ProviderRouteUpdateResponse,
   MaterialUploadResponse
@@ -128,6 +130,12 @@ export function fetchUpdateProviderParams(data: ProviderParamUpdateRequest) {
   return openApiRequest('updateProviderParams', {
     body: data
   }) as Promise<ProviderParamUpdateResponse>
+}
+
+export function fetchGetProviderAuditLogs(params: ProviderAuditLogSearchParams) {
+  return openApiRequest('getProviderAuditLogs', {
+    query: params
+  }) as Promise<ProviderAuditLogListResponse>
 }
 
 export function fetchUploadMaterial(file: File) {
