@@ -1,13 +1,16 @@
 # agent-aigc
 
-全模态 AIGC 创作平台，核心是多模型调度、Prompt 优化链、文生图/音频/视频、创作历史和模型参数配置。
+基于 `infra-dev-scaffolding` 生长出来的 AIGC 创作平台。
 
-## 核心能力
+底层工程规范、质量门禁、前后端分层和契约习惯来自脚手架；本项目只把注意力放在 AIGC 业务设计上：多模型调度、Prompt 优化链、文生图/音频/视频、素材库、资产库和灵感广场。
 
-- 一句话创作：识别意图、选择模型、优化 Prompt、创建生成任务
-- 多模态生成：图片、音频、视频能力预留统一入口
-- 创作资产：任务状态、作品资产、灵感广场、历史记录
-- 工程契约：统一 API 响应、OpenAPI 类型、服务边界、请求上下文
+## 能力边界
+
+- 创作工作台：一句话输入、参考素材、参数提示、任务进度和生成结果。
+- Agent 链路：意图识别、Prompt 清洗/增强、内容类型判断和模型路由。
+- Provider：Mock 本地演示、Google / OneRouter 等真实模型扩展点。
+- 创作资产：素材库、我的资产、灵感广场、Prompt 复用闭环。
+- 工程契约：统一响应、OpenAPI 类型、服务边界、请求上下文和质量门禁。
 
 ## 技术栈
 
@@ -15,18 +18,14 @@
 - 前端：Vue 3、TypeScript、Vite、Element Plus、pnpm
 - 模型：Google GenAI、OneRouter 等 Provider 可扩展
 
-## 本地启动
+## 运行
 
 默认使用 mock provider，本地不配置模型 Key 也能跑通创作任务。
-
-后端默认 dev 端口：`10003`。
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
-
-前端默认 dev 端口：`20003`。
 
 ```bash
 cd frontend
@@ -42,7 +41,12 @@ pnpm dev
 ./scripts/quality-gate.sh
 ```
 
-更多工程约束见 `project_document/`。
+## 文档入口
+
+- `project_document/STATUS.md`：当前状态。
+- `project_document/ROADMAP.md`：阶段规划。
+- `project_document/LOCAL_STARTUP_GUIDE.md`：本地启动。
+- `project_document/SCAFFOLD_ADOPTION_PROMPT.md`：如何复用脚手架改造其他项目。
 
 ## License
 
