@@ -307,13 +307,13 @@ async function handleDynamicRoutes(
  */
 async function fetchUserInfo(): Promise<void> {
   const userStore = useUserStore()
-  
+
   // 游客模式：跳过用户信息请求（token 以 guest_ 开头表示游客）
   if (userStore.accessToken?.startsWith('guest_')) {
     // 游客用户信息已在登录时设置，无需再次请求
     return
   }
-  
+
   const data = await fetchGetUserInfo()
   userStore.setUserInfo(data)
   // 检查并清理工作台标签页（如果是不同用户登录）

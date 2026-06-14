@@ -376,286 +376,286 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
-import { Edit, Search, Check, Message, Star, Delete, View } from '@element-plus/icons-vue'
+  import { ref } from 'vue'
+  import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
+  import { Edit, Search, Check, Message, Star, Delete, View } from '@element-plus/icons-vue'
 
-// 组件尺寸设置
-const currentSize = ref<'large' | 'default' | 'small'>('large')
+  // 组件尺寸设置
+  const currentSize = ref<'large' | 'default' | 'small'>('large')
 
-// 表单数据
-const form = ref({
-  input: '',
-  password: '',
-  select: '',
-  cascader: [],
-  radio: 'radio1',
-  checkbox: ['checkbox1'],
-  date: '',
-  time: '',
-  switch: true,
-  slider: 20,
-  rate: 3,
-  textarea: ''
-})
+  // 表单数据
+  const form = ref({
+    input: '',
+    password: '',
+    select: '',
+    cascader: [],
+    radio: 'radio1',
+    checkbox: ['checkbox1'],
+    date: '',
+    time: '',
+    switch: true,
+    slider: 20,
+    rate: 3,
+    textarea: ''
+  })
 
-// 级联选择器选项
-const cascaderOptions = [
-  {
-    value: 'guide',
-    label: 'Guide',
-    children: [
-      {
-        value: 'disciplines',
-        label: 'Disciplines',
-        children: [
-          { value: 'consistency', label: 'Consistency' },
-          { value: 'feedback', label: 'Feedback' },
-          { value: 'efficiency', label: 'Efficiency' },
-          { value: 'controllability', label: 'Controllability' }
-        ]
-      }
-    ]
+  // 级联选择器选项
+  const cascaderOptions = [
+    {
+      value: 'guide',
+      label: 'Guide',
+      children: [
+        {
+          value: 'disciplines',
+          label: 'Disciplines',
+          children: [
+            { value: 'consistency', label: 'Consistency' },
+            { value: 'feedback', label: 'Feedback' },
+            { value: 'efficiency', label: 'Efficiency' },
+            { value: 'controllability', label: 'Controllability' }
+          ]
+        }
+      ]
+    }
+  ]
+
+  // 表格数据
+  const tableData = ref([
+    {
+      id: 1,
+      name: '王小虎',
+      email: 'wangxiaohu@example.com',
+      status: '正常'
+    },
+    {
+      id: 2,
+      name: '李小明',
+      email: 'lixiaoming@example.com',
+      status: '正常'
+    },
+    {
+      id: 3,
+      name: '张小红',
+      email: 'zhangxiaohong@example.com',
+      status: '禁用'
+    },
+    {
+      id: 4,
+      name: '陈小强',
+      email: 'chenxiaoqiang@example.com',
+      status: '正常'
+    }
+  ])
+
+  // 分页
+  const currentPage = ref(1)
+
+  // 折叠面板
+  const activeNames = ref(['1'])
+
+  // 加载状态
+  const loading = ref(false)
+
+  // 反馈方法
+  const showAlert = () => {
+    ElMessageBox.alert('这是一段内容', '标题名称', {
+      confirmButtonText: '确定'
+    })
   }
-]
 
-// 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    name: '王小虎',
-    email: 'wangxiaohu@example.com',
-    status: '正常'
-  },
-  {
-    id: 2,
-    name: '李小明',
-    email: 'lixiaoming@example.com',
-    status: '正常'
-  },
-  {
-    id: 3,
-    name: '张小红',
-    email: 'zhangxiaohong@example.com',
-    status: '禁用'
-  },
-  {
-    id: 4,
-    name: '陈小强',
-    email: 'chenxiaoqiang@example.com',
-    status: '正常'
+  const showConfirm = () => {
+    ElMessageBox.confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
   }
-])
 
-// 分页
-const currentPage = ref(1)
+  const showPrompt = () => {
+    ElMessageBox.prompt('请输入邮箱', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    })
+  }
 
-// 折叠面板
-const activeNames = ref(['1'])
+  const showMessage = () => {
+    ElMessage({
+      message: '恭喜你，这是一条成功消息',
+      type: 'success'
+    })
+  }
 
-// 加载状态
-const loading = ref(false)
+  const showNotification = () => {
+    ElNotification({
+      title: '成功',
+      message: '这是一条成功的提示消息',
+      type: 'success'
+    })
+  }
 
-// 反馈方法
-const showAlert = () => {
-  ElMessageBox.alert('这是一段内容', '标题名称', {
-    confirmButtonText: '确定'
-  })
-}
-
-const showConfirm = () => {
-  ElMessageBox.confirm('此操作将永久删除该文件, 是否继续?', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  })
-}
-
-const showPrompt = () => {
-  ElMessageBox.prompt('请输入邮箱', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
-  })
-}
-
-const showMessage = () => {
-  ElMessage({
-    message: '恭喜你，这是一条成功消息',
-    type: 'success'
-  })
-}
-
-const showNotification = () => {
-  ElNotification({
-    title: '成功',
-    message: '这是一条成功的提示消息',
-    type: 'success'
-  })
-}
-
-const toggleLoading = () => {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-  }, 2000)
-}
+  const toggleLoading = () => {
+    loading.value = true
+    setTimeout(() => {
+      loading.value = false
+    }, 2000)
+  }
 </script>
 
 <style lang="scss" scoped>
-.theme-preview-container {
-  height: 100%;
-
-  .scrollbar-wrapper {
+  .theme-preview-container {
     height: 100%;
-  }
 
-  .preview-content {
-    max-width: 1200px;
-    padding: 20px;
-    margin: 0 auto;
-  }
-
-  .page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 30px;
-
-    .page-title {
-      margin: 0;
-      font-size: 28px;
-      color: var(--el-text-color-primary);
+    .scrollbar-wrapper {
+      height: 100%;
     }
 
-    .size-selector {
+    .preview-content {
+      max-width: 1200px;
+      padding: 20px;
+      margin: 0 auto;
+    }
+
+    .page-header {
       display: flex;
-      gap: 8px;
       align-items: center;
-
-      &::before {
-        font-size: 14px;
-        color: var(--el-text-color-regular);
-        content: '组件尺寸：';
-      }
-    }
-
-    @media (width <= 768px) {
-      flex-direction: column;
-      gap: 15px;
-      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 30px;
 
       .page-title {
-        font-size: 24px;
+        margin: 0;
+        font-size: 28px;
+        color: var(--el-text-color-primary);
       }
 
       .size-selector {
-        align-self: flex-end;
-      }
-    }
-  }
-
-  .section {
-    margin-bottom: 40px;
-    overflow: hidden;
-    border: 1px solid var(--el-border-color-light);
-    border-radius: 8px;
-
-    .section-title {
-      padding: 15px 20px;
-      margin: 0;
-      font-size: 20px;
-      color: var(--el-text-color-primary);
-      background-color: var(--el-bg-color-page);
-      border-bottom: 1px solid var(--el-border-color-light);
-    }
-
-    .component-group {
-      padding: 20px;
-
-      h3 {
-        margin: 0 0 15px;
-        font-size: 16px;
-        color: var(--el-text-color-regular);
-      }
-
-      .button-row {
         display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 15px;
-      }
+        gap: 8px;
+        align-items: center;
 
-      .link-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        margin-bottom: 10px;
-      }
-
-      .tag-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 15px;
-      }
-
-      .demo-form {
-        .el-form-item {
-          margin-bottom: 20px;
-        }
-
-        .el-select,
-        .el-cascader,
-        .el-date-editor {
-          width: 100%;
-        }
-      }
-
-      .box-card {
-        .card-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .text {
+        &::before {
           font-size: 14px;
+          color: var(--el-text-color-regular);
+          content: '组件尺寸：';
+        }
+      }
+
+      @media (width <= 768px) {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+
+        .page-title {
+          font-size: 24px;
         }
 
-        .item {
+        .size-selector {
+          align-self: flex-end;
+        }
+      }
+    }
+
+    .section {
+      margin-bottom: 40px;
+      overflow: hidden;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+
+      .section-title {
+        padding: 15px 20px;
+        margin: 0;
+        font-size: 20px;
+        color: var(--el-text-color-primary);
+        background-color: var(--el-bg-color-page);
+        border-bottom: 1px solid var(--el-border-color-light);
+      }
+
+      .component-group {
+        padding: 20px;
+
+        h3 {
+          margin: 0 0 15px;
+          font-size: 16px;
+          color: var(--el-text-color-regular);
+        }
+
+        .button-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-bottom: 15px;
+        }
+
+        .link-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-bottom: 10px;
+        }
+
+        .tag-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-bottom: 15px;
+        }
+
+        .demo-form {
+          .el-form-item {
+            margin-bottom: 20px;
+          }
+
+          .el-select,
+          .el-cascader,
+          .el-date-editor {
+            width: 100%;
+          }
+        }
+
+        .box-card {
+          .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+
+          .text {
+            font-size: 14px;
+          }
+
+          .item {
+            margin-bottom: 10px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+        }
+
+        .loading-demo {
+          margin-top: 15px;
+        }
+
+        .el-progress {
           margin-bottom: 10px;
 
           &:last-child {
             margin-bottom: 0;
           }
         }
-      }
 
-      .loading-demo {
-        margin-top: 15px;
-      }
-
-      .el-progress {
-        margin-bottom: 10px;
-
-        &:last-child {
-          margin-bottom: 0;
+        .el-steps {
+          margin: 20px 0;
         }
-      }
 
-      .el-steps {
-        margin: 20px 0;
-      }
+        .el-breadcrumb {
+          margin: 10px 0;
+        }
 
-      .el-breadcrumb {
-        margin: 10px 0;
-      }
-
-      .el-pagination {
-        justify-content: center;
-        margin: 20px 0;
+        .el-pagination {
+          justify-content: center;
+          margin: 20px 0;
+        }
       }
     }
   }
-}
 </style>

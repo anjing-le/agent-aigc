@@ -34,7 +34,8 @@ export interface ApiResponseEnvelope<T = unknown> {
 }
 
 /** 基础 API 响应结构；保留 code: number 和 msg 仅用于旧 mock / 第三方接口过渡 */
-export interface BaseResponse<T = unknown> extends Omit<ApiResponseEnvelope<T>, 'code' | 'message'> {
+export interface BaseResponse<T = unknown>
+  extends Omit<ApiResponseEnvelope<T>, 'code' | 'message'> {
   /** 状态码（标准后端返回字符串 "0"） */
   code: number | string
   /** 消息（标准字段名） */

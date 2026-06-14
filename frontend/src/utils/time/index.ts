@@ -72,18 +72,11 @@ export const formatFilenameTimestamp = (value: DateInput = nowDate()): string =>
   return (toIsoString(value) || nowIsoString()).replace(/[:.]/g, '-')
 }
 
-export const formatDateTime = (
-  value: DateInput,
-  options: FormatDateTimeOptions = {}
-): string => {
+export const formatDateTime = (value: DateInput, options: FormatDateTimeOptions = {}): string => {
   const date = toDate(value)
   if (!date) return ''
 
-  const {
-    locale = getClientLocale(),
-    timeZone = getClientTimeZone(),
-    ...dateTimeOptions
-  } = options
+  const { locale = getClientLocale(), timeZone = getClientTimeZone(), ...dateTimeOptions } = options
 
   return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
@@ -98,10 +91,7 @@ export const formatDateTime = (
   }).format(date)
 }
 
-export const formatDate = (
-  value: DateInput,
-  options: FormatDateTimeOptions = {}
-): string => {
+export const formatDate = (value: DateInput, options: FormatDateTimeOptions = {}): string => {
   return formatDateTime(value, {
     year: 'numeric',
     month: '2-digit',
@@ -113,10 +103,7 @@ export const formatDate = (
   })
 }
 
-export const formatTime = (
-  value: DateInput,
-  options: FormatDateTimeOptions = {}
-): string => {
+export const formatTime = (value: DateInput, options: FormatDateTimeOptions = {}): string => {
   return formatDateTime(value, {
     year: undefined,
     month: undefined,

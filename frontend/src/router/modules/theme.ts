@@ -6,6 +6,6 @@ export const themeRoutes: AppRouteRecord = {
   component: '/theme/index',
   meta: {
     title: '主题管理',
-    icon: 'ri:palette-line',
+    icon: 'ri:palette-line'
   }
 }

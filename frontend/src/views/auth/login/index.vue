@@ -294,11 +294,11 @@
 
       // 游客登录使用特殊的 guest token
       const guestToken = 'guest_token'
-      
+
       // 存储 token 和登录状态
       userStore.setToken(guestToken, '')
       userStore.setLoginStatus(true)
-      
+
       // 设置游客用户信息，避免后续请求 /api/user/info
       userStore.setUserInfo({
         userId: 0,
