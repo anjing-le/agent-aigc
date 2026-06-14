@@ -29,6 +29,7 @@ import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
+import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
@@ -69,6 +70,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcTaskExecutor taskExecutor;
     private final ProviderRouter providerRouter;
     private final AigcProperties aigcProperties;
+    private final AigcProviderRouteConfigService routeConfigService;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
     private final AigcMaterialRepository materialRepository;
@@ -216,6 +218,7 @@ public class AigcServiceImpl implements AigcService {
                 .contentType(contentType)
                 .provider(provider.getProviderType().name())
                 .activeProvider(getActiveProvider(contentType))
+                .routeConfigSource(routeConfigService.getRouteConfigSource(contentType))
                 .active(active)
                 .available(provider.isAvailable())
                 .configuredModel(resolveConfiguredModel(provider, contentType))
@@ -285,7 +288,7 @@ public class AigcServiceImpl implements AigcService {
         }
 
         String activeProvider = resolveActiveProviderKey(provider);
-        setActiveProvider(contentType, activeProvider);
+        routeConfigService.saveActiveProvider(contentType, activeProvider, provider);
 
         boolean available = provider.isAvailable();
         String missingConfig = resolveMissingConfig(provider);
@@ -295,6 +298,7 @@ public class AigcServiceImpl implements AigcService {
         return ProviderRouteUpdateResponse.builder()
                 .contentType(contentType)
                 .activeProvider(activeProvider)
+                .routeConfigSource("database")
                 .providerName(provider.getProviderName())
                 .providerType(provider.getProviderType().name())
                 .available(available)
@@ -332,20 +336,9 @@ public class AigcServiceImpl implements AigcService {
 
     private String getActiveProvider(ContentType contentType) {
         return switch (contentType) {
-            case IMAGE -> aigcProperties.getImage().getActiveProvider();
-            case VIDEO -> aigcProperties.getVideo().getActiveProvider();
-            case AUDIO -> aigcProperties.getAudio().getActiveProvider();
-            case TEXT -> "";
+            case IMAGE, VIDEO, AUDIO -> routeConfigService.getActiveProvider(contentType);
+            case TEXT -> routeConfigService.getConfiguredActiveProvider(contentType);
         };
-    }
-
-    private void setActiveProvider(ContentType contentType, String activeProvider) {
-        switch (contentType) {
-            case IMAGE -> aigcProperties.getImage().setActiveProvider(activeProvider);
-            case VIDEO -> aigcProperties.getVideo().setActiveProvider(activeProvider);
-            case AUDIO -> aigcProperties.getAudio().setActiveProvider(activeProvider);
-            case TEXT -> throw new AigcException(AigcErrorCode.CONTENT_TYPE_UNSUPPORTED, "文本生成暂未开放 Provider");
-        }
     }
 
     private String resolveActiveProviderKey(ContentProvider provider) {

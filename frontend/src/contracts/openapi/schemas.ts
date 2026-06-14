@@ -406,6 +406,7 @@ export interface ModelInfo {
   missingConfig?: string
   name?: string
   provider?: string
+  routeConfigSource?: string
   statusReason?: string
 }
 
@@ -518,6 +519,7 @@ export interface ProviderRouteUpdateResponse {
   providerName?: string
   providerType?: string
   routable?: boolean
+  routeConfigSource?: string
   statusReason?: string
   updatedAt?: string
 }

@@ -48,6 +48,10 @@
                   <span>状态</span>
                   <strong>{{ model.statusReason || '-' }}</strong>
                 </div>
+                <div>
+                  <span>来源</span>
+                  <strong>{{ formatRouteConfigSource(model.routeConfigSource) }}</strong>
+                </div>
               </div>
               <div v-if="model.missingConfig" class="aigc-models__missing">
                 {{ model.missingConfig }}
@@ -163,6 +167,12 @@
   const formatDefaultParams = (model: ModelInfo) => {
     const params = model.defaultParams || {}
     return Object.entries(params).map(([key, value]) => `${key}: ${value}`)
+  }
+
+  const formatRouteConfigSource = (source?: string) => {
+    if (source === 'database') return '页面保存'
+    if (source === 'configuration') return '环境配置'
+    return '-'
   }
 
   const handleProbe = async (model: ModelInfo) => {

@@ -19,6 +19,7 @@ public class ProviderRouteUpdateResponse {
 
     private ContentType contentType;
     private String activeProvider;
+    private String routeConfigSource;
     private String providerName;
     private String providerType;
     private Boolean available;

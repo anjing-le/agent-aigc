@@ -90,6 +90,23 @@ for (const token of [
 }
 
 for (const token of [
+  'AigcProviderRouteConfigRepository',
+  'findByContentType',
+  'JpaRepository'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcProviderRouteConfigRepository.java', token)
+}
+
+for (const token of [
+  'getActiveProvider',
+  'getConfiguredActiveProvider',
+  'getRouteConfigSource',
+  'saveActiveProvider'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderRouteConfigService.java', token)
+}
+
+for (const token of [
   'import com.anjing.model.constants.ApiConstants;',
   'import com.anjing.model.response.APIResponse;',
   'import com.anjing.model.response.PageResult;',
@@ -139,7 +156,8 @@ for (const token of [
   "import type * as Schemas from '@/contracts/openapi/schemas'",
   "OpenApiOperationRequest<'generate'>",
   "OpenApiOperationData<'getGalleryList'>",
-  "OpenApiOperationData<'getAssetList'>"
+  "OpenApiOperationData<'getAssetList'>",
+  "OpenApiOperationData<'updateActiveProvider'>"
 ]) {
   requireToken('frontend/src/api/model/aigcModel.ts', token)
 }

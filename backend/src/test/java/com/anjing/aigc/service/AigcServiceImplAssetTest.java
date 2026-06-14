@@ -19,6 +19,7 @@ import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
+import com.anjing.aigc.repository.AigcProviderRouteConfigRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.impl.AigcServiceImpl;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
@@ -42,6 +43,10 @@ class AigcServiceImplAssetTest {
     private final AigcTaskExecutor taskExecutor = mock(AigcTaskExecutor.class);
     private final ProviderRouter providerRouter = mock(ProviderRouter.class);
     private final AigcProperties aigcProperties = new AigcProperties();
+    private final AigcProviderRouteConfigRepository routeConfigRepository =
+            mock(AigcProviderRouteConfigRepository.class);
+    private final AigcProviderRouteConfigService routeConfigService =
+            new AigcProviderRouteConfigService(aigcProperties, routeConfigRepository);
     private final AigcTaskRepository taskRepository = mock(AigcTaskRepository.class);
     private final AigcAssetRepository assetRepository = mock(AigcAssetRepository.class);
     private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
@@ -52,6 +57,7 @@ class AigcServiceImplAssetTest {
             taskExecutor,
             providerRouter,
             aigcProperties,
+            routeConfigService,
             taskRepository,
             assetRepository,
             materialRepository,
@@ -124,6 +130,7 @@ class AigcServiceImplAssetTest {
         assertEquals(2, models.getImageModels().size());
         assertEquals("缺少 aigc.providers.google.api-key", models.getImageModels().get(0).getMissingConfig());
         assertEquals(true, models.getImageModels().get(0).getActive());
+        assertEquals("configuration", models.getImageModels().get(0).getRouteConfigSource());
         assertEquals("mock-image-preview", models.getImageModels().get(1).getConfiguredModel());
         assertEquals("local-demo", models.getImageModels().get(1).getDefaultParams().get("mode"));
     }
@@ -176,8 +183,13 @@ class AigcServiceImplAssetTest {
 
         assertEquals("Mock Image Provider", response.getActiveProvider());
         assertEquals("Mock Image Provider", response.getProviderName());
+        assertEquals("database", response.getRouteConfigSource());
         assertEquals(true, response.getRoutable());
-        assertEquals("Mock Image Provider", aigcProperties.getImage().getActiveProvider());
+        verify(routeConfigRepository).save(org.mockito.ArgumentMatchers.argThat(config ->
+                config.getContentType() == ContentType.IMAGE
+                        && "Mock Image Provider".equals(config.getActiveProvider())
+                        && "Mock Image Provider".equals(config.getProviderName())
+                        && "OTHER".equals(config.getProviderType())));
     }
 
     @Test
@@ -227,6 +239,7 @@ class AigcServiceImplAssetTest {
     private void givenImageProviders() {
         aigcProperties.getImage().setActiveProvider("google");
         aigcProperties.getProviders().getGoogle().setApiKey(null);
+        when(routeConfigRepository.findByContentType(ContentType.IMAGE)).thenReturn(Optional.empty());
 
         ImageGenerationProvider googleProvider = mock(ImageGenerationProvider.class);
         when(googleProvider.getProviderName()).thenReturn("Google Nano Banana");

@@ -37,6 +37,9 @@ public class ModelInfo {
     /** 当前内容类型配置的激活 Provider */
     private String activeProvider;
 
+    /** 路由配置来源：configuration 或 database */
+    private String routeConfigSource;
+
     /** 是否为当前激活 Provider */
     private Boolean active;
 

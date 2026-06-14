@@ -2,6 +2,7 @@ package com.anjing.aigc.provider;
 
 import com.anjing.aigc.config.AigcProperties;
 import com.anjing.aigc.model.enums.ContentType;
+import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,7 @@ import java.util.List;
 public class ProviderRouter {
     
     private final AigcProperties aigcProperties;
+    private final AigcProviderRouteConfigService routeConfigService;
     
     // 注入所有提供商实现（只有图片/视频/音频）
     private final List<ImageGenerationProvider> imageProviders;
@@ -57,9 +59,9 @@ public class ProviderRouter {
         
         // 打印当前激活的提供商
         log.info("当前激活:");
-        log.info("  图片: {}", aigcProperties.getImage().getActiveProvider());
-        log.info("  视频: {}", aigcProperties.getVideo().getActiveProvider());
-        log.info("  音频: {}", aigcProperties.getAudio().getActiveProvider());
+        log.info("  图片: {}", routeConfigService.getActiveProvider(ContentType.IMAGE));
+        log.info("  视频: {}", routeConfigService.getActiveProvider(ContentType.VIDEO));
+        log.info("  音频: {}", routeConfigService.getActiveProvider(ContentType.AUDIO));
         
         // 打印 Google 配置状态
         log.info("Google 配置状态: isGoogleConfigured={}", aigcProperties.isGoogleConfigured());
@@ -107,9 +109,9 @@ public class ProviderRouter {
      */
     public ContentProvider getProvider(ContentType contentType) {
         return switch (contentType) {
-            case IMAGE -> findProvider(imageProviders, aigcProperties.getImage().getActiveProvider(), "图片");
-            case VIDEO -> findProvider(videoProviders, aigcProperties.getVideo().getActiveProvider(), "视频");
-            case AUDIO -> findProvider(audioProviders, aigcProperties.getAudio().getActiveProvider(), "音频");
+            case IMAGE -> findProvider(imageProviders, routeConfigService.getActiveProvider(ContentType.IMAGE), "图片");
+            case VIDEO -> findProvider(videoProviders, routeConfigService.getActiveProvider(ContentType.VIDEO), "视频");
+            case AUDIO -> findProvider(audioProviders, routeConfigService.getActiveProvider(ContentType.AUDIO), "音频");
             case TEXT -> throw new IllegalStateException("文本生成暂未开放 Provider");
         };
     }
