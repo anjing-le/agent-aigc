@@ -4,6 +4,37 @@
   <div class="aigc-studio">
     <!-- 左侧：创作区域 -->
     <div class="aigc-studio__workspace">
+      <div class="aigc-studio__overview">
+        <div class="aigc-studio__overview-main">
+          <div class="aigc-studio__eyebrow">AIGC Studio</div>
+          <h2 class="aigc-studio__title">智能创作工作台</h2>
+          <p class="aigc-studio__subtitle">
+            Agent 会自动完成意图识别、Prompt 优化、模型路由和生成结果归档
+          </p>
+        </div>
+
+        <div class="aigc-studio__stats">
+          <div v-for="item in studioStats" :key="item.label" class="aigc-studio__stat">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="aigc-studio__taskbar">
+        <div class="aigc-studio__taskbar-left">
+          <el-tag :type="currentTaskTagType" effect="plain">{{ currentTaskStatusText }}</el-tag>
+          <span v-if="currentTask?.taskId" class="aigc-studio__task-id">
+            {{ currentTask.taskId }}
+          </span>
+          <span v-else class="aigc-studio__task-id">等待新的创作任务</span>
+        </div>
+        <div class="aigc-studio__taskbar-right">
+          <span>{{ currentModeText }}</span>
+          <span>{{ uploadedFiles.length }} 个参考素材</span>
+        </div>
+      </div>
+
       <!-- 中间：作品展示区域 -->
       <div class="aigc-studio__preview">
         <GenerationPreview
@@ -15,13 +46,23 @@
         />
       </div>
 
-      <div class="aigc-studio__models">
-        <div v-for="model in availableModelCards" :key="model.id" class="aigc-studio__model">
-          <span class="aigc-studio__model-type">{{ getContentTypeLabel(model.contentType) }}</span>
-          <span class="aigc-studio__model-name">{{ model.name }}</span>
-          <el-tag size="small" :type="model.available ? 'success' : 'info'" effect="plain">
-            {{ model.available ? '可用' : '不可用' }}
-          </el-tag>
+      <div class="aigc-studio__models-panel">
+        <div class="aigc-studio__models-header">
+          <span>模型路由能力</span>
+          <el-button type="primary" link size="small" @click="$router.push('/aigc/models')">
+            配置
+          </el-button>
+        </div>
+        <div class="aigc-studio__models">
+          <div v-for="model in availableModelCards" :key="model.id" class="aigc-studio__model">
+            <span class="aigc-studio__model-type">{{
+              getContentTypeLabel(model.contentType)
+            }}</span>
+            <span class="aigc-studio__model-name">{{ model.name }}</span>
+            <el-tag size="small" :type="model.available ? 'success' : 'info'" effect="plain">
+              {{ model.available ? '可用' : '不可用' }}
+            </el-tag>
+          </div>
         </div>
       </div>
 
@@ -91,6 +132,46 @@
   const availableModels = ref<ModelInfo[]>([])
 
   const availableModelCards = computed(() => availableModels.value.slice(0, 6))
+
+  const studioStats = computed(() => [
+    {
+      label: '创作记录',
+      value: `${historyItems.value.length}`
+    },
+    {
+      label: '可用模型',
+      value: `${availableModels.value.filter((model) => model.available).length}`
+    },
+    {
+      label: '能力类型',
+      value: `${new Set(availableModels.value.map((model) => model.contentType)).size}`
+    }
+  ])
+
+  const currentModeText = computed(() => {
+    if (!contentTypeHint.value) return '自动路由'
+    return `${getContentTypeLabel(contentTypeHint.value)}模式`
+  })
+
+  const currentTaskStatusText = computed(() => {
+    if (generating.value) return '生成中'
+    const status = currentTask.value?.status?.toUpperCase()
+    const map: Record<string, string> = {
+      PENDING: '排队中',
+      PROCESSING: '生成中',
+      COMPLETED: '已完成',
+      FAILED: '失败'
+    }
+    return status ? map[status] || status : '待创建'
+  })
+
+  const currentTaskTagType = computed(() => {
+    const status = currentTask.value?.status?.toUpperCase()
+    if (generating.value || status === 'PROCESSING' || status === 'PENDING') return 'warning'
+    if (status === 'COMPLETED') return 'success'
+    if (status === 'FAILED') return 'danger'
+    return 'info'
+  })
 
   // ==================== 方法 ====================
 
@@ -341,15 +422,132 @@
       min-width: 0;
     }
 
+    &__overview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 20px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__overview-main {
+      min-width: 0;
+    }
+
+    &__eyebrow {
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--el-color-primary);
+      text-transform: uppercase;
+    }
+
+    &__title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    &__subtitle {
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(88px, 1fr));
+      gap: 10px;
+      width: min(380px, 42%);
+      flex-shrink: 0;
+    }
+
+    &__stat {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 58px;
+      padding: 10px 12px;
+      background: var(--el-fill-color-light);
+      border-radius: 8px;
+
+      span {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        margin-top: 6px;
+        font-size: 20px;
+        line-height: 1;
+        color: var(--el-text-color-primary);
+      }
+    }
+
+    &__taskbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 40px;
+      padding: 8px 12px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__taskbar-left,
+    &__taskbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__taskbar-right {
+      flex-shrink: 0;
+    }
+
+    &__task-id {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     &__preview {
-      flex: 1;
+      flex: 1 1 320px;
       display: flex;
       align-items: center;
       justify-content: center;
+      min-height: 320px;
       background: var(--el-bg-color);
       border-radius: 12px;
       border: 1px solid var(--el-border-color-light);
       overflow: hidden;
+    }
+
+    &__models-panel {
+      padding: 12px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__models-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--el-text-color-primary);
     }
 
     &__models {
@@ -385,6 +583,40 @@
     &__sidebar {
       width: 320px;
       flex-shrink: 0;
+    }
+  }
+
+  @media screen and (max-width: 1200px) {
+    .aigc-studio {
+      height: auto;
+      min-height: calc(100vh - 120px);
+      flex-direction: column;
+
+      &__sidebar {
+        width: 100%;
+        min-height: 360px;
+      }
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .aigc-studio {
+      padding: 12px;
+
+      &__overview,
+      &__taskbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      &__stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+      }
+
+      &__taskbar-right {
+        justify-content: space-between;
+      }
     }
   }
 </style>
