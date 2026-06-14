@@ -4,10 +4,7 @@
  * @module api/model/authModel
  */
 
-import type {
-  OpenApiOperationData,
-  OpenApiOperationRequest
-} from '@/contracts/openapi/operations'
+import type { OpenApiOperationData, OpenApiOperationRequest } from '@/contracts/openapi/operations'
 
 /** 登录参数 */
 export type LoginParams = OpenApiOperationRequest<'login'>

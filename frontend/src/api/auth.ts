@@ -1,7 +1,9 @@
 import { openApiRequest } from './openapiClient'
 import type { LoginParams, LoginResponse, RefreshTokenParams, UserInfo } from './model/authModel'
 
-const normalizeLoginResponse = (data: Omit<LoginResponse, 'token'> & { token?: string }): LoginResponse => ({
+const normalizeLoginResponse = (
+  data: Omit<LoginResponse, 'token'> & { token?: string }
+): LoginResponse => ({
   ...data,
   token: data.token || data.accessToken
 })

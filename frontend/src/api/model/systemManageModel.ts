@@ -81,4 +81,3 @@ export interface CreateRoleParams {
 
 /** 更新角色参数 */
 export type UpdateRoleParams = Partial<CreateRoleParams>
-

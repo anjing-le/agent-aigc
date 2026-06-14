@@ -8,10 +8,7 @@ import { SERVICE_BOUNDARY_ROUTE_PATHS } from '@/contracts/service-boundaries'
 
 const encodePathValue = (value: string | number): string => encodeURIComponent(String(value))
 
-const bindApiPathParams = (
-  apiPath: string,
-  params: Record<string, string | number>
-): string => {
+const bindApiPathParams = (apiPath: string, params: Record<string, string | number>): string => {
   return Object.entries(params).reduce((path, [name, value]) => {
     return path.replace(`{${name}}`, encodePathValue(value))
   }, apiPath)
