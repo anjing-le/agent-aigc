@@ -20,7 +20,9 @@ export const matchSupportedLocale = (locale?: string): PlatformSupportedLocale =
   if (isSupportedLocale(locale)) return locale
 
   const language = locale.split('-')[0]
-  return SUPPORTED_LOCALES.find((supported) => supported.split('-')[0] === language) || DEFAULT_LOCALE
+  return (
+    SUPPORTED_LOCALES.find((supported) => supported.split('-')[0] === language) || DEFAULT_LOCALE
+  )
 }
 
 export const getClientLocale = (): PlatformSupportedLocale =>
