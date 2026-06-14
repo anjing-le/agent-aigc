@@ -1,6 +1,4 @@
-import request from '@/utils/http'
 import { openApiRequest } from './openapiClient'
-import { ApiPaths } from './paths'
 import type {
   GenerateRequest,
   GenerateResponse,
@@ -109,13 +107,9 @@ export function fetchProbeProvider(data: ProviderProbeRequest) {
 }
 
 export function fetchUploadMaterial(file: File) {
-  const data = new FormData()
-  data.append('file', file)
-  return request.post<MaterialUploadResponse>({
-    url: ApiPaths.aigc.materialUpload,
-    data,
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  return openApiRequest('uploadMaterial', {
+    body: { file }
+  }) as Promise<MaterialUploadResponse>
 }
 
 /**

@@ -350,7 +350,7 @@ export interface OpenApiOperationTypes {
   uploadMaterial: {
     pathParams: undefined
     query: undefined
-    request: { file: string }
+    request: { file: File }
     response: Schemas.APIResponseMaterialUploadResponse
     data: NonNullable<Schemas.APIResponseMaterialUploadResponse['data']>
   }

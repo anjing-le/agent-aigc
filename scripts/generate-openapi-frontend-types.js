@@ -88,7 +88,7 @@ function schemaType(schema, options = {}) {
   let result
   switch (schema.type) {
     case 'string':
-      result = 'string'
+      result = schema.format === 'binary' ? 'File' : 'string'
       break
     case 'integer':
     case 'number':
@@ -203,7 +203,11 @@ function operationResponseSchema(operation) {
 
 function operationRequestSchema(operation) {
   const content = operation.requestBody?.content || {}
-  return content['application/json']?.schema || content['*/*']?.schema || null
+  return content['application/json']?.schema ||
+    content['multipart/form-data']?.schema ||
+    content['application/x-www-form-urlencoded']?.schema ||
+    content['*/*']?.schema ||
+    null
 }
 
 function componentRefName(ref, prefix) {
