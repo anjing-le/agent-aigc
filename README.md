@@ -45,6 +45,7 @@ pnpm dev
 
 - `project_document/STATUS.md`：当前状态。
 - `project_document/ROADMAP.md`：阶段规划。
+- `project_document/SCAFFOLD_INHERITANCE_MAP.md`：脚手架继承地图。
 - `project_document/LOCAL_STARTUP_GUIDE.md`：本地启动。
 - `project_document/SCAFFOLD_ADOPTION_PROMPT.md`：如何复用脚手架改造其他项目。
 

@@ -14,6 +14,7 @@
 ## 脚手架继承层
 
 - `PROJECT_CONSTRAINTS.md`：项目约束和重构边界
+- `SCAFFOLD_INHERITANCE_MAP.md`：脚手架继承地图，用于教学说明哪些来自底座、哪些是 AIGC 增量
 - `API_CONTRACT_GUIDE.md`：统一响应、分页和错误码契约
 - `API_PATH_GUIDE.md`：前后端 API 路径常量规范
 - `PLATFORM_CONTRACT_GUIDE.md`：平台级契约来源和生成规则

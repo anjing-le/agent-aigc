@@ -1,0 +1,74 @@
+# Scaffold Inheritance Map
+
+本文档用于教学：说明 `agent-aigc` 如何从 `infra-dev-scaffolding` 生长出来。学习者看这个项目时，应先识别哪些是脚手架底座，哪些是 AIGC 业务增量。
+
+## 一句话结论
+
+`agent-aigc` 不重新发明工程体系。它继承脚手架的 Spring Boot、Vue 3、TypeScript、OpenAPI、统一响应、服务边界、请求上下文、质量门禁和后台页面习惯；AIGC 只在业务模块里扩展创作链路、Provider、资产、素材和页面体验。
+
+## 继承关系
+
+| 层级 | 来自脚手架 | agent-aigc 的业务增量 |
+| --- | --- | --- |
+| 后端技术栈 | Spring Boot 3、JPA、H2/MySQL、OpenAPI、统一异常和响应 | `com.anjing.aigc` 下的创作任务、素材、资产、Agent 和 Provider |
+| 前端技术栈 | Vue 3、TypeScript、Vite、Element Plus、路由、HTTP helper、OpenAPI 类型 | `views/aigc` 下的工作台、素材库、资产库、灵感广场、模型配置 |
+| API 契约 | `ApiConstants`、`ApiPaths`、`APIResponse`、`PageResult`、错误码分段 | `/api/aigc/**` 的任务、模型、素材、资产和广场接口 |
+| 服务边界 | `contracts/service-boundaries.json` 作为机器可读边界 | 新增 `aigc` service boundary，并由前后端常量生成和脚本校验 |
+| 请求上下文 | requestId、traceId、locale、timeZone 透传和日志字段 | 异步 AIGC 任务继续保留上下文与错误码，方便追踪生成链路 |
+| 质量门禁 | `scripts/check-contracts.sh`、`scripts/quality-gate.sh`、OpenAPI runtime probe | 每次业务迭代后继续运行同一套门禁，证明没有破坏底座 |
+
+## 后端边界
+
+脚手架层保留在 `com.anjing` 的通用包中：
+
+- `config`：环境、OpenAPI、HTTP、JPA、Redis、锁、异步线程池等通用配置。
+- `context`：请求上下文和 MDC 传播。
+- `model`：统一响应、分页、错误码、常量和平台契约。
+- `client`：远程调用 wrapper、服务地址解析和调用观测扩展点。
+- `util`：时间、语言、JSON、请求头等共享工具。
+
+AIGC 业务只放在 `com.anjing.aigc`：
+
+- `agent`：意图识别、Prompt 清洗/增强、模型路由决策。
+- `provider`：Mock、Google、后续 OneRouter 等模型供应商适配。
+- `service`：创作任务、素材、资产、重试、发布和本地存储。
+- `controller`：只暴露 `/api/aigc/**`，继续使用脚手架统一响应。
+- `model` / `repository`：AIGC 任务、资产、素材的实体、DTO、VO 和查询。
+
+## 前端边界
+
+脚手架层继续提供应用壳和通用能力：
+
+- `router`、`store`、`utils/http`、`utils/time`、`utils/locale`。
+- `contracts/openapi` 生成类型和 `api/openapiClient.ts` typed 调用入口。
+- `components/core`、全局样式 token、后台布局和基础交互习惯。
+
+AIGC 页面只聚焦创作体验：
+
+- `views/aigc/studio`：一句话创作、任务状态、Agent 决策、结果预览。
+- `views/aigc/materials`：参考素材上传、筛选、引用任务反查。
+- `views/aigc/assets`：个人资产、下载、删除、发布、Prompt 复用。
+- `views/aigc/gallery`：已发布作品、筛选、Prompt 复用到工作台。
+- `views/aigc/models`：Provider 配置、模型能力和运行前探测。
+
+## API 生长方式
+
+新增 AIGC 接口时遵守同一条路径：
+
+1. 在后端 `ApiConstants.Aigc` 声明路径。
+2. 在 `contracts/service-boundaries.json` 确认 `aigc` 边界。
+3. Controller 返回 `APIResponse<T>` 或 `APIResponse<PageResult<T>>`。
+4. 运行 OpenAPI 类型生成或检查。
+5. 前端通过 `ApiPaths` / `openApiRequest` / `api/model` 调用，不在页面里手写 URL。
+6. 运行 `./scripts/check-contracts.sh`，必要时再跑 `./scripts/quality-gate.sh`。
+
+## 教学视角
+
+讲解这个项目时，可以按下面顺序展开：
+
+1. 先讲脚手架底座：目录、统一响应、OpenAPI、服务边界、请求上下文和质量门禁。
+2. 再讲业务增量：AIGC 为什么需要任务、Provider、Prompt、素材和资产。
+3. 然后讲生长过程：先接入 service boundary，再做 Controller/Service/DTO，最后接页面。
+4. 最后讲验证闭环：每次小步改动都通过同一套脚本、测试、构建和 push 证明。
+
+这样学习者只需要关注业务设计本身，底层技术栈、命名习惯、质量守卫和最佳实践都从脚手架继承。
