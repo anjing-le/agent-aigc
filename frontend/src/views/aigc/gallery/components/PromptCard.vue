@@ -102,16 +102,18 @@
 
 <style lang="scss" scoped>
   .prompt-card {
-    background: #fff;
-    border-radius: 16px;
     overflow: hidden;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid #eee;
+    background: var(--el-bg-color);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
 
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+      border-color: var(--el-color-primary-light-5);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 
       .prompt-card__copy-btn {
         opacity: 1;
@@ -122,8 +124,8 @@
       position: relative;
       width: 100%;
       height: 160px;
-      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
       overflow: hidden;
+      background: var(--el-fill-color-light);
 
       img {
         width: 100%;
@@ -143,7 +145,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ccc;
+      color: var(--el-text-color-placeholder);
     }
 
     &__type-badge {
@@ -154,7 +156,7 @@
       background: rgba(0, 0, 0, 0.6);
       color: #fff;
       font-size: 12px;
-      border-radius: 12px;
+      border-radius: 6px;
     }
 
     &__content {
@@ -164,8 +166,8 @@
     &__title {
       font-size: 14px;
       font-weight: 600;
-      color: #1a1a1a;
       margin-bottom: 6px;
+      color: var(--el-text-color-primary);
       line-height: 1.4;
       display: -webkit-box;
       -webkit-line-clamp: 1;
@@ -175,9 +177,9 @@
 
     &__prompt {
       font-size: 13px;
-      color: #666;
       line-height: 1.5;
       margin-bottom: 12px;
+      color: var(--el-text-color-regular);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -196,7 +198,7 @@
       align-items: center;
       gap: 6px;
       font-size: 13px;
-      color: #999;
+      color: var(--el-text-color-secondary);
 
       .el-icon {
         font-size: 14px;
@@ -210,12 +212,11 @@
     }
 
     &__category {
-      border-radius: 12px;
+      border-radius: 6px;
     }
 
     &__copy-btn {
       opacity: 0.8;
-      border-radius: 16px;
       transition: opacity 0.2s;
     }
   }

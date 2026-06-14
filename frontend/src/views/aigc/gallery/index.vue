@@ -1,39 +1,65 @@
 <!-- 灵感广场页面 - 提示词工具库风格 -->
 <template>
   <div class="prompt-gallery">
-    <!-- 顶部区域 -->
     <div class="prompt-gallery__header">
-      <div class="prompt-gallery__title">
-        <h1>🎨 提示词灵感库</h1>
-        <p>发现优质提示词，一键复制使用</p>
+      <div>
+        <div class="prompt-gallery__eyebrow">Prompt Gallery</div>
+        <h2 class="prompt-gallery__title">灵感广场</h2>
+        <p class="prompt-gallery__subtitle">沉淀已发布作品和高质量 Prompt，一键复用到创作工作台</p>
+      </div>
+      <div class="prompt-gallery__header-actions">
+        <el-tag :type="dataSource === 'api' ? 'success' : 'warning'" effect="plain">
+          {{ dataSource === 'api' ? '后端作品' : '静态后备' }}
+        </el-tag>
+        <el-button :icon="Refresh" :loading="loading" @click="handleRefresh">刷新</el-button>
       </div>
     </div>
 
-    <!-- 标签筛选 -->
-    <div class="prompt-gallery__tags">
-      <el-tag
-        v-for="tag in categoryTags"
-        :key="tag.value"
-        :type="activeTag === tag.value ? 'primary' : 'info'"
-        :effect="activeTag === tag.value ? 'dark' : 'plain'"
-        class="prompt-gallery__tag"
-        @click="handleTagClick(tag.value)"
-      >
-        {{ tag.label }}
-      </el-tag>
+    <div class="prompt-gallery__stats">
+      <div v-for="item in galleryStats" :key="item.label" class="prompt-gallery__stat">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+      </div>
     </div>
 
-    <!-- 搜索区 -->
-    <div class="prompt-gallery__search-bar">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索提示词..."
-        :prefix-icon="Search"
-        clearable
-        size="large"
-        class="prompt-gallery__search"
-        @input="handleSearch"
-      />
+    <div class="prompt-gallery__filter">
+      <div class="prompt-gallery__filter-left">
+        <el-radio-group v-model="activeContentType" @change="handleFilterChange">
+          <el-radio-button value="">全部</el-radio-button>
+          <el-radio-button value="IMAGE">图片</el-radio-button>
+          <el-radio-button value="VIDEO">视频</el-radio-button>
+          <el-radio-button value="AUDIO">音频</el-radio-button>
+        </el-radio-group>
+
+        <el-select
+          v-model="activeTag"
+          placeholder="分类"
+          class="prompt-gallery__category"
+          @change="handleFilterChange"
+        >
+          <el-option
+            v-for="tag in categoryTags"
+            :key="tag.value"
+            :label="tag.label"
+            :value="tag.value"
+          />
+        </el-select>
+
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索 Prompt / 标题"
+          :prefix-icon="Search"
+          clearable
+          class="prompt-gallery__search"
+          @input="handleSearch"
+        />
+      </div>
+
+      <div class="prompt-gallery__filter-right">
+        <el-button type="primary" :icon="MagicStick" @click="$router.push('/aigc/studio')">
+          去创作
+        </el-button>
+      </div>
     </div>
 
     <!-- 提示词卡片列表 -->
@@ -59,19 +85,19 @@
     <!-- 复制成功提示 -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="showCopyTip" class="copy-tip"> ✅ 已复制到剪贴板 </div>
+        <div v-if="showCopyTip" class="copy-tip">已复制到剪贴板</div>
       </Transition>
     </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { Search } from '@element-plus/icons-vue'
+  import { MagicStick, Refresh, Search } from '@element-plus/icons-vue'
   import { useDebounceFn, useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import PromptCard from './components/PromptCard.vue'
   import { fetchGetGalleryList } from '@/api/aigc'
-  import type { GalleryItem } from '@/api/model/aigcModel'
+  import type { ContentType, GalleryItem } from '@/api/model/aigcModel'
 
   defineOptions({ name: 'AIGCGallery' })
 
@@ -87,6 +113,7 @@
   // 搜索筛选
   const searchKeyword = ref('')
   const activeTag = ref('all')
+  const activeContentType = ref<ContentType | ''>('')
 
   // 复制提示
   const showCopyTip = ref(false)
@@ -106,6 +133,25 @@
 
   // 是否有更多数据
   const hasMore = computed(() => galleryList.value.length < total.value)
+
+  const galleryStats = computed(() => [
+    {
+      label: '当前展示',
+      value: `${galleryList.value.length}`
+    },
+    {
+      label: '发布总数',
+      value: `${total.value}`
+    },
+    {
+      label: '图片 Prompt',
+      value: `${galleryList.value.filter((item) => item.contentType === 'IMAGE').length}`
+    },
+    {
+      label: '累计点赞',
+      value: `${galleryList.value.reduce((sum, item) => sum + (item.likeCount || 0), 0)}`
+    }
+  ])
 
   // ==================== 方法 ====================
 
@@ -135,7 +181,9 @@
       const res = await fetchGetGalleryList({
         current: currentPage.value,
         size: pageSize.value,
-        keyword: searchKeyword.value || undefined
+        keyword: searchKeyword.value || undefined,
+        category: activeTag.value === 'all' ? undefined : activeTag.value,
+        contentType: activeContentType.value || undefined
       })
 
       const records = (res?.records || []).map((item: any) => ({
@@ -216,6 +264,10 @@
       result = result.filter((item) => item.category === activeTag.value)
     }
 
+    if (activeContentType.value) {
+      result = result.filter((item) => item.contentType === activeContentType.value)
+    }
+
     return result
   }
 
@@ -225,11 +277,14 @@
     loadData()
   }, 300)
 
-  /** 标签点击 */
-  const handleTagClick = (tag: string) => {
-    activeTag.value = tag
+  const handleFilterChange = () => {
     currentPage.value = 1
-    // 切回 API 尝试（重新判断数据源）
+    dataSource.value = 'api'
+    loadData()
+  }
+
+  const handleRefresh = () => {
+    currentPage.value = 1
     dataSource.value = 'api'
     loadData()
   }
@@ -270,68 +325,108 @@
 <style lang="scss" scoped>
   .prompt-gallery {
     min-height: calc(100vh - 120px);
-    padding: 32px;
-    background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+    padding: 20px;
+    background: var(--el-bg-color-page);
 
     &__header {
-      text-align: center;
-      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    &__eyebrow {
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--el-color-primary);
+      text-transform: uppercase;
     }
 
     &__title {
-      h1 {
-        font-size: 32px;
-        font-weight: 700;
-        color: #1a1a1a;
-        margin-bottom: 8px;
-      }
-
-      p {
-        font-size: 16px;
-        color: #666;
-      }
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
     }
 
-    &__tags {
+    &__subtitle {
+      margin: 8px 0 0;
+      font-size: 13px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__header-actions {
       display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    &__stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
 
-    &__tag {
-      cursor: pointer;
-      padding: 8px 20px;
-      font-size: 14px;
-      border-radius: 20px;
-      transition: all 0.2s;
+    &__stat {
+      min-height: 72px;
+      padding: 14px 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
 
-      &:hover {
-        transform: translateY(-2px);
+      span {
+        display: block;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 24px;
+        line-height: 1;
+        color: var(--el-text-color-primary);
       }
     }
 
-    &__search-bar {
+    &__filter {
       display: flex;
-      justify-content: center;
-      margin-bottom: 32px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__filter-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    &__filter-right {
+      flex-shrink: 0;
+    }
+
+    &__category {
+      width: 130px;
     }
 
     &__search {
-      width: 100%;
-      max-width: 500px;
-
-      :deep(.el-input__wrapper) {
-        border-radius: 24px;
-        padding: 4px 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      }
+      width: 260px;
     }
 
     &__content {
-      max-width: 1400px;
-      margin: 0 auto;
+      min-height: 400px;
     }
 
     &__grid {
@@ -343,7 +438,44 @@
     &__loadmore {
       display: flex;
       justify-content: center;
-      margin-top: 40px;
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+  }
+
+  @media screen and (max-width: 1200px) {
+    .prompt-gallery {
+      &__stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      &__filter {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .prompt-gallery {
+      padding: 12px;
+
+      &__header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      &__header-actions,
+      &__search {
+        width: 100%;
+      }
+
+      &__stats {
+        grid-template-columns: 1fr;
+      }
     }
   }
 
@@ -354,8 +486,8 @@
     left: 50%;
     transform: translateX(-50%);
     padding: 12px 24px;
-    background: #1a1a1a;
-    color: #fff;
+    background: var(--el-text-color-primary);
+    color: var(--el-bg-color);
     border-radius: 8px;
     font-size: 14px;
     z-index: 9999;
