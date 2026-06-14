@@ -2,6 +2,7 @@ package com.anjing.aigc.provider;
 
 import com.anjing.aigc.config.AigcProperties;
 import com.anjing.aigc.model.enums.ContentType;
+import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ import java.util.List;
 public class ProviderRouter {
     
     private final AigcProperties aigcProperties;
+    private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderRouteConfigService routeConfigService;
     
     // 注入所有提供商实现（只有图片/视频/音频）
@@ -64,9 +66,10 @@ public class ProviderRouter {
         log.info("  音频: {}", routeConfigService.getActiveProvider(ContentType.AUDIO));
         
         // 打印 Google 配置状态，只输出存在性和长度，不输出任何密钥片段。
-        log.info("Google 配置状态: isGoogleConfigured={}, apiKey={}",
-                aigcProperties.isGoogleConfigured(),
-                describeSecret(aigcProperties.getProviders().getGoogle().getApiKey()));
+        log.info("Google 配置状态: isGoogleConfigured={}, credentialSource={}, credential={}",
+                credentialConfigService.isGoogleConfigured(),
+                credentialConfigService.getGoogleCredentialSource(),
+                describeSecret(credentialConfigService.getGoogleCredential().orElse(null)));
         
         // 打印 Agent 使用的 LLM
         if (aigcProperties.isOneRouterConfigured()) {

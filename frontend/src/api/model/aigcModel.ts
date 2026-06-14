@@ -305,6 +305,18 @@ export type ProviderRouteUpdateRequest = Omit<
 /** Provider 路由切换响应 */
 export type ProviderRouteUpdateResponse = OpenApiOperationData<'updateActiveProvider'>
 
+/** Provider 凭证更新请求 */
+export type ProviderCredentialUpdateRequest = Omit<
+  OpenApiOperationRequest<'updateProviderCredential'>,
+  'contentType'
+> & {
+  /** 内容类型 */
+  contentType: ContentType
+}
+
+/** Provider 凭证更新响应 */
+export type ProviderCredentialUpdateResponse = OpenApiOperationData<'updateProviderCredential'>
+
 /** 模型列表响应 */
 export type ModelListResponse = Omit<
   OpenApiOperationData<'getModels'>,

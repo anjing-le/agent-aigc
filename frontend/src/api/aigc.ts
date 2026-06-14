@@ -14,6 +14,8 @@ import type {
   MaterialSearchParams,
   ModelListResponse,
   ProviderProbeRequest,
+  ProviderCredentialUpdateRequest,
+  ProviderCredentialUpdateResponse,
   ProviderRouteUpdateRequest,
   ProviderRouteUpdateResponse,
   MaterialUploadResponse
@@ -112,6 +114,12 @@ export function fetchUpdateActiveProvider(data: ProviderRouteUpdateRequest) {
   return openApiRequest('updateActiveProvider', {
     body: data
   }) as Promise<ProviderRouteUpdateResponse>
+}
+
+export function fetchUpdateProviderCredential(data: ProviderCredentialUpdateRequest) {
+  return openApiRequest('updateProviderCredential', {
+    body: data
+  }) as Promise<ProviderCredentialUpdateResponse>
 }
 
 export function fetchUploadMaterial(file: File) {

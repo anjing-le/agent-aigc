@@ -52,6 +52,14 @@
                   <span>来源</span>
                   <strong>{{ formatRouteConfigSource(model.routeConfigSource) }}</strong>
                 </div>
+                <div>
+                  <span>凭证</span>
+                  <strong>{{ formatCredentialSource(model.credentialSource) }}</strong>
+                </div>
+                <div v-if="model.credentialUpdatedAt">
+                  <span>更新</span>
+                  <strong>{{ formatProbeTime(model.credentialUpdatedAt) }}</strong>
+                </div>
               </div>
               <div v-if="model.missingConfig" class="aigc-models__missing">
                 {{ model.missingConfig }}
@@ -81,6 +89,15 @@
                 探测
               </el-button>
               <el-button
+                v-if="supportsCredentialUpdate(model)"
+                size="small"
+                :icon="Key"
+                plain
+                @click="openCredentialDialog(model)"
+              >
+                凭证
+              </el-button>
+              <el-button
                 v-if="!model.active"
                 size="small"
                 type="primary"
@@ -105,13 +122,48 @@
         </div>
       </section>
     </div>
+
+    <el-dialog v-model="credentialDialogVisible" title="Provider 凭证" width="440px">
+      <el-form label-position="top">
+        <el-form-item label="Provider">
+          <el-input :model-value="credentialForm.providerName" disabled />
+        </el-form-item>
+        <el-form-item label="新凭证">
+          <el-input
+            v-model="credentialForm.credential"
+            type="password"
+            show-password
+            clearable
+            autocomplete="new-password"
+            placeholder="粘贴新的运行时凭证"
+            @keyup.enter="handleSaveCredential"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeCredentialDialog">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="savingCredential"
+          :disabled="!credentialForm.credential.trim()"
+          @click="handleSaveCredential"
+        >
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { Connection, Refresh } from '@element-plus/icons-vue'
+  import { Connection, Key, Refresh } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
-  import { fetchGetModelList, fetchProbeProvider, fetchUpdateActiveProvider } from '@/api/aigc'
+  import {
+    fetchGetModelList,
+    fetchProbeProvider,
+    fetchUpdateActiveProvider,
+    fetchUpdateProviderCredential
+  } from '@/api/aigc'
   import type {
     ContentType,
     ModelInfo,
@@ -130,6 +182,14 @@
   })
   const probingKey = ref('')
   const switchingKey = ref('')
+  const savingCredential = ref(false)
+  const credentialDialogVisible = ref(false)
+  const credentialForm = ref({
+    contentType: 'IMAGE' as ContentType,
+    provider: '',
+    providerName: '',
+    credential: ''
+  })
   const probeResults = ref<Record<string, ProviderProbeResponse>>({})
 
   const modelGroups = computed<
@@ -175,6 +235,31 @@
     return '-'
   }
 
+  const formatCredentialSource = (source?: string) => {
+    if (source === 'database') return '页面保存'
+    if (source === 'configuration') return '环境配置'
+    if (source === 'not-required') return '无需配置'
+    if (source === 'missing') return '未配置'
+    return '-'
+  }
+
+  const supportsCredentialUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
+
+  const openCredentialDialog = (model: ModelInfo) => {
+    credentialForm.value = {
+      contentType: model.contentType,
+      provider: model.provider,
+      providerName: model.name,
+      credential: ''
+    }
+    credentialDialogVisible.value = true
+  }
+
+  const closeCredentialDialog = () => {
+    credentialDialogVisible.value = false
+    credentialForm.value.credential = ''
+  }
+
   const handleProbe = async (model: ModelInfo) => {
     try {
       probingKey.value = model.id
@@ -197,6 +282,36 @@
       ElMessage.error('Provider 探测失败')
     } finally {
       probingKey.value = ''
+    }
+  }
+
+  const handleSaveCredential = async () => {
+    const credential = credentialForm.value.credential.trim()
+    if (!credential) {
+      ElMessage.warning('请输入 Provider 凭证')
+      return
+    }
+
+    try {
+      savingCredential.value = true
+      const result = await fetchUpdateProviderCredential({
+        contentType: credentialForm.value.contentType,
+        provider: credentialForm.value.provider,
+        providerName: credentialForm.value.providerName,
+        credential
+      })
+      if (result.configurationComplete) {
+        ElMessage.success(result.message || 'Provider 凭证已保存')
+      } else {
+        ElMessage.warning(result.message || 'Provider 凭证已保存，请继续检查配置')
+      }
+      closeCredentialDialog()
+      await loadModels()
+    } catch (error) {
+      console.error('Provider 凭证保存失败:', error)
+      ElMessage.error('Provider 凭证保存失败')
+    } finally {
+      savingCredential.value = false
     }
   }
 

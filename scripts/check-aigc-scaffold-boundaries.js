@@ -104,6 +104,14 @@ for (const token of [
 }
 
 for (const token of [
+  'AigcProviderCredentialConfigRepository',
+  'findByProviderKey',
+  'JpaRepository'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcProviderCredentialConfigRepository.java', token)
+}
+
+for (const token of [
   'getActiveProvider',
   'getConfiguredActiveProvider',
   'getRouteConfigSource',
@@ -112,11 +120,21 @@ for (const token of [
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderRouteConfigService.java', token)
 }
 
+for (const token of [
+  'getGoogleCredential',
+  'isGoogleConfigured',
+  'getGoogleCredentialSource',
+  'saveGoogleCredential'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderCredentialConfigService.java', token)
+}
+
 requireAbsentInFiles([
   'backend/src/main/java/com/anjing/aigc/model/dto/ModelInfo.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ModelListResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderProbeResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderRouteUpdateResponse.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/ProviderCredentialUpdateResponse.java',
   'frontend/src/api/model/aigcModel.ts',
   'frontend/src/views/aigc/models/index.vue'
 ], /\b(apiKey|accessKey|secretKey|accessKeySecret)\b/i, 'provider secret field exposed to frontend contracts')
@@ -133,6 +151,25 @@ for (const token of [
   '不输出任何密钥片段'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/provider/ProviderRouter.java', token)
+}
+
+for (const token of [
+  'SENSITIVE_FIELD_NAMES',
+  '"credential"',
+  '"apiKey"',
+  '"secretKey"',
+  'redactJsonNode'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aspect/ControllerLogAspect.java', token)
+}
+
+for (const relativeFile of [
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleImageProvider.java',
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleVideoProvider.java',
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleAudioProvider.java'
+]) {
+  requireToken(relativeFile, 'credentialConfigService.getGoogleCredential()')
+  requireAbsent(relativeFile, /getProviders\(\)\.getGoogle\(\)\.getApiKey\(\)/, 'direct Google credential access')
 }
 
 for (const token of [
@@ -159,6 +196,7 @@ for (const token of [
   'aigc: {',
   'generate: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.generate',
   'modelActiveProvider: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelActiveProvider',
+  'modelProviderCredential: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderCredential',
   'assetDetail: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
 ]) {
@@ -172,6 +210,7 @@ for (const token of [
   "openApiRequest('getGalleryList'",
   "openApiRequest('getAssetList'",
   "openApiRequest('updateActiveProvider'",
+  "openApiRequest('updateProviderCredential'",
   "openApiRequest('uploadMaterial'"
 ]) {
   requireToken('frontend/src/api/aigc.ts', token)
@@ -186,7 +225,8 @@ for (const token of [
   "OpenApiOperationRequest<'generate'>",
   "OpenApiOperationData<'getGalleryList'>",
   "OpenApiOperationData<'getAssetList'>",
-  "OpenApiOperationData<'updateActiveProvider'>"
+  "OpenApiOperationData<'updateActiveProvider'>",
+  "OpenApiOperationData<'updateProviderCredential'>"
 ]) {
   requireToken('frontend/src/api/model/aigcModel.ts', token)
 }

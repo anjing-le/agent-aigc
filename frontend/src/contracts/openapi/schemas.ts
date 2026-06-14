@@ -145,6 +145,15 @@ export interface APIResponsePageResultTaskStatusResponse {
   timestamp?: number
 }
 
+export interface APIResponseProviderCredentialUpdateResponse {
+  code?: string
+  data?: ProviderCredentialUpdateResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseProviderProbeResponse {
   code?: string
   data?: ProviderProbeResponse
@@ -399,6 +408,8 @@ export interface ModelInfo {
   available?: boolean
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  credentialSource?: string
+  credentialUpdatedAt?: string
   defaultParams?: Record<string, unknown>
   description?: string
   icon?: string
@@ -444,6 +455,40 @@ export interface PageResultTaskStatusResponse {
   total?: number
 }
 
+/**
+ * Provider 凭证更新请求
+ */
+export interface ProviderCredentialUpdateRequest {
+  /**
+   * 内容类型
+   */
+  contentType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Provider 凭证，只写入不回显
+   */
+  credential: string
+  /**
+   * Provider 类型或名称
+   */
+  provider: string
+  /**
+   * Provider 展示名称
+   */
+  providerName?: string
+}
+
+export interface ProviderCredentialUpdateResponse {
+  available?: boolean
+  configurationComplete?: boolean
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  credentialSource?: string
+  message?: string
+  providerName?: string
+  providerType?: string
+  statusReason?: string
+  updatedAt?: string
+}
+
 export interface ProviderExecutionSummary {
   costStatus?: string
   durationMs?: number
@@ -478,6 +523,7 @@ export interface ProviderProbeResponse {
   configurationComplete?: boolean
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  credentialSource?: string
   defaultParams?: Record<string, unknown>
   message?: string
   missingConfig?: string
@@ -513,6 +559,7 @@ export interface ProviderRouteUpdateResponse {
   configurationComplete?: boolean
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  credentialSource?: string
   defaultParams?: Record<string, unknown>
   message?: string
   missingConfig?: string
@@ -584,6 +631,7 @@ export interface OpenApiSchemas {
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
   APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
+  APIResponseProviderCredentialUpdateResponse: APIResponseProviderCredentialUpdateResponse
   APIResponseProviderProbeResponse: APIResponseProviderProbeResponse
   APIResponseProviderRouteUpdateResponse: APIResponseProviderRouteUpdateResponse
   APIResponseString: APIResponseString
@@ -611,6 +659,8 @@ export interface OpenApiSchemas {
   PageResultGalleryDTO: PageResultGalleryDTO
   PageResultMaterialDTO: PageResultMaterialDTO
   PageResultTaskStatusResponse: PageResultTaskStatusResponse
+  ProviderCredentialUpdateRequest: ProviderCredentialUpdateRequest
+  ProviderCredentialUpdateResponse: ProviderCredentialUpdateResponse
   ProviderExecutionSummary: ProviderExecutionSummary
   ProviderProbeRequest: ProviderProbeRequest
   ProviderProbeResponse: ProviderProbeResponse

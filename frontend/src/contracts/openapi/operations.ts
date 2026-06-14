@@ -153,6 +153,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/items/{id}",
     operationId: "updateItem"
   },
+  updateProviderCredential: {
+    method: "POST",
+    path: "/api/aigc/models/provider-credential",
+    operationId: "updateProviderCredential"
+  },
   uploadMaterial: {
     method: "POST",
     path: "/api/aigc/materials/upload",
@@ -358,6 +363,13 @@ export interface OpenApiOperationTypes {
     request: Record<string, unknown>
     response: Schemas.APIResponseMapStringObject
     data: NonNullable<Schemas.APIResponseMapStringObject['data']>
+  }
+  updateProviderCredential: {
+    pathParams: undefined
+    query: undefined
+    request: Schemas.ProviderCredentialUpdateRequest
+    response: Schemas.APIResponseProviderCredentialUpdateResponse
+    data: NonNullable<Schemas.APIResponseProviderCredentialUpdateResponse['data']>
   }
   uploadMaterial: {
     pathParams: undefined

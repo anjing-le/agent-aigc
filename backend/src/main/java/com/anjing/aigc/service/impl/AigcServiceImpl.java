@@ -12,6 +12,7 @@ import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.request.GenerateRequest;
+import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
@@ -20,6 +21,7 @@ import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderExecutionSummary;
+import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
@@ -28,6 +30,7 @@ import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
+import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
 import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import com.anjing.aigc.service.AigcService;
@@ -70,6 +73,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcTaskExecutor taskExecutor;
     private final ProviderRouter providerRouter;
     private final AigcProperties aigcProperties;
+    private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderRouteConfigService routeConfigService;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
@@ -219,6 +223,8 @@ public class AigcServiceImpl implements AigcService {
                 .provider(provider.getProviderType().name())
                 .activeProvider(getActiveProvider(contentType))
                 .routeConfigSource(routeConfigService.getRouteConfigSource(contentType))
+                .credentialSource(resolveCredentialSource(provider))
+                .credentialUpdatedAt(resolveCredentialUpdatedAt(provider))
                 .active(active)
                 .available(provider.isAvailable())
                 .configuredModel(resolveConfiguredModel(provider, contentType))
@@ -238,9 +244,10 @@ public class AigcServiceImpl implements AigcService {
         if (provider == null) {
             return ProviderProbeResponse.builder()
                     .contentType(contentType)
-                    .requestedProvider(request.getProvider())
-                    .activeProvider(activeProvider)
-                    .registered(false)
+                .requestedProvider(request.getProvider())
+                .activeProvider(activeProvider)
+                .credentialSource("missing")
+                .registered(false)
                     .active(false)
                     .available(false)
                     .routable(false)
@@ -265,6 +272,7 @@ public class AigcServiceImpl implements AigcService {
                 .providerName(provider.getProviderName())
                 .providerType(provider.getProviderType().name())
                 .activeProvider(activeProvider)
+                .credentialSource(resolveCredentialSource(provider))
                 .registered(true)
                 .active(active)
                 .available(available)
@@ -301,6 +309,7 @@ public class AigcServiceImpl implements AigcService {
                 .routeConfigSource("database")
                 .providerName(provider.getProviderName())
                 .providerType(provider.getProviderType().name())
+                .credentialSource(resolveCredentialSource(provider))
                 .available(available)
                 .routable(routable)
                 .configurationComplete(configurationComplete)
@@ -309,6 +318,36 @@ public class AigcServiceImpl implements AigcService {
                 .missingConfig(missingConfig)
                 .statusReason(resolveModelStatusReason(provider, true))
                 .message(resolveRouteUpdateMessage(routable, configurationComplete, available))
+                .updatedAt(DateUtils.nowIso())
+                .build();
+    }
+
+    @Override
+    public ProviderCredentialUpdateResponse updateProviderCredential(ProviderCredentialUpdateRequest request) {
+        ContentType contentType = request.getContentType();
+        ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
+        if (provider == null) {
+            throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "Provider 未注册，无法更新凭证");
+        }
+        if (provider.getProviderType() != ContentProvider.ProviderType.GOOGLE) {
+            throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "当前 V1 仅支持更新 Google Provider 凭证");
+        }
+
+        credentialConfigService.saveGoogleCredential(request.getCredential(), provider);
+
+        boolean available = provider.isAvailable();
+        String missingConfig = resolveMissingConfig(provider);
+        boolean configurationComplete = missingConfig == null;
+
+        return ProviderCredentialUpdateResponse.builder()
+                .contentType(contentType)
+                .providerName(provider.getProviderName())
+                .providerType(provider.getProviderType().name())
+                .credentialSource(resolveCredentialSource(provider))
+                .configurationComplete(configurationComplete)
+                .available(available)
+                .statusReason(resolveModelStatusReason(provider, isActiveProvider(provider, getActiveProvider(contentType))))
+                .message(resolveCredentialUpdateMessage(configurationComplete, available))
                 .updatedAt(DateUtils.nowIso())
                 .build();
     }
@@ -444,10 +483,30 @@ public class AigcServiceImpl implements AigcService {
     }
 
     private String resolveMissingConfig(ContentProvider provider) {
-        if (provider.getProviderType() == ContentProvider.ProviderType.GOOGLE && !aigcProperties.isGoogleConfigured()) {
-            return "缺少 aigc.providers.google.api-key";
+        if (provider.getProviderType() == ContentProvider.ProviderType.GOOGLE
+                && !credentialConfigService.isGoogleConfigured()) {
+            return "缺少 Google Provider 凭证";
         }
         return null;
+    }
+
+    private String resolveCredentialSource(ContentProvider provider) {
+        if (provider.getProviderType() == ContentProvider.ProviderType.GOOGLE) {
+            return credentialConfigService.getGoogleCredentialSource();
+        }
+        if (provider.getProviderType() == ContentProvider.ProviderType.OTHER) {
+            return "not-required";
+        }
+        return "missing";
+    }
+
+    private String resolveCredentialUpdatedAt(ContentProvider provider) {
+        if (provider.getProviderType() != ContentProvider.ProviderType.GOOGLE) {
+            return null;
+        }
+        return credentialConfigService.getGoogleCredentialUpdatedAt() == null
+                ? null
+                : credentialConfigService.getGoogleCredentialUpdatedAt().toString();
     }
 
     private String resolveModelStatusReason(ContentProvider provider, boolean active) {
@@ -488,6 +547,16 @@ public class AigcServiceImpl implements AigcService {
             return "已切换：Provider 当前不可用";
         }
         return "已切换：路由需要进一步检查";
+    }
+
+    private String resolveCredentialUpdateMessage(boolean configurationComplete, boolean available) {
+        if (configurationComplete && available) {
+            return "Provider 凭证已保存，当前配置可用";
+        }
+        if (configurationComplete) {
+            return "Provider 凭证已保存，请继续检查 Provider 启用状态";
+        }
+        return "Provider 凭证已保存，但配置仍不完整";
     }
 
     @Override

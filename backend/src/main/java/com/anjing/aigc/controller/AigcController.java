@@ -2,6 +2,7 @@ package com.anjing.aigc.controller;
 
 import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
+import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.SaveToGalleryRequest;
@@ -9,6 +10,7 @@ import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
@@ -119,6 +121,14 @@ public class AigcController {
     public APIResponse<ProviderRouteUpdateResponse> updateActiveProvider(
             @Valid @RequestBody ProviderRouteUpdateRequest request) {
         ProviderRouteUpdateResponse response = aigcService.updateActiveProvider(request);
+        return APIResponse.success(response);
+    }
+
+    @PostMapping(ApiConstants.Aigc.MODEL_PROVIDER_CREDENTIAL)
+    @Operation(summary = "只写式更新 AIGC Provider 凭证")
+    public APIResponse<ProviderCredentialUpdateResponse> updateProviderCredential(
+            @Valid @RequestBody ProviderCredentialUpdateRequest request) {
+        ProviderCredentialUpdateResponse response = aigcService.updateProviderCredential(request);
         return APIResponse.success(response);
     }
 

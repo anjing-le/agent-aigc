@@ -22,6 +22,7 @@ public class ProviderRouteUpdateResponse {
     private String routeConfigSource;
     private String providerName;
     private String providerType;
+    private String credentialSource;
     private Boolean available;
     private Boolean routable;
     private Boolean configurationComplete;

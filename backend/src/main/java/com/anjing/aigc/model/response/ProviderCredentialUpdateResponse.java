@@ -6,32 +6,22 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-
 /**
- * Provider 运行前探测结果。
+ * Provider 凭证更新结果。
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProviderProbeResponse {
+public class ProviderCredentialUpdateResponse {
 
     private ContentType contentType;
-    private String requestedProvider;
     private String providerName;
     private String providerType;
-    private String activeProvider;
     private String credentialSource;
-    private Boolean registered;
-    private Boolean active;
-    private Boolean available;
-    private Boolean routable;
     private Boolean configurationComplete;
-    private String configuredModel;
-    private Map<String, Object> defaultParams;
-    private String missingConfig;
+    private Boolean available;
     private String statusReason;
     private String message;
-    private String checkedAt;
+    private String updatedAt;
 }

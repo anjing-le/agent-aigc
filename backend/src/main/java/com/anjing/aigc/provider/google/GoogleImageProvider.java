@@ -8,6 +8,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
+import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 public class GoogleImageProvider implements ImageGenerationProvider {
     
     private final AigcProperties aigcProperties;
+    private final AigcProviderCredentialConfigService credentialConfigService;
     private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -95,14 +97,11 @@ public class GoogleImageProvider implements ImageGenerationProvider {
     
     @Override
     public boolean isAvailable() {
-        boolean googleConfigured = aigcProperties.isGoogleConfigured();
+        boolean googleConfigured = credentialConfigService.isGoogleConfigured();
         boolean imageEnabled = aigcProperties.getImage().getGoogle().isEnabled();
         
         if (!googleConfigured) {
-            log.debug("Google 未配置 - apiKey: {}", 
-                    aigcProperties.getProviders().getGoogle().getApiKey() != null 
-                            ? "已设置(长度:" + aigcProperties.getProviders().getGoogle().getApiKey().length() + ")" 
-                            : "null");
+            log.debug("Google 未配置 - credentialSource: {}", credentialConfigService.getGoogleCredentialSource());
         }
         if (!imageEnabled) {
             log.debug("Image provider 未启用");
@@ -146,9 +145,10 @@ public class GoogleImageProvider implements ImageGenerationProvider {
                     : aigcProperties.getImage().getGoogle().getDefaultAspectRatio();
             
             // 构建请求 URL（直连 Google API）
-            String apiKey = googleConfig.getApiKey();
+            String apiKey = credentialConfigService.getGoogleCredential()
+                    .orElseThrow(() -> new IllegalStateException("Google Provider 凭证未配置"));
             String url = googleConfig.getBaseUrl() + "/v1beta/models/" + model + ":generateContent?key=" + apiKey;
-            log.debug("调用 Google API: {}", url);
+            log.debug("调用 Google API: baseUrl={}, model={}", googleConfig.getBaseUrl(), model);
             
             // 构建请求体
             String requestBody = buildRequestBody(prompt, aspectRatio, model, request.getReferenceImages());

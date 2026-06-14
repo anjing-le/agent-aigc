@@ -6,6 +6,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.AudioGenerationProvider;
 import com.anjing.aigc.provider.ContentProvider;
+import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 public class GoogleAudioProvider implements AudioGenerationProvider {
     
     private final AigcProperties aigcProperties;
+    private final AigcProviderCredentialConfigService credentialConfigService;
     private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -110,7 +112,7 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
     
     @Override
     public boolean isAvailable() {
-        return aigcProperties.isGoogleConfigured() 
+        return credentialConfigService.isGoogleConfigured()
             && aigcProperties.getAudio().getGoogle().isEnabled();
     }
     
@@ -169,7 +171,8 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
             String model = "gemini-2.5-flash-preview-tts";
             String prompt = task.getOptimizedPrompt();
             String voiceName = extractVoice(prompt);
-            String apiKey = aigcProperties.getProviders().getGoogle().getApiKey();
+            String apiKey = credentialConfigService.getGoogleCredential()
+                    .orElseThrow(() -> new IllegalStateException("Google Provider 凭证未配置"));
             
             // 构建请求 URL
             String url = String.format("%s/%s:generateContent?key=%s", GEMINI_API_BASE, model, apiKey);

@@ -40,6 +40,12 @@ public class ModelInfo {
     /** 路由配置来源：configuration 或 database */
     private String routeConfigSource;
 
+    /** Provider 凭证来源：configuration、database 或 missing */
+    private String credentialSource;
+
+    /** Provider 凭证更新时间，仅数据库来源时返回 */
+    private String credentialUpdatedAt;
+
     /** 是否为当前激活 Provider */
     private Boolean active;
 

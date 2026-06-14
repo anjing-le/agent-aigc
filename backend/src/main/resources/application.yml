@@ -129,7 +129,7 @@ logging:
     org.springframework.web: INFO
     # Hibernate SQL日志（开发环境）
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
     # Spring Data JPA日志
     org.springframework.data.jpa: DEBUG
     # 抑制JPA Named Query查找日志（抑制 "Did not find named query" 信息）

@@ -6,6 +6,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.VideoGenerationProvider;
+import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.storage.LocalAigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class GoogleVideoProvider implements VideoGenerationProvider {
     
     private final AigcProperties aigcProperties;
+    private final AigcProviderCredentialConfigService credentialConfigService;
     private final LocalAigcStorageService localAigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -97,7 +99,7 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
     
     @Override
     public boolean isAvailable() {
-        return aigcProperties.isGoogleConfigured() 
+        return credentialConfigService.isGoogleConfigured()
             && aigcProperties.getVideo().getGoogle().isEnabled();
     }
     
@@ -130,7 +132,8 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
             var config = aigcProperties.getVideo().getGoogle();
             String model = task.getModel() != null ? task.getModel() : config.getModel();
             String prompt = task.getOptimizedPrompt();
-            String apiKey = aigcProperties.getProviders().getGoogle().getApiKey();
+            String apiKey = credentialConfigService.getGoogleCredential()
+                    .orElseThrow(() -> new IllegalStateException("Google Provider 凭证未配置"));
             
             // 构建请求 URL - 视频生成使用 predictLongRunning 端点
             String url = String.format("%s/%s:predictLongRunning?key=%s", GEMINI_API_BASE, model, apiKey);
@@ -420,7 +423,8 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
      * 从 Google API 下载视频并保存到本地
      */
     private String downloadAndSaveVideo(String videoUri, String taskId) throws IOException {
-        String apiKey = aigcProperties.getProviders().getGoogle().getApiKey();
+        String apiKey = credentialConfigService.getGoogleCredential()
+                .orElseThrow(() -> new IllegalStateException("Google Provider 凭证未配置"));
         String downloadUrl = videoUri + (videoUri.contains("?") ? "&" : "?") + "key=" + apiKey;
         
         log.info("开始下载视频: {}", videoUri);

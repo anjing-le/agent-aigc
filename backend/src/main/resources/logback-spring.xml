@@ -113,7 +113,7 @@
         <appender-ref ref="FILE_SQL"/>
     </logger>
     
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE_SQL"/>
     </logger>

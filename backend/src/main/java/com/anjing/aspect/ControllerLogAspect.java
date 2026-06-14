@@ -5,7 +5,10 @@ import com.anjing.model.errorcode.ErrorCode;
 import com.anjing.model.exception.BizException;
 import com.anjing.model.exception.SystemException;
 import com.anjing.model.response.APIResponse;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -17,6 +20,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 统一日志处理切面
@@ -38,6 +44,19 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class ControllerLogAspect
 {
+
+    private static final String FILTERED_VALUE = "***FILTERED***";
+    private static final Set<String> SENSITIVE_FIELD_NAMES = Set.of(
+            "password",
+            "credential",
+            "apiKey",
+            "accessKey",
+            "secretKey",
+            "accessKeySecret",
+            "token",
+            "refreshToken",
+            "authorization"
+    );
 
     private final ObjectMapper objectMapper;
 
@@ -221,7 +240,7 @@ public class ControllerLogAspect
         try {
             // 过滤敏感信息
             Object[] filteredArgs = Arrays.stream(args)
-                    .map(this::filterSensitiveData)
+                    .map(this::sanitizeForLog)
                     .toArray();
             
             String jsonArgs = objectMapper.writeValueAsString(filteredArgs);
@@ -233,7 +252,7 @@ public class ControllerLogAspect
             return jsonArgs;
             
         } catch (Exception e) {
-            return Arrays.toString(args);
+            return maskSensitiveText(Arrays.toString(args));
         }
     }
 
@@ -246,7 +265,7 @@ public class ControllerLogAspect
         }
         
         try {
-            String jsonResult = objectMapper.writeValueAsString(result);
+            String jsonResult = objectMapper.writeValueAsString(sanitizeForLog(result));
             
             // 限制日志长度
             if (jsonResult.length() > 1000) {
@@ -255,31 +274,72 @@ public class ControllerLogAspect
             return jsonResult;
             
         } catch (Exception e) {
-            return result.toString();
+            return maskSensitiveText(result.toString());
         }
     }
 
     /**
      * 过滤敏感数据
      */
-    private Object filterSensitiveData(Object arg) {
-        if (arg == null) {
+    private Object sanitizeForLog(Object value) {
+        if (value == null) {
             return null;
         }
-        
-        String argStr = arg.toString();
-        
-        // 过滤密码字段
-        if (argStr.contains("password") || argStr.contains("Password")) {
-            return "***FILTERED***";
+
+        try {
+            JsonNode node = objectMapper.valueToTree(value);
+            redactJsonNode(node);
+            return node;
+        } catch (Exception e) {
+            return maskSensitiveText(value.toString());
         }
-        
-        // 过滤token字段
-        if (argStr.contains("token") || argStr.contains("Token")) {
-            return "***FILTERED***";
+    }
+
+    private void redactJsonNode(JsonNode node) {
+        if (node == null) {
+            return;
         }
-        
-        return arg;
+        if (node.isObject()) {
+            ObjectNode objectNode = (ObjectNode) node;
+            Iterator<Map.Entry<String, JsonNode>> fields = objectNode.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                if (isSensitiveField(field.getKey())) {
+                    objectNode.put(field.getKey(), FILTERED_VALUE);
+                } else {
+                    redactJsonNode(field.getValue());
+                }
+            }
+            return;
+        }
+        if (node.isArray()) {
+            ArrayNode arrayNode = (ArrayNode) node;
+            for (JsonNode item : arrayNode) {
+                redactJsonNode(item);
+            }
+        }
+    }
+
+    private boolean isSensitiveField(String fieldName) {
+        if (fieldName == null) {
+            return false;
+        }
+        return SENSITIVE_FIELD_NAMES.stream()
+                .anyMatch(sensitiveField -> sensitiveField.equalsIgnoreCase(fieldName));
+    }
+
+    private String maskSensitiveText(String text) {
+        if (text == null) {
+            return null;
+        }
+        String masked = text;
+        for (String fieldName : SENSITIVE_FIELD_NAMES) {
+            masked = masked.replaceAll(
+                    "(?i)(" + fieldName + "\\s*[=:]\\s*)([^,}\\]\\s]+)",
+                    "$1" + FILTERED_VALUE
+            );
+        }
+        return masked;
     }
 
     /**

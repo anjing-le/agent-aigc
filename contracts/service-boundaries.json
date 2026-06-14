@@ -82,6 +82,7 @@
         { "name": "models", "backendConstant": "MODELS_FULL", "frontendKey": "models", "path": "/api/aigc/models", "methods": ["GET"] },
         { "name": "modelProbe", "backendConstant": "MODEL_PROBE_FULL", "frontendKey": "modelProbe", "path": "/api/aigc/models/probe", "methods": ["POST"] },
         { "name": "modelActiveProvider", "backendConstant": "MODEL_ACTIVE_PROVIDER_FULL", "frontendKey": "modelActiveProvider", "path": "/api/aigc/models/active-provider", "methods": ["POST"] },
+        { "name": "modelProviderCredential", "backendConstant": "MODEL_PROVIDER_CREDENTIAL_FULL", "frontendKey": "modelProviderCredential", "path": "/api/aigc/models/provider-credential", "methods": ["POST"] },
         { "name": "materials", "backendConstant": "MATERIALS_FULL", "frontendKey": "materials", "path": "/api/aigc/materials", "methods": ["GET"] },
         { "name": "materialDetail", "backendConstant": "MATERIAL_DETAIL_FULL", "frontendKey": "materialDetail", "path": "/api/aigc/materials/{materialId}", "methods": ["DELETE"] },
         { "name": "materialTasks", "backendConstant": "MATERIAL_TASKS_FULL", "frontendKey": "materialTasks", "path": "/api/aigc/materials/{materialId}/tasks", "methods": ["GET"] },
