@@ -13,6 +13,7 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
+import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
@@ -20,6 +21,7 @@ import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderExecutionSummary;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
+import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ProviderRouter;
@@ -274,6 +276,39 @@ public class AigcServiceImpl implements AigcService {
                 .build();
     }
 
+    @Override
+    public ProviderRouteUpdateResponse updateActiveProvider(ProviderRouteUpdateRequest request) {
+        ContentType contentType = request.getContentType();
+        ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
+        if (provider == null) {
+            throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "Provider 未注册，无法切换路由");
+        }
+
+        String activeProvider = resolveActiveProviderKey(provider);
+        setActiveProvider(contentType, activeProvider);
+
+        boolean available = provider.isAvailable();
+        String missingConfig = resolveMissingConfig(provider);
+        boolean configurationComplete = missingConfig == null;
+        boolean routable = available && configurationComplete;
+
+        return ProviderRouteUpdateResponse.builder()
+                .contentType(contentType)
+                .activeProvider(activeProvider)
+                .providerName(provider.getProviderName())
+                .providerType(provider.getProviderType().name())
+                .available(available)
+                .routable(routable)
+                .configurationComplete(configurationComplete)
+                .configuredModel(resolveConfiguredModel(provider, contentType))
+                .defaultParams(resolveDefaultParams(provider, contentType))
+                .missingConfig(missingConfig)
+                .statusReason(resolveModelStatusReason(provider, true))
+                .message(resolveRouteUpdateMessage(routable, configurationComplete, available))
+                .updatedAt(DateUtils.nowIso())
+                .build();
+    }
+
     private String toModelId(ContentProvider provider, ContentType contentType) {
         String normalizedProvider = provider.getProviderName()
                 .toLowerCase()
@@ -301,6 +336,24 @@ public class AigcServiceImpl implements AigcService {
             case VIDEO -> aigcProperties.getVideo().getActiveProvider();
             case AUDIO -> aigcProperties.getAudio().getActiveProvider();
             case TEXT -> "";
+        };
+    }
+
+    private void setActiveProvider(ContentType contentType, String activeProvider) {
+        switch (contentType) {
+            case IMAGE -> aigcProperties.getImage().setActiveProvider(activeProvider);
+            case VIDEO -> aigcProperties.getVideo().setActiveProvider(activeProvider);
+            case AUDIO -> aigcProperties.getAudio().setActiveProvider(activeProvider);
+            case TEXT -> throw new AigcException(AigcErrorCode.CONTENT_TYPE_UNSUPPORTED, "文本生成暂未开放 Provider");
+        }
+    }
+
+    private String resolveActiveProviderKey(ContentProvider provider) {
+        return switch (provider.getProviderType()) {
+            case GOOGLE -> "google";
+            case OPENAI -> "openai";
+            case STABILITY -> "stability";
+            case OTHER -> provider.getProviderName();
         };
     }
 
@@ -429,6 +482,19 @@ public class AigcServiceImpl implements AigcService {
             return "探测未通过：Provider 当前不可用";
         }
         return "探测未通过：路由不可用";
+    }
+
+    private String resolveRouteUpdateMessage(boolean routable, boolean configurationComplete, boolean available) {
+        if (routable) {
+            return "已切换：当前路由可用";
+        }
+        if (!configurationComplete) {
+            return "已切换：配置不完整，生成前需要补齐密钥或参数";
+        }
+        if (!available) {
+            return "已切换：Provider 当前不可用";
+        }
+        return "已切换：路由需要进一步检查";
     }
 
     @Override

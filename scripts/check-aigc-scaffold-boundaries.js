@@ -112,6 +112,7 @@ requireAbsent(
 for (const token of [
   'aigc: {',
   'generate: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.generate',
+  'modelActiveProvider: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelActiveProvider',
   'assetDetail: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
 ]) {
@@ -124,6 +125,7 @@ for (const token of [
   "openApiRequest('getTaskStatus'",
   "openApiRequest('getGalleryList'",
   "openApiRequest('getAssetList'",
+  "openApiRequest('updateActiveProvider'",
   "openApiRequest('uploadMaterial'"
 ]) {
   requireToken('frontend/src/api/aigc.ts', token)

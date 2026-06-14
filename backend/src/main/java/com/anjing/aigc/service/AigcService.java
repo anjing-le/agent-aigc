@@ -4,10 +4,12 @@ import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
+import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
+import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.model.response.PageResult;
 
@@ -68,6 +70,14 @@ public interface AigcService {
      * @return 探测结果
      */
     ProviderProbeResponse probeProvider(ProviderProbeRequest request);
+
+    /**
+     * 运行时切换指定内容类型的 active provider。
+     *
+     * @param request 切换请求
+     * @return 切换后的路由摘要
+     */
+    ProviderRouteUpdateResponse updateActiveProvider(ProviderRouteUpdateRequest request);
 
     /**
      * 获取灵感广场作品列表

@@ -14,6 +14,8 @@ import type {
   MaterialSearchParams,
   ModelListResponse,
   ProviderProbeRequest,
+  ProviderRouteUpdateRequest,
+  ProviderRouteUpdateResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
 
@@ -104,6 +106,12 @@ export function fetchProbeProvider(data: ProviderProbeRequest) {
   return openApiRequest('probeModel', {
     body: data
   })
+}
+
+export function fetchUpdateActiveProvider(data: ProviderRouteUpdateRequest) {
+  return openApiRequest('updateActiveProvider', {
+    body: data
+  }) as Promise<ProviderRouteUpdateResponse>
 }
 
 export function fetchUploadMaterial(file: File) {

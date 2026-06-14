@@ -154,6 +154,15 @@ export interface APIResponseProviderProbeResponse {
   timestamp?: number
 }
 
+export interface APIResponseProviderRouteUpdateResponse {
+  code?: string
+  data?: ProviderRouteUpdateResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseString {
   code?: string
   data?: string
@@ -480,6 +489,40 @@ export interface ProviderProbeResponse {
 }
 
 /**
+ * Provider 运行时路由切换请求
+ */
+export interface ProviderRouteUpdateRequest {
+  /**
+   * 内容类型
+   */
+  contentType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Provider 类型或名称
+   */
+  provider: string
+  /**
+   * Provider 展示名称
+   */
+  providerName?: string
+}
+
+export interface ProviderRouteUpdateResponse {
+  activeProvider?: string
+  available?: boolean
+  configurationComplete?: boolean
+  configuredModel?: string
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  defaultParams?: Record<string, unknown>
+  message?: string
+  missingConfig?: string
+  providerName?: string
+  providerType?: string
+  routable?: boolean
+  statusReason?: string
+  updatedAt?: string
+}
+
+/**
  * Refresh token request
  */
 export interface RefreshTokenRequest {
@@ -540,6 +583,7 @@ export interface OpenApiSchemas {
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
   APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
   APIResponseProviderProbeResponse: APIResponseProviderProbeResponse
+  APIResponseProviderRouteUpdateResponse: APIResponseProviderRouteUpdateResponse
   APIResponseString: APIResponseString
   APIResponseTaskStatusResponse: APIResponseTaskStatusResponse
   APIResponseVoid: APIResponseVoid
@@ -568,6 +612,8 @@ export interface OpenApiSchemas {
   ProviderExecutionSummary: ProviderExecutionSummary
   ProviderProbeRequest: ProviderProbeRequest
   ProviderProbeResponse: ProviderProbeResponse
+  ProviderRouteUpdateRequest: ProviderRouteUpdateRequest
+  ProviderRouteUpdateResponse: ProviderRouteUpdateResponse
   RefreshTokenRequest: RefreshTokenRequest
   SaveToGalleryRequest: SaveToGalleryRequest
   TaskStatusResponse: TaskStatusResponse

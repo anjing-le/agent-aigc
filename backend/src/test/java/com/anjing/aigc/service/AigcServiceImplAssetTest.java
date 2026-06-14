@@ -8,10 +8,12 @@ import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
+import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
+import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.provider.ProviderRouter;
@@ -159,6 +161,36 @@ class AigcServiceImplAssetTest {
         assertEquals(true, response.getAvailable());
         assertEquals(false, response.getRoutable());
         assertEquals("探测通过：Provider 已注册，但不是当前路由", response.getMessage());
+    }
+
+    @Test
+    void updateActiveProviderSwitchesRuntimeRouteToMockProvider() {
+        givenImageProviders();
+
+        ProviderRouteUpdateRequest request = new ProviderRouteUpdateRequest();
+        request.setContentType(ContentType.IMAGE);
+        request.setProvider("OTHER");
+        request.setProviderName("Mock Image Provider");
+
+        ProviderRouteUpdateResponse response = aigcService.updateActiveProvider(request);
+
+        assertEquals("Mock Image Provider", response.getActiveProvider());
+        assertEquals("Mock Image Provider", response.getProviderName());
+        assertEquals(true, response.getRoutable());
+        assertEquals("Mock Image Provider", aigcProperties.getImage().getActiveProvider());
+    }
+
+    @Test
+    void updateActiveProviderRejectsUnregisteredProvider() {
+        givenImageProviders();
+
+        ProviderRouteUpdateRequest request = new ProviderRouteUpdateRequest();
+        request.setContentType(ContentType.IMAGE);
+        request.setProvider("missing-provider");
+
+        AigcException error = assertThrows(AigcException.class, () -> aigcService.updateActiveProvider(request));
+
+        assertEquals(AigcErrorCode.PROVIDER_UNAVAILABLE, error.getErrorCode());
     }
 
     @Test

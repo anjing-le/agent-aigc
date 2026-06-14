@@ -3,12 +3,14 @@ package com.anjing.aigc.controller;
 import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
+import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.SaveToGalleryRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
+import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.service.AigcMaterialService;
 import com.anjing.aigc.service.AigcService;
@@ -109,6 +111,14 @@ public class AigcController {
     @Operation(summary = "探测 AIGC Provider 配置和当前路由")
     public APIResponse<ProviderProbeResponse> probeModel(@Valid @RequestBody ProviderProbeRequest request) {
         ProviderProbeResponse response = aigcService.probeProvider(request);
+        return APIResponse.success(response);
+    }
+
+    @PostMapping(ApiConstants.Aigc.MODEL_ACTIVE_PROVIDER)
+    @Operation(summary = "运行时切换 AIGC active Provider")
+    public APIResponse<ProviderRouteUpdateResponse> updateActiveProvider(
+            @Valid @RequestBody ProviderRouteUpdateRequest request) {
+        ProviderRouteUpdateResponse response = aigcService.updateActiveProvider(request);
         return APIResponse.success(response);
     }
 

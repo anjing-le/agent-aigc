@@ -76,6 +76,16 @@
               >
                 探测
               </el-button>
+              <el-button
+                v-if="!model.active"
+                size="small"
+                type="primary"
+                plain
+                :loading="switchingKey === model.id"
+                @click="handleSwitchProvider(model)"
+              >
+                设为路由
+              </el-button>
             </div>
             <div v-if="probeResults[model.id]" class="aigc-models__probe">
               <el-tag
@@ -97,7 +107,7 @@
 <script setup lang="ts">
   import { Connection, Refresh } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
-  import { fetchGetModelList, fetchProbeProvider } from '@/api/aigc'
+  import { fetchGetModelList, fetchProbeProvider, fetchUpdateActiveProvider } from '@/api/aigc'
   import type {
     ContentType,
     ModelInfo,
@@ -115,6 +125,7 @@
     audioModels: []
   })
   const probingKey = ref('')
+  const switchingKey = ref('')
   const probeResults = ref<Record<string, ProviderProbeResponse>>({})
 
   const modelGroups = computed<
@@ -176,6 +187,28 @@
       ElMessage.error('Provider 探测失败')
     } finally {
       probingKey.value = ''
+    }
+  }
+
+  const handleSwitchProvider = async (model: ModelInfo) => {
+    try {
+      switchingKey.value = model.id
+      const result = await fetchUpdateActiveProvider({
+        contentType: model.contentType,
+        provider: model.provider,
+        providerName: model.name
+      })
+      if (result.routable) {
+        ElMessage.success(result.message || 'Provider 路由已切换')
+      } else {
+        ElMessage.warning(result.message || 'Provider 已切换，请检查配置')
+      }
+      await loadModels()
+    } catch (error) {
+      console.error('Provider 路由切换失败:', error)
+      ElMessage.error('Provider 路由切换失败')
+    } finally {
+      switchingKey.value = ''
     }
   }
 

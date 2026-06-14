@@ -11,7 +11,7 @@
 | 工程规范 | Ready | 已继承脚手架的前后端目录、统一 API 响应、OpenAPI、服务边界、请求上下文和质量门禁 |
 | AIGC 主链路 | V0.9 in progress | 已具备创作任务、意图识别、Prompt 优化、Provider 路由、任务轮询、失败重试、资产保存，并开始支持显式类型、参数提示和参考素材上传 |
 | 本地演示 | Ready | 默认使用 mock provider，无 Google/OneRouter Key 也能端到端创建作品 |
-| 真实模型接入 | In progress | Google GenAI 和 OneRouter 路径保留，通过环境变量切换 provider 与 key |
+| 真实模型接入 | In progress | Google GenAI 和 OneRouter 路径保留，支持环境变量配置和页面运行时切换 active provider |
 | 作品管理 | V0.9 | 已完成资产管理页、详情溯源、发布到广场、下载、删除、Prompt 复用和卡片/表格视图 |
 | 素材库 | V0.9 | 已提供上传 API、素材记录、列表/删除 API、前端素材库、任务引用 ID 记录、结果区引用展示、基础引用统计、引用任务预览和本地文件清理；后续补 OSS 和权限 |
 | 前端体验 | V0.9 | 工作台、素材库、我的资产、灵感广场、模型配置已统一到脚手架后台页面范式，并形成 Prompt 复用闭环 |
@@ -38,6 +38,7 @@
 - 模型列表已从后端 ProviderRouter 派生，创作页展示可用模型能力，并新增只读模型配置页。
 - 模型配置页已升级为 Provider 配置视图，可展示 active provider、可用性、配置模型、缺失配置和默认参数模板。
 - Provider 配置页已接入运行前探测接口，按 service-boundary、ApiConstants、明确 DTO/VO、OpenAPI 生成类型和 `openApiRequest` 贯通脚手架契约。
+- Provider 配置页已支持运行时切换 active provider：页面调用 `/api/aigc/models/active-provider`，后端按 service-boundary、ApiConstants、OpenAPI 类型和统一响应返回路由摘要。
 - AIGC 本地文件保存已收口到 `LocalAigcStorageService`，Google 图片/视频/音频 provider 不再各自硬编码上传目录和访问前缀。
 - Google 图片 Provider 已加入 429/5xx 短重试、统一 Provider 调用错误码和本地保存失败兜底。
 - 删除资产时会清理本地生成文件和缩略图；清理失败只记录 warning，不阻断资产记录删除。
@@ -60,7 +61,7 @@
 
 - 视频/音频 mock 当前是可视化占位，不是真实媒体文件。
 - 素材库和资产库已具备本地文件清理；OSS 清理和权限隔离仍待产品化。
-- Provider 配置已有只读配置视图和运行前探测，写配置能力仍主要通过环境变量切换。
+- Provider 配置已有运行前探测和页面运行时切换；密钥、持久化配置和权限审计仍主要通过环境变量或后续管理能力承接。
 - 历史记录和作品广场缺少用户维度、收藏、点赞等产品能力。
 - 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口和基础 Provider 调用观测；真实成本金额仍需继续产品化。
 
@@ -68,7 +69,7 @@
 
 1. 做真实图片 provider 验证：至少打通一条生产级图片生成链路。
 2. 做存储产品化：OSS 存储抽象、文件权限隔离、清理审计。
-3. 做 Provider 管理：运行时切换默认 provider、真实成本金额。
+3. 做 Provider 管理：持久化 provider 配置、真实成本金额和权限审计。
 4. 做用户维度：资产、素材、广场发布、收藏和点赞的用户隔离。
 5. 做教学材料：以 agent-aigc 作为从脚手架生长业务项目的案例，沉淀模块边界和页面流程。
 

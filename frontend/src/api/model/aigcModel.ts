@@ -293,6 +293,18 @@ export type ProviderProbeRequest = Omit<OpenApiOperationRequest<'probeModel'>, '
 /** Provider 探测响应 */
 export type ProviderProbeResponse = OpenApiOperationData<'probeModel'>
 
+/** Provider 路由切换请求 */
+export type ProviderRouteUpdateRequest = Omit<
+  OpenApiOperationRequest<'updateActiveProvider'>,
+  'contentType'
+> & {
+  /** 内容类型 */
+  contentType: ContentType
+}
+
+/** Provider 路由切换响应 */
+export type ProviderRouteUpdateResponse = OpenApiOperationData<'updateActiveProvider'>
+
 /** 模型列表响应 */
 export type ModelListResponse = Omit<
   OpenApiOperationData<'getModels'>,

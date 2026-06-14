@@ -143,6 +143,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/exception/system",
     operationId: "testSystemException"
   },
+  updateActiveProvider: {
+    method: "POST",
+    path: "/api/aigc/models/active-provider",
+    operationId: "updateActiveProvider"
+  },
   updateItem: {
     method: "PUT",
     path: "/api/test/items/{id}",
@@ -339,6 +344,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseVoid
     data: NonNullable<Schemas.APIResponseVoid['data']>
+  }
+  updateActiveProvider: {
+    pathParams: undefined
+    query: undefined
+    request: Schemas.ProviderRouteUpdateRequest
+    response: Schemas.APIResponseProviderRouteUpdateResponse
+    data: NonNullable<Schemas.APIResponseProviderRouteUpdateResponse['data']>
   }
   updateItem: {
     pathParams: { id: number }
