@@ -235,6 +235,12 @@ public class AigcController {
         return aigcDownloadService.downloadMaterial(materialId);
     }
 
+    @GetMapping(ApiConstants.Aigc.MATERIAL_PREVIEW)
+    @Operation(summary = "授权预览 AIGC 参考素材")
+    public ResponseEntity<Resource> previewMaterial(@PathVariable String materialId) {
+        return aigcDownloadService.previewMaterial(materialId);
+    }
+
     /**
      * 获取灵感广场作品列表
      *
@@ -299,6 +305,12 @@ public class AigcController {
     @Operation(summary = "授权下载 AIGC 资产文件")
     public ResponseEntity<Resource> downloadAsset(@PathVariable String assetId) {
         return aigcDownloadService.downloadAsset(assetId);
+    }
+
+    @GetMapping(ApiConstants.Aigc.ASSET_PREVIEW)
+    @Operation(summary = "授权预览 AIGC 资产文件")
+    public ResponseEntity<Resource> previewAsset(@PathVariable String assetId) {
+        return aigcDownloadService.previewAsset(assetId);
     }
 
     /**

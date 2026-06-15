@@ -35,7 +35,16 @@ public class AigcDownloadService {
                         ownershipService.currentOwnerId(),
                         ownershipService.currentTenantId())
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
-        return buildDownloadResponse(asset.getUrl(), buildAssetFileName(asset));
+        return buildStorageResponse(asset.getUrl(), buildAssetFileName(asset), true);
+    }
+
+    public ResponseEntity<Resource> previewAsset(String assetId) {
+        AigcAsset asset = assetRepository.findVisibleByAssetId(
+                        assetId,
+                        ownershipService.currentOwnerId(),
+                        ownershipService.currentTenantId())
+                .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
+        return buildStorageResponse(asset.getUrl(), buildAssetFileName(asset), false);
     }
 
     public ResponseEntity<Resource> downloadMaterial(String materialId) {
@@ -44,10 +53,19 @@ public class AigcDownloadService {
                         ownershipService.currentOwnerId(),
                         ownershipService.currentTenantId())
                 .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
-        return buildDownloadResponse(material.getUrl(), buildMaterialFileName(material));
+        return buildStorageResponse(material.getUrl(), buildMaterialFileName(material), true);
     }
 
-    private ResponseEntity<Resource> buildDownloadResponse(String url, String fileName) {
+    public ResponseEntity<Resource> previewMaterial(String materialId) {
+        AigcMaterial material = materialRepository.findVisibleByMaterialId(
+                        materialId,
+                        ownershipService.currentOwnerId(),
+                        ownershipService.currentTenantId())
+                .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
+        return buildStorageResponse(material.getUrl(), buildMaterialFileName(material), false);
+    }
+
+    private ResponseEntity<Resource> buildStorageResponse(String url, String fileName, boolean attachment) {
         try {
             AigcStorageDownloadResource download = storageService.resolveDownload(url, fileName);
             if (download.isRedirect()) {
@@ -57,11 +75,14 @@ public class AigcDownloadService {
             }
 
             ResponseEntity.BodyBuilder builder = ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(download.getContentType()))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
-                            .filename(download.getFileName(), StandardCharsets.UTF_8)
-                            .build()
-                            .toString());
+                    .contentType(MediaType.parseMediaType(download.getContentType()));
+            ContentDisposition.Builder disposition = attachment
+                    ? ContentDisposition.attachment()
+                    : ContentDisposition.inline();
+            builder.header(HttpHeaders.CONTENT_DISPOSITION, disposition
+                    .filename(download.getFileName(), StandardCharsets.UTF_8)
+                    .build()
+                    .toString());
             if (download.getContentLength() != null) {
                 builder.contentLength(download.getContentLength());
             }

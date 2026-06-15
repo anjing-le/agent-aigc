@@ -35,7 +35,7 @@
           <div class="history-panel__item-thumb">
             <el-image
               v-if="isImage(item.contentType) || hasVisualPreview(item)"
-              :src="item.thumbnailUrl || item.url"
+              :src="resolveAigcAssetPreviewUrl(item)"
               fit="cover"
             >
               <template #error>
@@ -110,7 +110,7 @@
   import type { AssetItem, ContentType } from '@/api/model/aigcModel'
   import { fetchSaveToGallery, fetchDeleteAsset } from '@/api/aigc'
   import { formatDate } from '@/utils/time'
-  import { downloadAigcAsset } from '@/utils/aigcAsset'
+  import { downloadAigcAsset, resolveAigcAssetPreviewUrl } from '@/utils/aigcAsset'
 
   interface Props {
     items: AssetItem[]

@@ -138,6 +138,16 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/ping",
     operationId: "ping"
   },
+  previewAsset: {
+    method: "GET",
+    path: "/api/aigc/assets/{assetId}/preview",
+    operationId: "previewAsset"
+  },
+  previewMaterial: {
+    method: "GET",
+    path: "/api/aigc/materials/{materialId}/preview",
+    operationId: "previewMaterial"
+  },
   probeModel: {
     method: "POST",
     path: "/api/aigc/models/probe",
@@ -377,6 +387,20 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseString
     data: NonNullable<Schemas.APIResponseString['data']>
+  }
+  previewAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: File
+    data: unknown
+  }
+  previewMaterial: {
+    pathParams: { materialId: string }
+    query: undefined
+    request: undefined
+    response: File
+    data: unknown
   }
   probeModel: {
     pathParams: undefined

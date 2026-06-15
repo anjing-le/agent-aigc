@@ -268,8 +268,12 @@ for (const token of [
   'STORAGE_AUDITS_FULL',
   'ASSET_DOWNLOAD',
   'ASSET_DOWNLOAD_FULL',
+  'ASSET_PREVIEW',
+  'ASSET_PREVIEW_FULL',
   'MATERIAL_DOWNLOAD',
-  'MATERIAL_DOWNLOAD_FULL'
+  'MATERIAL_DOWNLOAD_FULL',
+  'MATERIAL_PREVIEW',
+  'MATERIAL_PREVIEW_FULL'
 ]) {
   requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
 }
@@ -286,7 +290,11 @@ for (const token of [
   'STORAGE_STATUS',
   'STORAGE_AUDITS',
   'ASSET_DOWNLOAD',
+  'ASSET_PREVIEW',
   'MATERIAL_DOWNLOAD',
+  'MATERIAL_PREVIEW',
+  'previewAsset',
+  'previewMaterial',
   'ResponseEntity<Resource>'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/controller/AigcController.java', token)
@@ -317,7 +325,10 @@ for (const token of [
   'findVisibleByAssetId',
   'findVisibleByMaterialId',
   'storageService.resolveDownload',
-  'ContentDisposition.attachment'
+  'ContentDisposition.attachment',
+  'ContentDisposition.inline',
+  'previewAsset',
+  'previewMaterial'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcDownloadService.java', token)
 }
@@ -496,14 +507,22 @@ for (const token of [
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits',
   'assetDownload',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDownload',
+  'assetPreview',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetPreview',
   'materialDownload',
-  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDownload'
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDownload',
+  'materialPreview',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialPreview'
 ]) {
   requireToken('frontend/src/api/paths.ts', token)
 }
 
 for (const token of [
   'ApiPaths.aigc.assetDownload',
+  'ApiPaths.aigc.assetPreview',
+  'ApiPaths.aigc.materialPreview',
+  'resolveAigcAssetPreviewUrl',
+  'resolveAigcMaterialPreviewUrl',
   'buildRequestContextHeaders',
   'REQUEST_HEADERS.userId',
   'fetch(resolveApiPath',

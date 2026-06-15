@@ -60,11 +60,17 @@
           <button class="material-card__preview" type="button" @click="handlePreview(item)">
             <el-image
               v-if="isImage(item)"
-              :src="item.url"
+              :src="resolveAigcMaterialPreviewUrl(item)"
               fit="cover"
               class="material-card__media"
             />
-            <video v-else :src="item.url" class="material-card__media" muted playsinline />
+            <video
+              v-else
+              :src="resolveAigcMaterialPreviewUrl(item)"
+              class="material-card__media"
+              muted
+              playsinline
+            />
           </button>
 
           <div class="material-card__body">
@@ -81,7 +87,11 @@
             <div class="material-card__footer">
               <span>{{ formatTime(item.createdAt) }}</span>
               <div class="material-card__actions">
-                <el-button text :icon="DocumentCopy" @click="handleCopy(item.url)" />
+                <el-button
+                  text
+                  :icon="DocumentCopy"
+                  @click="handleCopy(resolveAigcMaterialPreviewUrl(item))"
+                />
                 <el-button text type="danger" :icon="Delete" @click="handleDelete(item)" />
               </div>
             </div>
@@ -99,8 +109,12 @@
                   type="button"
                   @click="handlePreview(row)"
                 >
-                  <el-image v-if="isImage(row)" :src="row.url" fit="cover" />
-                  <video v-else :src="row.url" muted playsinline />
+                  <el-image
+                    v-if="isImage(row)"
+                    :src="resolveAigcMaterialPreviewUrl(row)"
+                    fit="cover"
+                  />
+                  <video v-else :src="resolveAigcMaterialPreviewUrl(row)" muted playsinline />
                 </button>
                 <div class="aigc-materials__table-main">
                   <span>{{ row.originalFileName || row.fileName }}</span>
@@ -132,7 +146,11 @@
           <el-table-column label="操作" width="210" fixed="right">
             <template #default="{ row }">
               <el-button size="small" :icon="View" @click="handlePreview(row)">预览</el-button>
-              <el-button size="small" :icon="DocumentCopy" @click="handleCopy(row.url)">
+              <el-button
+                size="small"
+                :icon="DocumentCopy"
+                @click="handleCopy(resolveAigcMaterialPreviewUrl(row))"
+              >
                 复制
               </el-button>
               <el-button size="small" type="danger" plain :icon="Delete" @click="handleDelete(row)">
@@ -160,12 +178,17 @@
       <div v-if="previewItem" class="material-preview">
         <el-image
           v-if="isImage(previewItem)"
-          :src="previewItem.url"
-          :preview-src-list="[previewItem.url]"
+          :src="resolveAigcMaterialPreviewUrl(previewItem)"
+          :preview-src-list="[resolveAigcMaterialPreviewUrl(previewItem)]"
           fit="contain"
           class="material-preview__image"
         />
-        <video v-else :src="previewItem.url" controls class="material-preview__video" />
+        <video
+          v-else
+          :src="resolveAigcMaterialPreviewUrl(previewItem)"
+          controls
+          class="material-preview__video"
+        />
 
         <div class="material-preview__info">
           <div>{{ previewItem.originalFileName || previewItem.fileName }}</div>
@@ -230,6 +253,7 @@
     TaskStatus,
     TaskStatusResponse
   } from '@/api/model/aigcModel'
+  import { resolveAigcMaterialPreviewUrl } from '@/utils/aigcAsset'
   import { formatDateTime } from '@/utils/time'
 
   defineOptions({ name: 'AIGCMaterials' })

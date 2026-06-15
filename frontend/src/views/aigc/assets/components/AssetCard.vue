@@ -3,7 +3,7 @@
   <div class="asset-card">
     <!-- 封面 (后端返回大写枚举 IMAGE/VIDEO/AUDIO) -->
     <div class="asset-card__cover" @click="$emit('preview')">
-      <el-image v-if="isImage" :src="item.thumbnailUrl || item.url" fit="cover" lazy>
+      <el-image v-if="isImage" :src="resolveAigcAssetPreviewUrl(item)" fit="cover" lazy>
         <template #placeholder>
           <div class="asset-card__cover-loading">
             <el-icon class="is-loading"><Loading /></el-icon>
@@ -68,6 +68,7 @@
     Delete
   } from '@element-plus/icons-vue'
   import type { AssetItem, ContentType } from '@/api/model/aigcModel'
+  import { resolveAigcAssetPreviewUrl } from '@/utils/aigcAsset'
   import { formatDateTime } from '@/utils/time'
 
   interface Props {

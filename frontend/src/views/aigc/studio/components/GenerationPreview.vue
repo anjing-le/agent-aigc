@@ -118,17 +118,17 @@
               :key="material.id"
               class="generation-preview__reference"
               type="button"
-              @click="openMaterial(material.url)"
+              @click="openMaterial(resolveAigcMaterialPreviewUrl(material))"
             >
               <el-image
                 v-if="isImageMaterial(material.contentType)"
-                :src="material.url"
+                :src="resolveAigcMaterialPreviewUrl(material)"
                 fit="cover"
                 class="generation-preview__reference-media"
               />
               <video
                 v-else-if="isVideoMaterial(material.contentType)"
-                :src="material.url"
+                :src="resolveAigcMaterialPreviewUrl(material)"
                 muted
                 playsinline
                 class="generation-preview__reference-media"
@@ -181,8 +181,8 @@
       <!-- 图片结果 (后端返回大写 IMAGE) -->
       <template v-if="isImage">
         <el-image
-          :src="result.url"
-          :preview-src-list="[result.url]"
+          :src="resultPreviewUrl"
+          :preview-src-list="[resultPreviewUrl]"
           fit="contain"
           class="generation-preview__image"
         >
@@ -198,11 +198,11 @@
       <template v-else-if="isVideo">
         <el-image
           v-if="isVisualPreview"
-          :src="result.thumbnailUrl || result.url"
+          :src="resultVisualPreviewUrl"
           fit="contain"
           class="generation-preview__image"
         />
-        <video v-else :src="result.url" controls class="generation-preview__video" />
+        <video v-else :src="resultPreviewUrl" controls class="generation-preview__video" />
       </template>
 
       <!-- 音频结果 (后端返回大写 AUDIO) -->
@@ -210,14 +210,14 @@
         <div class="generation-preview__audio">
           <el-image
             v-if="isVisualPreview"
-            :src="result.thumbnailUrl || result.url"
+            :src="resultVisualPreviewUrl"
             fit="contain"
             class="generation-preview__audio-cover"
           />
           <el-icon :size="48"><Headset /></el-icon>
           <audio
             v-if="!isVisualPreview"
-            :src="result.url"
+            :src="resultPreviewUrl"
             controls
             class="generation-preview__audio-player"
           />
@@ -251,17 +251,17 @@
             :key="material.id"
             class="generation-preview__reference"
             type="button"
-            @click="openMaterial(material.url)"
+            @click="openMaterial(resolveAigcMaterialPreviewUrl(material))"
           >
             <el-image
               v-if="isImageMaterial(material.contentType)"
-              :src="material.url"
+              :src="resolveAigcMaterialPreviewUrl(material)"
               fit="cover"
               class="generation-preview__reference-media"
             />
             <video
               v-else-if="isVideoMaterial(material.contentType)"
-              :src="material.url"
+              :src="resolveAigcMaterialPreviewUrl(material)"
               muted
               playsinline
               class="generation-preview__reference-media"
@@ -296,7 +296,11 @@
     ContentType,
     ProviderExecutionSummary
   } from '@/api/model/aigcModel'
-  import { downloadAigcAsset } from '@/utils/aigcAsset'
+  import {
+    downloadAigcAsset,
+    resolveAigcAssetPreviewUrl,
+    resolveAigcMaterialPreviewUrl
+  } from '@/utils/aigcAsset'
 
   interface Props {
     task?: TaskStatusResponse | null
@@ -342,7 +346,12 @@
   const isImage = computed(() => props.result?.contentType?.toUpperCase() === 'IMAGE')
   const isVideo = computed(() => props.result?.contentType?.toUpperCase() === 'VIDEO')
   const isAudio = computed(() => props.result?.contentType?.toUpperCase() === 'AUDIO')
-  const isVisualPreview = computed(() => props.result?.url?.startsWith('data:image/') || false)
+  const resultPreviewUrl = computed(() => resolveAigcAssetPreviewUrl(props.result))
+  const resultVisualPreviewUrl = computed(() => {
+    if (props.result?.thumbnailUrl?.startsWith('data:image/')) return props.result.thumbnailUrl
+    return resultPreviewUrl.value
+  })
+  const isVisualPreview = computed(() => resultVisualPreviewUrl.value.startsWith('data:image/'))
   const isFailed = computed(() => props.task?.status?.toUpperCase() === 'FAILED')
   const referenceMaterials = computed(() => props.task?.referenceMaterials || [])
 

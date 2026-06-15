@@ -329,6 +329,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "materialPreview",
+          "backendConstant": "MATERIAL_PREVIEW_FULL",
+          "frontendKey": "materialPreview",
+          "path": "/api/aigc/materials/{materialId}/preview",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "materialDownload",
           "backendConstant": "MATERIAL_DOWNLOAD_FULL",
           "frontendKey": "materialDownload",
@@ -402,6 +411,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "assetPreview",
+          "backendConstant": "ASSET_PREVIEW_FULL",
+          "frontendKey": "assetPreview",
+          "path": "/api/aigc/assets/{assetId}/preview",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "assetDownload",
           "backendConstant": "ASSET_DOWNLOAD_FULL",
           "frontendKey": "assetDownload",
@@ -465,12 +483,14 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
   "aigc": {
     "assetDetail": "/api/aigc/assets/{assetId}",
     "assetDownload": "/api/aigc/assets/{assetId}/download",
+    "assetPreview": "/api/aigc/assets/{assetId}/preview",
     "assets": "/api/aigc/assets",
     "gallery": "/api/aigc/gallery",
     "gallerySave": "/api/aigc/gallery/save",
     "generate": "/api/aigc/generate",
     "materialDetail": "/api/aigc/materials/{materialId}",
     "materialDownload": "/api/aigc/materials/{materialId}/download",
+    "materialPreview": "/api/aigc/materials/{materialId}/preview",
     "materials": "/api/aigc/materials",
     "materialTasks": "/api/aigc/materials/{materialId}/tasks",
     "materialUpload": "/api/aigc/materials/upload",

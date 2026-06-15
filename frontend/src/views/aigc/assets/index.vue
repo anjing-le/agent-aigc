@@ -163,7 +163,7 @@
                 <div class="aigc-assets__table-thumb">
                   <el-image
                     v-if="isImage(row) || hasVisualPreview(row)"
-                    :src="row.thumbnailUrl || row.url"
+                    :src="resolveAigcAssetPreviewUrl(row)"
                     fit="cover"
                   />
                   <el-icon v-else-if="row.contentType === 'VIDEO'"><VideoPlay /></el-icon>
@@ -238,18 +238,18 @@
         <!-- 后端返回大写枚举 IMAGE/VIDEO/AUDIO -->
         <el-image
           v-if="previewItem.contentType?.toUpperCase() === 'IMAGE'"
-          :src="previewItem.url"
-          :preview-src-list="[previewItem.url]"
+          :src="resolveAigcAssetPreviewUrl(previewItem)"
+          :preview-src-list="[resolveAigcAssetPreviewUrl(previewItem)]"
           fit="contain"
           class="asset-preview__image"
         />
         <video
           v-else-if="previewItem.contentType?.toUpperCase() === 'VIDEO'"
-          :src="previewItem.url"
+          :src="resolveAigcAssetPreviewUrl(previewItem)"
           controls
           class="asset-preview__video"
         />
-        <audio v-else :src="previewItem.url" controls class="asset-preview__audio" />
+        <audio v-else :src="resolveAigcAssetPreviewUrl(previewItem)" controls class="asset-preview__audio" />
 
         <div class="asset-preview__info">
           <div class="asset-preview__prompt">{{ previewItem.prompt }}</div>
@@ -329,16 +329,16 @@
                 :key="material.id"
                 class="asset-preview__material"
                 type="button"
-                @click="openUrl(material.url)"
+                @click="openUrl(resolveAigcMaterialPreviewUrl(material))"
               >
                 <el-image
                   v-if="isImageMaterial(material.contentType)"
-                  :src="material.url"
+                  :src="resolveAigcMaterialPreviewUrl(material)"
                   fit="cover"
                 />
                 <video
                   v-else-if="isVideoMaterial(material.contentType)"
-                  :src="material.url"
+                  :src="resolveAigcMaterialPreviewUrl(material)"
                   muted
                   playsinline
                 />
@@ -386,7 +386,11 @@
     TaskStatusResponse
   } from '@/api/model/aigcModel'
   import { formatDateTime } from '@/utils/time'
-  import { downloadAigcAsset } from '@/utils/aigcAsset'
+  import {
+    downloadAigcAsset,
+    resolveAigcAssetPreviewUrl,
+    resolveAigcMaterialPreviewUrl
+  } from '@/utils/aigcAsset'
 
   defineOptions({ name: 'AIGCAssets' })
 

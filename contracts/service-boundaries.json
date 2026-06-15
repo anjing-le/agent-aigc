@@ -89,6 +89,7 @@
         { "name": "materials", "backendConstant": "MATERIALS_FULL", "frontendKey": "materials", "path": "/api/aigc/materials", "methods": ["GET"] },
         { "name": "materialDetail", "backendConstant": "MATERIAL_DETAIL_FULL", "frontendKey": "materialDetail", "path": "/api/aigc/materials/{materialId}", "methods": ["DELETE"] },
         { "name": "materialTasks", "backendConstant": "MATERIAL_TASKS_FULL", "frontendKey": "materialTasks", "path": "/api/aigc/materials/{materialId}/tasks", "methods": ["GET"] },
+        { "name": "materialPreview", "backendConstant": "MATERIAL_PREVIEW_FULL", "frontendKey": "materialPreview", "path": "/api/aigc/materials/{materialId}/preview", "methods": ["GET"] },
         { "name": "materialDownload", "backendConstant": "MATERIAL_DOWNLOAD_FULL", "frontendKey": "materialDownload", "path": "/api/aigc/materials/{materialId}/download", "methods": ["GET"] },
         { "name": "materialUpload", "backendConstant": "MATERIAL_UPLOAD_FULL", "frontendKey": "materialUpload", "path": "/api/aigc/materials/upload", "methods": ["POST"] },
         { "name": "storageStatus", "backendConstant": "STORAGE_STATUS_FULL", "frontendKey": "storageStatus", "path": "/api/aigc/storage/status", "methods": ["GET"] },
@@ -97,6 +98,7 @@
         { "name": "gallerySave", "backendConstant": "GALLERY_SAVE_FULL", "frontendKey": "gallerySave", "path": "/api/aigc/gallery/save", "methods": ["POST"] },
         { "name": "assets", "backendConstant": "ASSETS_FULL", "frontendKey": "assets", "path": "/api/aigc/assets", "methods": ["GET"] },
         { "name": "assetDetail", "backendConstant": "ASSET_DETAIL_FULL", "frontendKey": "assetDetail", "path": "/api/aigc/assets/{assetId}", "methods": ["GET", "DELETE"] },
+        { "name": "assetPreview", "backendConstant": "ASSET_PREVIEW_FULL", "frontendKey": "assetPreview", "path": "/api/aigc/assets/{assetId}/preview", "methods": ["GET"] },
         { "name": "assetDownload", "backendConstant": "ASSET_DOWNLOAD_FULL", "frontendKey": "assetDownload", "path": "/api/aigc/assets/{assetId}/download", "methods": ["GET"] }
       ]
     },

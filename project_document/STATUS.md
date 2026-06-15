@@ -52,7 +52,7 @@
 - AIGC 存储治理 V2 已接入：OSS 上传/删除支持 `retry-count` 与 `retry-interval-ms` 短重试；统一存储边界会把上传、按文件删除和按 URL 删除写入 `aigc_storage_audit_log`，审计继承脚手架 requestId、traceId、tenantId、operator、callerId 和 clientIp；存储状态接口新增 retry、cleanup audit、signed URL 配置可见性，不暴露任何密钥。
 - AIGC 存储审计查询 V3 已接入：新增 `/api/aigc/storage/audits`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；资产页展示最近上传/删除审计，支持后端 action/backend/success 筛选能力。
 - AIGC 权限隔离 V1 已接入：`AigcOwnershipService` 从脚手架 `GlobalRequestContextHolder` 读取 userId/tenantId，新上传素材、新生成任务和新资产会写入归属；任务状态/重试、按素材反查任务、素材列表/删除、素材引用、资产列表/详情/发布/删除和存储审计查询都按当前上下文过滤，并兼容历史空归属演示数据。
-- AIGC 私有文件访问 V1 已接入：新增 `/api/aigc/assets/{assetId}/download` 和 `/api/aigc/materials/{materialId}/download` 授权下载入口，下载前复用 owner/tenant 可见性查询；本地文件由后端在受管目录内校验后流式返回，OSS 文件在授权后按 public-read 或 signed URL 配置重定向，前端下载动作改为携带脚手架 request context 和用户上下文头获取 Blob。
+- AIGC 私有文件访问 V1 已接入：新增 `/api/aigc/assets/{assetId}/download`、`/api/aigc/materials/{materialId}/download`、`/api/aigc/assets/{assetId}/preview` 和 `/api/aigc/materials/{materialId}/preview` 授权入口，访问前复用 owner/tenant 可见性查询；本地文件由后端在受管目录内校验后返回，OSS 文件在授权后按 public-read 或 signed URL 配置重定向，前端下载动作携带脚手架 request context 和用户上下文头，资产/素材核心页面预览不再直接渲染裸 `/files/**` URL。
 - AIGC 存储状态诊断 V1 已接入：新增 `/api/aigc/storage/status`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；资产页展示 activeMode、本地目录可读写、清理能力、URL 前缀和 OSS 配置状态，响应不暴露任何密钥字段。
 - Google 图片 Provider 已加入 429/5xx 短重试、统一 Provider 调用错误码和本地保存失败兜底。
 - 删除资产时会清理本地生成文件和缩略图；清理失败只记录 warning，不阻断资产记录删除。
@@ -74,14 +74,14 @@
 ## 风险与缺口
 
 - 视频/音频 mock 当前是可视化占位，不是真实媒体文件。
-- 素材库和资产库已具备统一 storage adapter、OSS SDK 上传/删除、本地文件清理、存储状态诊断、OSS 短重试、清理审计、审计查询视图、用户/租户可见性隔离和授权下载入口；关闭裸 `/files/**` 预览、历史文件归属迁移仍待产品化。
+- 素材库和资产库已具备统一 storage adapter、OSS SDK 上传/删除、本地文件清理、存储状态诊断、OSS 短重试、清理审计、审计查询视图、用户/租户可见性隔离、授权下载和授权预览入口；历史文件归属迁移、公共广场资源策略和静态 `/files/**` 处理收口仍待产品化。
 - Provider 配置已有运行前探测检查项、显式 smoke test、页面持久化切换、配置来源展示、只写式加密凭证保存、默认参数模板编辑、角色边界、管理审计和密钥脱敏边界；生产级 KMS 托管和批量测试策略仍需要后续管理能力承接。
 - 历史记录和作品广场缺少用户维度、收藏、点赞等产品能力。
 - 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口、基础 Provider 调用观测和配置化成本估算；真实用量计费和聚合报表仍需继续产品化。
 
 ## 推荐下一步
 
-1. 做存储产品化：关闭裸 `/files/**` 预览、历史文件归属迁移和下载/预览统一鉴权。
+1. 做存储产品化：历史文件归属迁移、公共广场资源策略和静态 `/files/**` 处理收口。
 2. 做 Provider 管理：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
 3. 做真实调用报表：按 Provider、模型、内容类型聚合成功率、耗时和估算成本。
 4. 做用户维度：资产、素材、广场发布、收藏和点赞的用户隔离。

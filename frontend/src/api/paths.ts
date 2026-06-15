@@ -70,6 +70,8 @@ export const ApiPaths = {
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDetail, { materialId }),
     materialTasks: (materialId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialTasks, { materialId }),
+    materialPreview: (materialId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialPreview, { materialId }),
     materialDownload: (materialId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDownload, { materialId }),
     materialUpload: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialUpload,
@@ -80,6 +82,8 @@ export const ApiPaths = {
     assets: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assets,
     assetDetail: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail, { assetId }),
+    assetPreview: (assetId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetPreview, { assetId }),
     assetDownload: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDownload, { assetId })
   }

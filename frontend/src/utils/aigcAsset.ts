@@ -3,6 +3,11 @@ import { ApiPaths, resolveApiPath } from '@/api/paths'
 import { useUserStore } from '@/store/modules/user'
 import { buildRequestContextHeaders, REQUEST_HEADERS } from '@/utils/http/context'
 
+type PreviewableMaterial = {
+  id?: string
+  url?: string
+}
+
 const EXTENSION_MAP: Record<ContentType, string> = {
   IMAGE: 'png',
   VIDEO: 'mp4',
@@ -11,6 +16,23 @@ const EXTENSION_MAP: Record<ContentType, string> = {
 
 export const getAigcAssetExtension = (contentType: ContentType) => {
   return EXTENSION_MAP[contentType?.toUpperCase() as ContentType] || 'file'
+}
+
+export const resolveAigcAssetPreviewUrl = (
+  asset: Pick<AssetItem, 'id' | 'url' | 'thumbnailUrl'> | null | undefined
+) => {
+  if (!asset) return ''
+  if (isInlinePreview(asset.thumbnailUrl)) return asset.thumbnailUrl || ''
+  if (isInlinePreview(asset.url)) return asset.url || ''
+  if (!asset.id) return asset.thumbnailUrl || asset.url || ''
+  return resolveApiPath(ApiPaths.aigc.assetPreview(asset.id))
+}
+
+export const resolveAigcMaterialPreviewUrl = (material: PreviewableMaterial | null | undefined) => {
+  if (!material) return ''
+  if (isInlinePreview(material.url)) return material.url || ''
+  if (!material.id) return material.url || ''
+  return resolveApiPath(ApiPaths.aigc.materialPreview(material.id))
 }
 
 export const downloadAigcAsset = async (asset: Pick<AssetItem, 'id' | 'url' | 'contentType'>) => {
@@ -59,6 +81,8 @@ const buildAigcDownloadHeaders = (): HeadersInit => {
   }
   return headers
 }
+
+const isInlinePreview = (url?: string) => Boolean(url?.startsWith('data:'))
 
 const resolveDownloadFileName = (contentDisposition: string | null) => {
   if (!contentDisposition) return null
