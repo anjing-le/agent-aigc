@@ -30,6 +30,14 @@ public class AigcProviderManagementPermissionService {
     private final AigcProviderAuditLogService auditLogService;
 
     public void assertCanManageProvider(String managementAction, ContentType contentType, String providerKey) {
+        assertCanManage(managementAction, contentType, providerKey);
+    }
+
+    public void assertCanManageAigc(String managementAction, String resourceKey) {
+        assertCanManage(managementAction, ContentType.IMAGE, resourceKey);
+    }
+
+    private void assertCanManage(String managementAction, ContentType contentType, String providerKey) {
         GlobalRequestContext context = GlobalRequestContextHolder.current().orElse(null);
         Set<String> userRoles = parseRoles(context == null ? null : context.getUserRoles());
         Set<String> allowedRoles = allowedRoles();

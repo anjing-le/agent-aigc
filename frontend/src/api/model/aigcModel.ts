@@ -258,6 +258,12 @@ export type StorageAuditLogListResponse = PageResult<
   StorageAuditLogItem
 >
 
+/** 历史归属回填请求 */
+export type OwnershipBackfillRequest = OpenApiOperationRequest<'backfillOwnership'>
+
+/** 历史归属回填响应 */
+export type OwnershipBackfillResponse = OpenApiOperationData<'backfillOwnership'>
+
 /** 参考素材项 */
 export type MaterialItem = RequiredKeys<
   Schemas.MaterialDTO,

@@ -65,6 +65,29 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
             @Param("tenantId") String tenantId);
 
     @Query("""
+            select count(a) from AigcAsset a
+            where a.ownerId is null or a.ownerId = ''
+               or a.tenantId is null or a.tenantId = ''
+            """)
+    long countMissingOwnership();
+
+    @Modifying
+    @Query("""
+            update AigcAsset a
+            set a.ownerId = case
+                    when a.ownerId is null or a.ownerId = '' then :ownerId
+                    else a.ownerId
+                end,
+                a.tenantId = case
+                    when (a.tenantId is null or a.tenantId = '') and :tenantId is not null then :tenantId
+                    else a.tenantId
+                end
+            where a.ownerId is null or a.ownerId = ''
+               or a.tenantId is null or a.tenantId = ''
+            """)
+    int backfillMissingOwnership(@Param("ownerId") String ownerId, @Param("tenantId") String tenantId);
+
+    @Query("""
             select a from AigcAsset a
             where a.isPublished = true
               and (:contentType is null or a.contentType = :contentType)

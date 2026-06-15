@@ -374,6 +374,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "ownershipBackfill",
+          "backendConstant": "OWNERSHIP_BACKFILL_FULL",
+          "frontendKey": "ownershipBackfill",
+          "path": "/api/aigc/ownership/backfill",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
           "name": "gallery",
           "backendConstant": "GALLERY_FULL",
           "frontendKey": "gallery",
@@ -501,6 +510,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "modelProviderParams": "/api/aigc/models/provider-params",
     "modelProviderSmokeTest": "/api/aigc/models/provider-smoke-test",
     "models": "/api/aigc/models",
+    "ownershipBackfill": "/api/aigc/ownership/backfill",
     "storageAudits": "/api/aigc/storage/audits",
     "storageStatus": "/api/aigc/storage/status",
     "taskRetry": "/api/aigc/task/{taskId}/retry",

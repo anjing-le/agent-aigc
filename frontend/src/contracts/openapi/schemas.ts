@@ -109,6 +109,15 @@ export interface APIResponseModelListResponse {
   timestamp?: number
 }
 
+export interface APIResponseOwnershipBackfillResponse {
+  code?: string
+  data?: OwnershipBackfillResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponsePageResultAssetDTO {
   code?: string
   data?: PageResultAssetDTO
@@ -476,6 +485,74 @@ export interface ModelListResponse {
   audioModels?: ModelInfo[]
   imageModels?: ModelInfo[]
   videoModels?: ModelInfo[]
+}
+
+/**
+ * 历史 AIGC 数据归属回填请求
+ */
+export interface OwnershipBackfillRequest {
+  /**
+   * 当 dryRun=false 时必须显式为 true，防止误写历史数据
+   */
+  confirmBackfill?: boolean
+  /**
+   * 是否仅预演；默认 true，不写入数据
+   */
+  dryRun?: boolean
+}
+
+/**
+ * 历史 AIGC 数据归属回填结果
+ */
+export interface OwnershipBackfillResponse {
+  /**
+   * 待回填资产数量
+   */
+  assetCandidates?: number
+  /**
+   * 已回填资产数量
+   */
+  assetUpdated?: number
+  /**
+   * 检查时间
+   */
+  checkedAt?: string
+  /**
+   * 是否已显式确认写入
+   */
+  confirmed?: boolean
+  /**
+   * 是否仅预演
+   */
+  dryRun?: boolean
+  /**
+   * 待回填参考素材数量
+   */
+  materialCandidates?: number
+  /**
+   * 已回填参考素材数量
+   */
+  materialUpdated?: number
+  /**
+   * 执行提示
+   */
+  message?: string
+  /**
+   * 回填使用的用户 ID
+   */
+  ownerId?: string
+  /**
+   * 待回填任务数量
+   */
+  taskCandidates?: number
+  /**
+   * 已回填任务数量
+   */
+  taskUpdated?: number
+  /**
+   * 回填使用的租户 ID
+   */
+  tenantId?: string
 }
 
 export interface PageResultAssetDTO {
@@ -866,6 +943,7 @@ export interface OpenApiSchemas {
   APIResponseMaterialUploadResponse: APIResponseMaterialUploadResponse
   APIResponseMiddlewareStatusReport: APIResponseMiddlewareStatusReport
   APIResponseModelListResponse: APIResponseModelListResponse
+  APIResponseOwnershipBackfillResponse: APIResponseOwnershipBackfillResponse
   APIResponsePageResultAssetDTO: APIResponsePageResultAssetDTO
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
@@ -899,6 +977,8 @@ export interface OpenApiSchemas {
   MiddlewareSummary: MiddlewareSummary
   ModelInfo: ModelInfo
   ModelListResponse: ModelListResponse
+  OwnershipBackfillRequest: OwnershipBackfillRequest
+  OwnershipBackfillResponse: OwnershipBackfillResponse
   PageResultAssetDTO: PageResultAssetDTO
   PageResultGalleryDTO: PageResultGalleryDTO
   PageResultMaterialDTO: PageResultMaterialDTO

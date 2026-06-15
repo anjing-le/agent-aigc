@@ -268,6 +268,7 @@ public class ApiConstants {
         public static final String MATERIAL_UPLOAD = "/materials/upload";
         public static final String STORAGE_STATUS = "/storage/status";
         public static final String STORAGE_AUDITS = "/storage/audits";
+        public static final String OWNERSHIP_BACKFILL = "/ownership/backfill";
         public static final String GALLERY = "/gallery";
         public static final String GALLERY_SAVE = "/gallery/save";
         public static final String ASSETS = "/assets";
@@ -293,6 +294,7 @@ public class ApiConstants {
         public static final String MATERIAL_UPLOAD_FULL = BASE + MATERIAL_UPLOAD;
         public static final String STORAGE_STATUS_FULL = BASE + STORAGE_STATUS;
         public static final String STORAGE_AUDITS_FULL = BASE + STORAGE_AUDITS;
+        public static final String OWNERSHIP_BACKFILL_FULL = BASE + OWNERSHIP_BACKFILL;
         public static final String GALLERY_FULL = BASE + GALLERY;
         public static final String GALLERY_SAVE_FULL = BASE + GALLERY_SAVE;
         public static final String ASSETS_FULL = BASE + ASSETS;

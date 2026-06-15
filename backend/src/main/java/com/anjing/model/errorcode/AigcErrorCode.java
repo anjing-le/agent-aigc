@@ -17,7 +17,8 @@ public enum AigcErrorCode implements ErrorCode {
     PROVIDER_UNAVAILABLE("2409", "模型 Provider 暂不可用"),
     PROVIDER_CALL_FAILED("2410", "模型 Provider 调用失败"),
     MATERIAL_USAGE_UNSUPPORTED("2411", "素材不适用于当前创作类型"),
-    STORAGE_FILE_NOT_FOUND("2412", "文件不存在或不可访问");
+    STORAGE_FILE_NOT_FOUND("2412", "文件不存在或不可访问"),
+    OWNERSHIP_BACKFILL_INVALID("2413", "归属回填请求不合法");
 
     private final String code;
     private final String message;

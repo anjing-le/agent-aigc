@@ -8,10 +8,12 @@ import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.request.SaveToGalleryRequest;
+import com.anjing.aigc.model.request.OwnershipBackfillRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
+import com.anjing.aigc.model.response.OwnershipBackfillResponse;
 import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
@@ -23,6 +25,7 @@ import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.service.AigcDownloadService;
 import com.anjing.aigc.service.AigcMaterialService;
+import com.anjing.aigc.service.AigcOwnershipBackfillService;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.storage.AigcStorageAuditLogService;
 import com.anjing.aigc.service.storage.AigcStorageService;
@@ -69,6 +72,7 @@ public class AigcController {
     private final AigcDownloadService aigcDownloadService;
     private final AigcStorageService aigcStorageService;
     private final AigcStorageAuditLogService aigcStorageAuditLogService;
+    private final AigcOwnershipBackfillService aigcOwnershipBackfillService;
 
     /**
      * 智能生成接口 - Agent核心入口
@@ -210,6 +214,14 @@ public class AigcController {
         PageResult<StorageAuditLogResponse> logs = aigcStorageAuditLogService.getAuditLogs(
                 current, size, action, backend, success);
         return APIResponse.success(logs);
+    }
+
+    @PostMapping(ApiConstants.Aigc.OWNERSHIP_BACKFILL)
+    @Operation(summary = "回填历史 AIGC 数据归属")
+    public APIResponse<OwnershipBackfillResponse> backfillOwnership(
+            @Valid @RequestBody OwnershipBackfillRequest request) {
+        OwnershipBackfillResponse response = aigcOwnershipBackfillService.backfill(request);
+        return APIResponse.success(response);
     }
 
     @DeleteMapping(ApiConstants.Aigc.MATERIAL_DETAIL)

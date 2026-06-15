@@ -13,6 +13,11 @@ export interface OpenApiOperationMeta {
 }
 
 export const OPENAPI_OPERATIONS = {
+  backfillOwnership: {
+    method: "POST",
+    path: "/api/aigc/ownership/backfill",
+    operationId: "backfillOwnership"
+  },
   createItem: {
     method: "POST",
     path: "/api/test/items",
@@ -213,6 +218,13 @@ export const OPENAPI_OPERATIONS = {
 export type OpenApiOperationId = keyof typeof OPENAPI_OPERATIONS
 
 export interface OpenApiOperationTypes {
+  backfillOwnership: {
+    pathParams: undefined
+    query: undefined
+    request: Schemas.OwnershipBackfillRequest
+    response: Schemas.APIResponseOwnershipBackfillResponse
+    data: NonNullable<Schemas.APIResponseOwnershipBackfillResponse['data']>
+  }
   createItem: {
     pathParams: undefined
     query: undefined

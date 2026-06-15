@@ -90,6 +90,7 @@ for (const token of [
   'public static class Aigc',
   'public static final String BASE = API_PREFIX + "/aigc"',
   'public static final String GENERATE_FULL = BASE + GENERATE',
+  'public static final String OWNERSHIP_BACKFILL_FULL = BASE + OWNERSHIP_BACKFILL',
   'public static final String ASSET_DETAIL_FULL = BASE + ASSET_DETAIL'
 ]) {
   requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
@@ -178,6 +179,7 @@ for (const token of [
   'ACTION_CREDENTIAL',
   'ACTION_PARAMS',
   'ACTION_PERMISSION_DENIED',
+  'ACTION_OWNERSHIP_BACKFILL',
   'recordPermissionDenied',
   'getAuditLogs'
 ]) {
@@ -188,9 +190,32 @@ for (const token of [
   'GlobalRequestContextHolder',
   'AuthErrorCode.PERMISSION_DENIED',
   'recordPermissionDenied',
-  'getProviderManagement().getAdminRoles()'
+  'getProviderManagement().getAdminRoles()',
+  'assertCanManageAigc'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderManagementPermissionService.java', token)
+}
+
+for (const token of [
+  'AigcOwnershipBackfillService',
+  'OwnershipBackfillRequest',
+  'OwnershipBackfillResponse',
+  'ACTION_OWNERSHIP_BACKFILL',
+  'countMissingOwnership',
+  'backfillMissingOwnership',
+  'confirmBackfill',
+  'currentOwnerId'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcOwnershipBackfillService.java', token)
+}
+
+for (const relativeFile of [
+  'backend/src/main/java/com/anjing/aigc/repository/AigcAssetRepository.java',
+  'backend/src/main/java/com/anjing/aigc/repository/AigcMaterialRepository.java',
+  'backend/src/main/java/com/anjing/aigc/repository/AigcTaskRepository.java'
+]) {
+  requireToken(relativeFile, 'countMissingOwnership')
+  requireToken(relativeFile, 'backfillMissingOwnership')
 }
 
 requireAbsentInFiles([

@@ -30,6 +30,7 @@ public class AigcProviderAuditLogService {
     public static final String ACTION_PARAMS = "params";
     public static final String ACTION_SMOKE_TEST = "smoke-test";
     public static final String ACTION_PERMISSION_DENIED = "permission-denied";
+    public static final String ACTION_OWNERSHIP_BACKFILL = "ownership-backfill";
 
     private final AigcProviderAuditLogRepository auditLogRepository;
 

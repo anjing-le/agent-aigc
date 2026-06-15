@@ -4,6 +4,7 @@ import com.anjing.aigc.model.entity.AigcTask;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -73,4 +74,27 @@ public interface AigcTaskRepository extends JpaRepository<AigcTask, Long> {
             @Param("ownerId") String ownerId,
             @Param("tenantId") String tenantId,
             Pageable pageable);
+
+    @Query("""
+            select count(t) from AigcTask t
+            where t.userId is null or t.userId = ''
+               or t.tenantId is null or t.tenantId = ''
+            """)
+    long countMissingOwnership();
+
+    @Modifying
+    @Query("""
+            update AigcTask t
+            set t.userId = case
+                    when t.userId is null or t.userId = '' then :ownerId
+                    else t.userId
+                end,
+                t.tenantId = case
+                    when (t.tenantId is null or t.tenantId = '') and :tenantId is not null then :tenantId
+                    else t.tenantId
+                end
+            where t.userId is null or t.userId = ''
+               or t.tenantId is null or t.tenantId = ''
+            """)
+    int backfillMissingOwnership(@Param("ownerId") String ownerId, @Param("tenantId") String tenantId);
 }

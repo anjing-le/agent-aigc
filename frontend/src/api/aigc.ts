@@ -27,6 +27,8 @@ import type {
   StorageAuditLogListResponse,
   StorageAuditLogSearchParams,
   StorageStatusResponse,
+  OwnershipBackfillRequest,
+  OwnershipBackfillResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
 
@@ -163,6 +165,12 @@ export function fetchGetStorageAuditLogs(params: StorageAuditLogSearchParams) {
   return openApiRequest('getStorageAuditLogs', {
     query: params
   }) as Promise<StorageAuditLogListResponse>
+}
+
+export function fetchBackfillOwnership(data: OwnershipBackfillRequest) {
+  return openApiRequest('backfillOwnership', {
+    body: data
+  }) as Promise<OwnershipBackfillResponse>
 }
 
 /**
