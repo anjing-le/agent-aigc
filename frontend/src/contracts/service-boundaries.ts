@@ -347,6 +347,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "storageAudits",
+          "backendConstant": "STORAGE_AUDITS_FULL",
+          "frontendKey": "storageAudits",
+          "path": "/api/aigc/storage/audits",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "gallery",
           "backendConstant": "GALLERY_FULL",
           "frontendKey": "gallery",
@@ -452,6 +461,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "modelProviderParams": "/api/aigc/models/provider-params",
     "modelProviderSmokeTest": "/api/aigc/models/provider-smoke-test",
     "models": "/api/aigc/models",
+    "storageAudits": "/api/aigc/storage/audits",
     "storageStatus": "/api/aigc/storage/status",
     "taskRetry": "/api/aigc/task/{taskId}/retry",
     "taskStatus": "/api/aigc/task/{taskId}"

@@ -18,10 +18,12 @@ import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.ProviderSmokeTestResponse;
+import com.anjing.aigc.model.response.StorageAuditLogResponse;
 import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.service.AigcMaterialService;
 import com.anjing.aigc.service.AigcService;
+import com.anjing.aigc.service.storage.AigcStorageAuditLogService;
 import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.constants.ApiConstants;
 import com.anjing.model.response.APIResponse;
@@ -62,6 +64,7 @@ public class AigcController {
     private final AigcService aigcService;
     private final AigcMaterialService aigcMaterialService;
     private final AigcStorageService aigcStorageService;
+    private final AigcStorageAuditLogService aigcStorageAuditLogService;
 
     /**
      * 智能生成接口 - Agent核心入口
@@ -190,6 +193,19 @@ public class AigcController {
     public APIResponse<StorageStatusResponse> getStorageStatus() {
         StorageStatusResponse response = aigcStorageService.getStorageStatus();
         return APIResponse.success(response);
+    }
+
+    @GetMapping(ApiConstants.Aigc.STORAGE_AUDITS)
+    @Operation(summary = "获取 AIGC 存储审计日志")
+    public APIResponse<PageResult<StorageAuditLogResponse>> getStorageAuditLogs(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String backend,
+            @RequestParam(required = false) Boolean success) {
+        PageResult<StorageAuditLogResponse> logs = aigcStorageAuditLogService.getAuditLogs(
+                current, size, action, backend, success);
+        return APIResponse.success(logs);
     }
 
     @DeleteMapping(ApiConstants.Aigc.MATERIAL_DETAIL)

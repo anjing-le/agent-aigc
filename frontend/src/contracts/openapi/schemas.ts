@@ -145,6 +145,15 @@ export interface APIResponsePageResultProviderAuditLogResponse {
   timestamp?: number
 }
 
+export interface APIResponsePageResultStorageAuditLogResponse {
+  code?: string
+  data?: PageResultStorageAuditLogResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponsePageResultTaskStatusResponse {
   code?: string
   data?: PageResultTaskStatusResponse
@@ -497,6 +506,13 @@ export interface PageResultProviderAuditLogResponse {
   total?: number
 }
 
+export interface PageResultStorageAuditLogResponse {
+  current?: number
+  records?: StorageAuditLogResponse[]
+  size?: number
+  total?: number
+}
+
 export interface PageResultTaskStatusResponse {
   current?: number
   records?: TaskStatusResponse[]
@@ -758,6 +774,26 @@ export interface SaveToGalleryRequest {
   assetId: string
 }
 
+export interface StorageAuditLogResponse {
+  action?: string
+  backend?: string
+  callerId?: string
+  clientIp?: string
+  createdAt?: string
+  directory?: string
+  errorMessage?: string
+  fileName?: string
+  id?: number
+  operatorId?: string
+  operatorName?: string
+  requestId?: string
+  sizeBytes?: number
+  success?: boolean
+  tenantId?: string
+  traceId?: string
+  url?: string
+}
+
 export interface StorageBackendStatusResponse {
   available?: boolean
   backend?: string
@@ -833,6 +869,7 @@ export interface OpenApiSchemas {
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
   APIResponsePageResultProviderAuditLogResponse: APIResponsePageResultProviderAuditLogResponse
+  APIResponsePageResultStorageAuditLogResponse: APIResponsePageResultStorageAuditLogResponse
   APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
   APIResponseProviderCredentialUpdateResponse: APIResponseProviderCredentialUpdateResponse
   APIResponseProviderParamUpdateResponse: APIResponseProviderParamUpdateResponse
@@ -865,6 +902,7 @@ export interface OpenApiSchemas {
   PageResultGalleryDTO: PageResultGalleryDTO
   PageResultMaterialDTO: PageResultMaterialDTO
   PageResultProviderAuditLogResponse: PageResultProviderAuditLogResponse
+  PageResultStorageAuditLogResponse: PageResultStorageAuditLogResponse
   PageResultTaskStatusResponse: PageResultTaskStatusResponse
   ProviderAuditLogResponse: ProviderAuditLogResponse
   ProviderCredentialUpdateRequest: ProviderCredentialUpdateRequest
@@ -881,6 +919,7 @@ export interface OpenApiSchemas {
   ProviderSmokeTestResponse: ProviderSmokeTestResponse
   RefreshTokenRequest: RefreshTokenRequest
   SaveToGalleryRequest: SaveToGalleryRequest
+  StorageAuditLogResponse: StorageAuditLogResponse
   StorageBackendStatusResponse: StorageBackendStatusResponse
   StorageStatusResponse: StorageStatusResponse
   TaskStatusResponse: TaskStatusResponse

@@ -88,6 +88,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/models/provider-audits",
     operationId: "getProviderAuditLogs"
   },
+  getStorageAuditLogs: {
+    method: "GET",
+    path: "/api/aigc/storage/audits",
+    operationId: "getStorageAuditLogs"
+  },
   getStorageStatus: {
     method: "GET",
     path: "/api/aigc/storage/status",
@@ -292,6 +297,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponsePageResultProviderAuditLogResponse
     data: NonNullable<Schemas.APIResponsePageResultProviderAuditLogResponse['data']>
+  }
+  getStorageAuditLogs: {
+    pathParams: undefined
+    query: { action?: string; backend?: string; current?: number; size?: number; success?: boolean }
+    request: undefined
+    response: Schemas.APIResponsePageResultStorageAuditLogResponse
+    data: NonNullable<Schemas.APIResponsePageResultStorageAuditLogResponse['data']>
   }
   getStorageStatus: {
     pathParams: undefined

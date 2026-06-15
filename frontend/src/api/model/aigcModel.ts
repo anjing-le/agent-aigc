@@ -239,6 +239,25 @@ export type AssetDetailResponse = Omit<
 /** AIGC 存储状态响应 */
 export type StorageStatusResponse = OpenApiOperationData<'getStorageStatus'>
 
+/** 存储审计日志项 */
+export type StorageAuditLogItem = Schemas.StorageAuditLogResponse
+
+/** 存储审计日志查询参数 */
+export type StorageAuditLogSearchParams = OpenApiOperationQuery<'getStorageAuditLogs'> & {
+  /** 操作筛选 */
+  action?: string
+  /** 存储后端筛选 */
+  backend?: 'LOCAL' | 'OSS'
+  /** 成功状态筛选 */
+  success?: boolean
+}
+
+/** 存储审计日志列表响应 */
+export type StorageAuditLogListResponse = PageResult<
+  OpenApiOperationData<'getStorageAuditLogs'>,
+  StorageAuditLogItem
+>
+
 /** 参考素材项 */
 export type MaterialItem = RequiredKeys<
   Schemas.MaterialDTO,

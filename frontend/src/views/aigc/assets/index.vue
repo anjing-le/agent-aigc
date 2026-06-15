@@ -54,6 +54,52 @@
       </div>
     </div>
 
+    <section class="aigc-assets__audit">
+      <div class="aigc-assets__audit-header">
+        <div>
+          <h3>最近存储审计</h3>
+          <p>上传、删除和清理操作的请求上下文记录</p>
+        </div>
+        <el-tag size="small" effect="plain">{{ storageAuditLogs.length }} 条</el-tag>
+      </div>
+      <el-table
+        v-loading="storageAuditLoading"
+        :data="storageAuditLogs"
+        size="small"
+        empty-text="暂无存储审计"
+      >
+        <el-table-column label="动作" min-width="96">
+          <template #default="{ row }">
+            <el-tag size="small" :type="getStorageAuditActionTag(row.action)" effect="plain">
+              {{ formatStorageAuditAction(row.action) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="后端" min-width="80">
+          <template #default="{ row }">{{ formatStorageMode(row.backend) }}</template>
+        </el-table-column>
+        <el-table-column label="对象" min-width="220" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatStorageAuditTarget(row) }}</template>
+        </el-table-column>
+        <el-table-column label="大小" min-width="88">
+          <template #default="{ row }">{{ formatBytes(row.sizeBytes) }}</template>
+        </el-table-column>
+        <el-table-column label="结果" min-width="84">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.success ? 'success' : 'danger'" effect="plain">
+              {{ row.success ? '成功' : '失败' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作人" min-width="110" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.operatorName || row.operatorId || '-' }}</template>
+        </el-table-column>
+        <el-table-column label="时间" min-width="150">
+          <template #default="{ row }">{{ formatTime(row.createdAt) }}</template>
+        </el-table-column>
+      </el-table>
+    </section>
+
     <!-- 筛选区 (后端使用大写枚举) -->
     <div class="aigc-assets__filter">
       <div class="aigc-assets__filter-left">
@@ -326,6 +372,7 @@
     fetchGetAssetList,
     fetchGetAssetDetail,
     fetchDeleteAsset,
+    fetchGetStorageAuditLogs,
     fetchGetStorageStatus,
     fetchSaveToGallery
   } from '@/api/aigc'
@@ -333,6 +380,7 @@
     AssetItem,
     ContentType,
     ProviderExecutionSummary,
+    StorageAuditLogItem,
     StorageStatusResponse,
     TaskStatus,
     TaskStatusResponse
@@ -355,6 +403,8 @@
   const keyword = ref('')
   const viewMode = ref<'card' | 'table'>('card')
   const storageStatus = ref<StorageStatusResponse | null>(null)
+  const storageAuditLogs = ref<StorageAuditLogItem[]>([])
+  const storageAuditLoading = ref(false)
 
   // 预览
   const previewVisible = ref(false)
@@ -424,9 +474,22 @@
     }
   }
 
+  const loadStorageAuditLogs = async () => {
+    try {
+      storageAuditLoading.value = true
+      const result = await fetchGetStorageAuditLogs({ current: 1, size: 8 })
+      storageAuditLogs.value = result.records || []
+    } catch (error) {
+      console.error('加载存储审计失败:', error)
+    } finally {
+      storageAuditLoading.value = false
+    }
+  }
+
   const handleRefresh = () => {
     loadData()
     loadStorageStatus()
+    loadStorageAuditLogs()
   }
 
   /** 筛选 */
@@ -612,6 +675,34 @@
     return 'danger'
   }
 
+  const formatStorageAuditAction = (action?: string) => {
+    if (action === 'upload') return '上传'
+    if (action === 'delete-file') return '删文件'
+    if (action === 'delete-url') return '删 URL'
+    return action || '-'
+  }
+
+  const getStorageAuditActionTag = (action?: string) => {
+    if (action === 'upload') return 'success'
+    if (action === 'delete-file') return 'warning'
+    if (action === 'delete-url') return 'warning'
+    return 'info'
+  }
+
+  const formatStorageAuditTarget = (row: StorageAuditLogItem) => {
+    if (row.directory || row.fileName) {
+      return [row.directory, row.fileName].filter(Boolean).join('/')
+    }
+    return row.url || '-'
+  }
+
+  const formatBytes = (value?: number) => {
+    if (value === undefined || value === null) return '-'
+    if (value < 1024) return `${value} B`
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
+    return `${(value / 1024 / 1024).toFixed(1)} MB`
+  }
+
   const agentParamsText = computed(() => {
     const analysis = previewTask.value?.agentAnalysis
     const intent = analysis?.analyzedIntent
@@ -653,6 +744,7 @@
   onMounted(() => {
     loadData()
     loadStorageStatus()
+    loadStorageAuditLogs()
   })
 </script>
 
@@ -789,6 +881,35 @@
         font-size: 13px;
         font-weight: 500;
         color: var(--el-text-color-primary);
+      }
+    }
+
+    &__audit {
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__audit-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
       }
     }
 

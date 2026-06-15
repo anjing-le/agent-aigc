@@ -24,6 +24,8 @@ import type {
   ProviderRouteUpdateResponse,
   ProviderSmokeTestRequest,
   ProviderSmokeTestResponse,
+  StorageAuditLogListResponse,
+  StorageAuditLogSearchParams,
   StorageStatusResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
@@ -155,6 +157,12 @@ export function fetchUploadMaterial(file: File) {
 
 export function fetchGetStorageStatus() {
   return openApiRequest('getStorageStatus') as Promise<StorageStatusResponse>
+}
+
+export function fetchGetStorageAuditLogs(params: StorageAuditLogSearchParams) {
+  return openApiRequest('getStorageAuditLogs', {
+    query: params
+  }) as Promise<StorageAuditLogListResponse>
 }
 
 /**

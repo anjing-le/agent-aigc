@@ -203,6 +203,7 @@ requireAbsentInFiles([
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderSmokeTestResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/StorageBackendStatusResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/StorageStatusResponse.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/StorageAuditLogResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderAuditLogResponse.java',
   'frontend/src/api/model/aigcModel.ts',
   'frontend/src/views/aigc/models/index.vue'
@@ -262,7 +263,9 @@ for (const token of [
   'MODEL_PROVIDER_SMOKE_TEST',
   'MODEL_PROVIDER_SMOKE_TEST_FULL',
   'STORAGE_STATUS',
-  'STORAGE_STATUS_FULL'
+  'STORAGE_STATUS_FULL',
+  'STORAGE_AUDITS',
+  'STORAGE_AUDITS_FULL'
 ]) {
   requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
 }
@@ -271,9 +274,12 @@ for (const token of [
   'ProviderSmokeTestRequest',
   'ProviderSmokeTestResponse',
   'StorageStatusResponse',
+  'StorageAuditLogResponse',
+  'AigcStorageAuditLogService',
   'AigcStorageService',
   'MODEL_PROVIDER_SMOKE_TEST',
-  'STORAGE_STATUS'
+  'STORAGE_STATUS',
+  'STORAGE_AUDITS'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/controller/AigcController.java', token)
 }
@@ -334,7 +340,8 @@ for (const token of [
 
 for (const token of [
   'AigcStorageAuditLogRepository',
-  'JpaRepository'
+  'JpaRepository',
+  'JpaSpecificationExecutor'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcStorageAuditLogRepository.java', token)
 }
@@ -377,7 +384,9 @@ for (const token of [
   'ProviderSmokeTestRequest',
   'ProviderSmokeTestResponse',
   'fetchGetStorageStatus',
-  'StorageStatusResponse'
+  'StorageStatusResponse',
+  'fetchGetStorageAuditLogs',
+  'StorageAuditLogListResponse'
 ]) {
   requireToken('frontend/src/api/aigc.ts', token)
 }
@@ -386,16 +395,21 @@ for (const token of [
   'modelProviderSmokeTest',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderSmokeTest',
   'storageStatus',
-  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageStatus'
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageStatus',
+  'storageAudits',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits'
 ]) {
   requireToken('frontend/src/api/paths.ts', token)
 }
 
 for (const token of [
   'storageStatus',
+  'storageAuditLogs',
   'formatStorageMode',
+  'formatStorageAuditAction',
   'assetCleanupSupported',
-  'fetchGetStorageStatus'
+  'fetchGetStorageStatus',
+  'fetchGetStorageAuditLogs'
 ]) {
   requireToken('frontend/src/views/aigc/assets/index.vue', token)
 }
