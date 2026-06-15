@@ -439,6 +439,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryAssetDownload",
+          "backendConstant": "GALLERY_ASSET_DOWNLOAD_FULL",
+          "frontendKey": "galleryAssetDownload",
+          "path": "/api/aigc/gallery/{assetId}/download",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "assets",
           "backendConstant": "ASSETS_FULL",
           "frontendKey": "assets",
@@ -533,6 +542,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "assetPreview": "/api/aigc/assets/{assetId}/preview",
     "assets": "/api/aigc/assets",
     "gallery": "/api/aigc/gallery",
+    "galleryAssetDownload": "/api/aigc/gallery/{assetId}/download",
     "galleryAssetPreview": "/api/aigc/gallery/{assetId}/preview",
     "galleryFavorite": "/api/aigc/gallery/{assetId}/favorite",
     "galleryLike": "/api/aigc/gallery/{assetId}/like",

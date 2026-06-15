@@ -88,6 +88,8 @@ export const ApiPaths = {
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorite, { assetId }),
     galleryAssetPreview: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAssetPreview, { assetId }),
+    galleryAssetDownload: (assetId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAssetDownload, { assetId }),
     assets: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assets,
     assetDetail: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail, { assetId }),

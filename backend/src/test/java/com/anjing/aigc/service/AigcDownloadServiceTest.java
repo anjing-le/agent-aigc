@@ -117,6 +117,40 @@ class AigcDownloadServiceTest {
     }
 
     @Test
+    void downloadPublishedAssetRequiresPublishedAsset() {
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-1")).thenReturn(Optional.empty());
+
+        AigcException error = assertThrows(AigcException.class,
+                () -> downloadService.downloadPublishedAsset("asset-1"));
+
+        assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
+    }
+
+    @Test
+    void downloadPublishedAssetUsesStorageBoundaryAsAttachment() throws Exception {
+        AigcAsset asset = new AigcAsset();
+        asset.setAssetId("asset-1");
+        asset.setContentType(ContentType.IMAGE);
+        asset.setUrl("http://localhost:10003/files/images/asset-1.png");
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-1")).thenReturn(Optional.of(asset));
+        when(storageService.resolveDownload(asset.getUrl(), "aigc-asset-1.png"))
+                .thenReturn(AigcStorageDownloadResource.builder()
+                        .resource(new ByteArrayResource(new byte[]{1, 2, 3}))
+                        .fileName("aigc-asset-1.png")
+                        .contentType("image/png")
+                        .contentLength(3L)
+                        .build());
+
+        ResponseEntity<?> response = downloadService.downloadPublishedAsset("asset-1");
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(3L, response.getHeaders().getContentLength());
+        assertTrue(response.getHeaders()
+                .getFirst(HttpHeaders.CONTENT_DISPOSITION)
+                .startsWith("attachment"));
+    }
+
+    @Test
     void downloadMaterialRejectsMissingVisibleMaterial() {
         when(materialRepository.findVisibleByMaterialId("missing", null, null)).thenReturn(Optional.empty());
 

@@ -46,6 +46,10 @@ export const resolveAigcGalleryPreviewUrl = (
   return item.id ? resolveApiPath(ApiPaths.aigc.galleryAssetPreview(item.id)) : ''
 }
 
+export const resolveAigcGalleryDownloadUrl = (item: Pick<GalleryItem, 'id'> | null | undefined) => {
+  return item?.id ? resolveApiPath(ApiPaths.aigc.galleryAssetDownload(item.id)) : ''
+}
+
 export const downloadAigcAsset = async (asset: Pick<AssetItem, 'id' | 'url' | 'contentType'>) => {
   if (!asset.id) return
 
@@ -65,6 +69,41 @@ export const downloadAigcAsset = async (asset: Pick<AssetItem, 'id' | 'url' | 'c
     link.download =
       resolveDownloadFileName(response.headers.get('content-disposition')) ||
       `aigc-${asset.id}.${getAigcAssetExtension(asset.contentType)}`
+    link.rel = 'noopener noreferrer'
+    document.body.appendChild(link)
+    link.click()
+  } finally {
+    document.body.removeChild(link)
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+export const downloadAigcGalleryAsset = async (
+  item: Pick<GalleryItem, 'id' | 'contentType'> | null | undefined
+) => {
+  if (!item?.id) return
+
+  await downloadFromAigcUrl(
+    resolveApiPath(ApiPaths.aigc.galleryAssetDownload(item.id)),
+    `aigc-gallery-${item.id}.${getAigcAssetExtension(item.contentType)}`
+  )
+}
+
+const downloadFromAigcUrl = async (url: string, fallbackFileName: string) => {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: buildAigcDownloadHeaders(),
+    credentials: import.meta.env.VITE_WITH_CREDENTIALS === 'true' ? 'include' : 'same-origin'
+  })
+  if (!response.ok) {
+    throw new Error(`AIGC download failed: ${response.status}`)
+  }
+  const blob = await response.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  try {
+    link.href = objectUrl
+    link.download = resolveDownloadFileName(response.headers.get('content-disposition')) || fallbackFileName
     link.rel = 'noopener noreferrer'
     document.body.appendChild(link)
     link.click()

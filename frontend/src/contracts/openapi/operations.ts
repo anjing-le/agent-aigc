@@ -43,6 +43,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/assets/{assetId}/download",
     operationId: "downloadAsset"
   },
+  downloadGalleryAsset: {
+    method: "GET",
+    path: "/api/aigc/gallery/{assetId}/download",
+    operationId: "downloadGalleryAsset"
+  },
   downloadMaterial: {
     method: "GET",
     path: "/api/aigc/materials/{materialId}/download",
@@ -284,6 +289,13 @@ export interface OpenApiOperationTypes {
     data: NonNullable<Schemas.APIResponseVoid['data']>
   }
   downloadAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: File
+    data: unknown
+  }
+  downloadGalleryAsset: {
     pathParams: { assetId: string }
     query: undefined
     request: undefined

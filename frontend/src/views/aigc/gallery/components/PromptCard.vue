@@ -57,6 +57,26 @@
             {{ item.favoriteCount || 0 }}
           </el-button>
 
+          <el-tooltip content="下载作品" placement="top">
+            <el-button
+              size="small"
+              :icon="Download"
+              plain
+              class="prompt-card__download-btn"
+              @click.stop="handleDownload"
+            />
+          </el-tooltip>
+
+          <el-tooltip content="复制公开链接" placement="top">
+            <el-button
+              size="small"
+              :icon="Share"
+              plain
+              class="prompt-card__share-btn"
+              @click.stop="handleShare"
+            />
+          </el-tooltip>
+
           <!-- 复制按钮 -->
           <el-button
             type="primary"
@@ -74,7 +94,15 @@
 </template>
 
 <script setup lang="ts">
-  import { Picture, User, DocumentCopy, Star, Collection } from '@element-plus/icons-vue'
+  import {
+    Picture,
+    User,
+    DocumentCopy,
+    Star,
+    Collection,
+    Download,
+    Share
+  } from '@element-plus/icons-vue'
   import type { GalleryItem, ContentType } from '@/api/model/aigcModel'
   import { resolveAigcGalleryPreviewUrl } from '@/utils/aigcAsset'
 
@@ -87,6 +115,8 @@
     use: [item: GalleryItem]
     like: [item: GalleryItem]
     favorite: [item: GalleryItem]
+    download: [item: GalleryItem]
+    share: [item: GalleryItem]
   }
 
   const props = defineProps<Props>()
@@ -134,6 +164,14 @@
 
   const handleFavorite = () => {
     emit('favorite', props.item)
+  }
+
+  const handleDownload = () => {
+    emit('download', props.item)
+  }
+
+  const handleShare = () => {
+    emit('share', props.item)
   }
 </script>
 

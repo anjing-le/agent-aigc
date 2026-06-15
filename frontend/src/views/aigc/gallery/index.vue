@@ -75,6 +75,8 @@
           @use="handleUse(item)"
           @like="handleLike(item)"
           @favorite="handleFavorite(item)"
+          @download="handleDownload(item)"
+          @share="handleShare(item)"
         />
       </div>
 
@@ -106,6 +108,10 @@
     fetchUnlikeGalleryAsset
   } from '@/api/aigc'
   import type { ContentType, GalleryItem } from '@/api/model/aigcModel'
+  import {
+    downloadAigcGalleryAsset,
+    resolveAigcGalleryPreviewUrl
+  } from '@/utils/aigcAsset'
 
   defineOptions({ name: 'AIGCGallery' })
 
@@ -326,6 +332,42 @@
     } catch {
       ElMessage.error('复制失败')
     }
+  }
+
+  const handleDownload = async (item: GalleryItem) => {
+    try {
+      if (dataSource.value === 'static') {
+        window.open(resolveAigcGalleryPreviewUrl(item), '_blank', 'noopener,noreferrer')
+        return
+      }
+      await downloadAigcGalleryAsset(item)
+    } catch (error) {
+      console.error('下载广场作品失败:', error)
+      ElMessage.error('下载失败，请稍后重试')
+    }
+  }
+
+  const handleShare = async (item: GalleryItem) => {
+    try {
+      const url = resolvePublicGalleryUrl(item)
+      await copy(url)
+      showCopyTip.value = true
+      setTimeout(() => {
+        showCopyTip.value = false
+      }, 2000)
+      ElMessage.success('公开链接已复制')
+    } catch (error) {
+      console.error('复制公开链接失败:', error)
+      ElMessage.error('复制失败')
+    }
+  }
+
+  const resolvePublicGalleryUrl = (item: GalleryItem) => {
+    const previewUrl = resolveAigcGalleryPreviewUrl(item)
+    if (/^(https?:|data:|blob:)/i.test(previewUrl)) {
+      return previewUrl
+    }
+    return `${window.location.origin}${previewUrl}`
   }
 
   const handleLike = async (item: GalleryItem) => {

@@ -606,12 +606,15 @@ for (const token of [
 }
 
 requireToken('frontend/src/utils/aigcAsset.ts', 'thumbnailUrl || item.previewUrl || item.url')
+requireToken('frontend/src/utils/aigcAsset.ts', 'resolveAigcGalleryDownloadUrl')
+requireToken('frontend/src/utils/aigcAsset.ts', 'downloadAigcGalleryAsset')
 
 for (const token of [
   'GALLERY_PUBLICATION_FULL',
   'GALLERY_LIKE_FULL',
   'GALLERY_FAVORITE_FULL',
-  'GALLERY_ASSET_PREVIEW_FULL'
+  'GALLERY_ASSET_PREVIEW_FULL',
+  'GALLERY_ASSET_DOWNLOAD_FULL'
 ]) {
   requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
 }
@@ -627,7 +630,10 @@ for (const token of [
   'unfavoriteGalleryAsset',
   'GALLERY_ASSET_PREVIEW',
   'previewGalleryAsset',
-  'previewPublishedAsset'
+  'previewPublishedAsset',
+  'GALLERY_ASSET_DOWNLOAD',
+  'downloadGalleryAsset',
+  'downloadPublishedAsset'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/controller/AigcController.java', token)
 }
@@ -733,6 +739,8 @@ for (const token of [
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryLike',
   'galleryFavorite: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorite',
+  'galleryAssetDownload: (assetId: string | number)',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAssetDownload',
   'assetDetail: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
 ]) {
@@ -766,6 +774,9 @@ for (const token of [
   'fetchUnfavoriteGalleryAsset',
   'handleLike',
   'handleFavorite',
+  'handleDownload',
+  'handleShare',
+  'resolvePublicGalleryUrl',
   'likedAssetIds',
   'favoritedAssetIds',
   'updateGalleryLikeState',
@@ -777,8 +788,12 @@ for (const token of [
 for (const token of [
   'Star',
   'Collection',
+  'Download',
+  'Share',
   'handleLike',
   'handleFavorite',
+  'handleDownload',
+  'handleShare',
   'likedByCurrentUser',
   'favoritedByCurrentUser'
 ]) {
