@@ -183,6 +183,10 @@ export type GalleryItem = Omit<
   url: string
   /** 缩略图URL */
   thumbnailUrl?: string
+  /** 公开预览 URL */
+  previewUrl?: string
+  /** 公开访问策略 */
+  publicAccessMode?: string
   /** 提示词 */
   prompt: string
   /** 使用的模型 */

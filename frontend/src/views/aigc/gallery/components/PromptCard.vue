@@ -3,7 +3,7 @@
   <div class="prompt-card" @click="handleCardClick">
     <!-- 预览图 -->
     <div class="prompt-card__preview">
-      <img v-if="item.thumbnailUrl" :src="item.thumbnailUrl" :alt="item.prompt" loading="lazy" />
+      <img v-if="shouldShowPreviewImage" :src="previewUrl" :alt="item.prompt" loading="lazy" />
       <div v-else class="prompt-card__placeholder">
         <el-icon :size="32"><Picture /></el-icon>
       </div>
@@ -54,6 +54,7 @@
 <script setup lang="ts">
   import { Picture, User, DocumentCopy } from '@element-plus/icons-vue'
   import type { GalleryItem, ContentType } from '@/api/model/aigcModel'
+  import { resolveAigcGalleryPreviewUrl } from '@/utils/aigcAsset'
 
   interface Props {
     item: GalleryItem
@@ -66,6 +67,10 @@
 
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
+  const previewUrl = computed(() => resolveAigcGalleryPreviewUrl(props.item))
+  const shouldShowPreviewImage = computed(
+    () => props.item.contentType === 'IMAGE' && Boolean(previewUrl.value)
+  )
 
   /** 获取内容类型标签 */
   const getTypeLabel = (type: ContentType) => {

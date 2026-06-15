@@ -556,6 +556,8 @@ for (const token of [
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits',
   'ownershipBackfill',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.ownershipBackfill',
+  'galleryAssetPreview',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAssetPreview',
   'assetDownload',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDownload',
   'assetPreview',
@@ -571,8 +573,10 @@ for (const token of [
 for (const token of [
   'ApiPaths.aigc.assetDownload',
   'ApiPaths.aigc.assetPreview',
+  'ApiPaths.aigc.galleryAssetPreview',
   'ApiPaths.aigc.materialPreview',
   'resolveAigcAssetPreviewUrl',
+  'resolveAigcGalleryPreviewUrl',
   'resolveAigcMaterialPreviewUrl',
   'buildRequestContextHeaders',
   'REQUEST_HEADERS.userId',
@@ -592,6 +596,36 @@ for (const token of [
   'fetchGetStorageAuditLogs'
 ]) {
   requireToken('frontend/src/views/aigc/assets/index.vue', token)
+}
+
+for (const token of [
+  'resolveAigcGalleryPreviewUrl',
+  'previewUrl'
+]) {
+  requireToken('frontend/src/views/aigc/gallery/components/PromptCard.vue', token)
+}
+
+requireToken('frontend/src/utils/aigcAsset.ts', 'thumbnailUrl || item.previewUrl || item.url')
+
+for (const token of [
+  'GALLERY_ASSET_PREVIEW_FULL'
+]) {
+  requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
+}
+
+for (const token of [
+  'GALLERY_ASSET_PREVIEW',
+  'previewGalleryAsset',
+  'previewPublishedAsset'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/controller/AigcController.java', token)
+}
+
+for (const token of [
+  'publicAccessMode',
+  'published-preview'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/impl/AigcServiceImpl.java', token)
 }
 
 for (const token of [

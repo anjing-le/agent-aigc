@@ -1,4 +1,4 @@
-import type { AssetItem, ContentType } from '@/api/model/aigcModel'
+import type { AssetItem, ContentType, GalleryItem } from '@/api/model/aigcModel'
 import { ApiPaths, resolveApiPath } from '@/api/paths'
 import { useUserStore } from '@/store/modules/user'
 import { buildRequestContextHeaders, REQUEST_HEADERS } from '@/utils/http/context'
@@ -33,6 +33,17 @@ export const resolveAigcMaterialPreviewUrl = (material: PreviewableMaterial | nu
   if (isInlinePreview(material.url)) return material.url || ''
   if (!material.id) return material.url || ''
   return resolveApiPath(ApiPaths.aigc.materialPreview(material.id))
+}
+
+export const resolveAigcGalleryPreviewUrl = (
+  item: Pick<GalleryItem, 'id' | 'url' | 'thumbnailUrl' | 'previewUrl'> | null | undefined
+) => {
+  if (!item) return ''
+  const previewUrl = item.thumbnailUrl || item.previewUrl || item.url
+  if (previewUrl) {
+    return isAbsolutePreview(previewUrl) ? previewUrl : resolveApiPath(previewUrl)
+  }
+  return item.id ? resolveApiPath(ApiPaths.aigc.galleryAssetPreview(item.id)) : ''
 }
 
 export const downloadAigcAsset = async (asset: Pick<AssetItem, 'id' | 'url' | 'contentType'>) => {
@@ -83,6 +94,7 @@ const buildAigcDownloadHeaders = (): HeadersInit => {
 }
 
 const isInlinePreview = (url?: string) => Boolean(url?.startsWith('data:'))
+const isAbsolutePreview = (url: string) => /^(https?:|data:|blob:)/i.test(url)
 
 const resolveDownloadFileName = (contentDisposition: string | null) => {
   if (!contentDisposition) return null

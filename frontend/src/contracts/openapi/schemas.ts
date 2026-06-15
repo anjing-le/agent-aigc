@@ -347,7 +347,9 @@ export interface GalleryDTO {
   isPublished?: boolean
   likeCount?: number
   model?: string
+  previewUrl?: string
   prompt?: string
+  publicAccessMode?: string
   thumbnailUrl?: string
   url?: string
 }

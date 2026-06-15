@@ -31,6 +31,12 @@ public class GalleryDTO {
     /** 缩略图URL */
     private String thumbnailUrl;
 
+    /** 公开预览 URL */
+    private String previewUrl;
+
+    /** 公开访问策略 */
+    private String publicAccessMode;
+
     /** 提示词 */
     private String prompt;
 
@@ -49,4 +55,3 @@ public class GalleryDTO {
     /** 点赞数 */
     private Integer likeCount;
 }
-

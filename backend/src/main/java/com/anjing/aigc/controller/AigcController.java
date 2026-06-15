@@ -275,6 +275,12 @@ public class AigcController {
         return APIResponse.success(gallery);
     }
 
+    @GetMapping(ApiConstants.Aigc.GALLERY_ASSET_PREVIEW)
+    @Operation(summary = "公开预览已发布 AIGC 广场作品")
+    public ResponseEntity<Resource> previewGalleryAsset(@PathVariable String assetId) {
+        return aigcDownloadService.previewPublishedAsset(assetId);
+    }
+
     /**
      * 保存作品到灵感广场
      *

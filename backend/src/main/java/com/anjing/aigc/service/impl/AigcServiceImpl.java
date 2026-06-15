@@ -49,6 +49,7 @@ import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
 import com.anjing.aigc.service.storage.AigcStorageService;
+import com.anjing.model.constants.ApiConstants;
 import com.anjing.aigc.exception.AigcException;
 import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.model.response.PageResult;
@@ -1266,11 +1267,14 @@ public class AigcServiceImpl implements AigcService {
      * 转换为GalleryDTO
      */
     private GalleryDTO toGalleryDTO(AigcAsset asset) {
+        String previewUrl = buildGalleryPreviewUrl(asset);
         return GalleryDTO.builder()
                 .id(asset.getAssetId())
                 .contentType(asset.getContentType())
-                .url(asset.getUrl())
-                .thumbnailUrl(asset.getThumbnailUrl())
+                .url(previewUrl)
+                .thumbnailUrl(asset.getContentType() == ContentType.IMAGE ? previewUrl : null)
+                .previewUrl(previewUrl)
+                .publicAccessMode("published-preview")
                 .prompt(asset.getPrompt())
                 .model(asset.getModel())
                 .isPublished(asset.getIsPublished())
@@ -1278,6 +1282,11 @@ public class AigcServiceImpl implements AigcService {
                 .authorName(null) // TODO: 关联用户
                 .likeCount(0) // TODO: 点赞功能
                 .build();
+    }
+
+    private String buildGalleryPreviewUrl(AigcAsset asset) {
+        return ApiConstants.Aigc.GALLERY_ASSET_PREVIEW_FULL
+                .replace("{assetId}", asset.getAssetId());
     }
 
     /**

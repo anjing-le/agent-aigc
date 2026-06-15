@@ -47,6 +47,12 @@ public class AigcDownloadService {
         return buildStorageResponse(asset.getUrl(), buildAssetFileName(asset), false);
     }
 
+    public ResponseEntity<Resource> previewPublishedAsset(String assetId) {
+        AigcAsset asset = assetRepository.findByAssetIdAndIsPublishedTrue(assetId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
+        return buildStorageResponse(asset.getUrl(), buildAssetFileName(asset), false);
+    }
+
     public ResponseEntity<Resource> downloadMaterial(String materialId) {
         AigcMaterial material = materialRepository.findVisibleByMaterialId(
                         materialId,

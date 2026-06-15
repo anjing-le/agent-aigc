@@ -148,6 +148,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/assets/{assetId}/preview",
     operationId: "previewAsset"
   },
+  previewGalleryAsset: {
+    method: "GET",
+    path: "/api/aigc/gallery/{assetId}/preview",
+    operationId: "previewGalleryAsset"
+  },
   previewMaterial: {
     method: "GET",
     path: "/api/aigc/materials/{materialId}/preview",
@@ -401,6 +406,13 @@ export interface OpenApiOperationTypes {
     data: NonNullable<Schemas.APIResponseString['data']>
   }
   previewAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: File
+    data: unknown
+  }
+  previewGalleryAsset: {
     pathParams: { assetId: string }
     query: undefined
     request: undefined

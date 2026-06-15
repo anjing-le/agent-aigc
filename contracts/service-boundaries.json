@@ -97,6 +97,7 @@
         { "name": "ownershipBackfill", "backendConstant": "OWNERSHIP_BACKFILL_FULL", "frontendKey": "ownershipBackfill", "path": "/api/aigc/ownership/backfill", "methods": ["POST"] },
         { "name": "gallery", "backendConstant": "GALLERY_FULL", "frontendKey": "gallery", "path": "/api/aigc/gallery", "methods": ["GET"] },
         { "name": "gallerySave", "backendConstant": "GALLERY_SAVE_FULL", "frontendKey": "gallerySave", "path": "/api/aigc/gallery/save", "methods": ["POST"] },
+        { "name": "galleryAssetPreview", "backendConstant": "GALLERY_ASSET_PREVIEW_FULL", "frontendKey": "galleryAssetPreview", "path": "/api/aigc/gallery/{assetId}/preview", "methods": ["GET"] },
         { "name": "assets", "backendConstant": "ASSETS_FULL", "frontendKey": "assets", "path": "/api/aigc/assets", "methods": ["GET"] },
         { "name": "assetDetail", "backendConstant": "ASSET_DETAIL_FULL", "frontendKey": "assetDetail", "path": "/api/aigc/assets/{assetId}", "methods": ["GET", "DELETE"] },
         { "name": "assetPreview", "backendConstant": "ASSET_PREVIEW_FULL", "frontendKey": "assetPreview", "path": "/api/aigc/assets/{assetId}/preview", "methods": ["GET"] },

@@ -25,6 +25,8 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
      */
     Optional<AigcAsset> findByAssetId(String assetId);
 
+    Optional<AigcAsset> findByAssetIdAndIsPublishedTrue(String assetId);
+
     /**
      * 根据资产ID删除
      */
