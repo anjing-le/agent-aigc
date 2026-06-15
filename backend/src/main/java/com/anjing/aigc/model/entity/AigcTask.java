@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -115,6 +116,26 @@ public class AigcTask {
     /** 耗时（毫秒） */
     @Column(name = "duration_ms")
     private Long durationMs;
+
+    /** 成本统计状态：PENDING、MOCK_FREE、ESTIMATED、ESTIMATE_NOT_CONFIGURED、UNTRACKED */
+    @Column(name = "cost_status", length = 32)
+    private String costStatus;
+
+    /** 估算成本金额 */
+    @Column(name = "estimated_cost_amount", precision = 18, scale = 6)
+    private BigDecimal estimatedCostAmount;
+
+    /** 估算成本币种 */
+    @Column(name = "estimated_cost_currency", length = 16)
+    private String estimatedCostCurrency;
+
+    /** 成本估算单位 */
+    @Column(name = "cost_unit", length = 32)
+    private String costUnit;
+
+    /** 成本估算说明 */
+    @Column(name = "cost_description", length = 255)
+    private String costDescription;
 
     /** 创建时间 */
     @Column(name = "created_at")

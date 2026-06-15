@@ -24,6 +24,7 @@ import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderExecutionSummary;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
+import com.anjing.aigc.model.response.ProviderCostEstimate;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
@@ -35,6 +36,7 @@ import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcProviderAuditLogService;
+import com.anjing.aigc.service.AigcProviderCostEstimator;
 import com.anjing.aigc.service.AigcProviderManagementPermissionService;
 import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
@@ -81,6 +83,7 @@ public class AigcServiceImpl implements AigcService {
     private final ProviderRouter providerRouter;
     private final AigcProperties aigcProperties;
     private final AigcProviderAuditLogService auditLogService;
+    private final AigcProviderCostEstimator costEstimator;
     private final AigcProviderManagementPermissionService permissionService;
     private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderParamConfigService paramConfigService;
@@ -804,25 +807,31 @@ public class AigcServiceImpl implements AigcService {
         if (task.getProviderName() == null && task.getProviderType() == null && task.getDurationMs() == null) {
             return null;
         }
+        ProviderCostEstimate costEstimate = resolveCostEstimate(task);
         return ProviderExecutionSummary.builder()
                 .providerName(task.getProviderName())
                 .providerType(task.getProviderType())
                 .model(task.getModel())
                 .durationMs(task.getDurationMs())
-                .costStatus(resolveCostStatus(task))
+                .costStatus(costEstimate.getCostStatus())
+                .estimatedCostAmount(costEstimate.getEstimatedCostAmount())
+                .estimatedCostCurrency(costEstimate.getEstimatedCostCurrency())
+                .costUnit(costEstimate.getCostUnit())
+                .costDescription(costEstimate.getCostDescription())
                 .build();
     }
 
-    private String resolveCostStatus(AigcTask task) {
-        if (task.getDurationMs() == null) {
-            return "PENDING";
+    private ProviderCostEstimate resolveCostEstimate(AigcTask task) {
+        if (task.getCostStatus() == null) {
+            return costEstimator.estimate(task);
         }
-        if ("OTHER".equals(task.getProviderType())
-                && task.getProviderName() != null
-                && task.getProviderName().toLowerCase().contains("mock")) {
-            return "MOCK_FREE";
-        }
-        return "UNTRACKED";
+        return ProviderCostEstimate.builder()
+                .costStatus(task.getCostStatus())
+                .estimatedCostAmount(task.getEstimatedCostAmount())
+                .estimatedCostCurrency(task.getEstimatedCostCurrency())
+                .costUnit(task.getCostUnit())
+                .costDescription(task.getCostDescription())
+                .build();
     }
 
     private List<MaterialDTO> getReferenceMaterials(List<String> materialIds) {

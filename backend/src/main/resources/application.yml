@@ -195,6 +195,12 @@ aigc:
     admin-roles:
       - R_SUPER
       - R_ADMIN
+  cost:
+    currency: ${AIGC_COST_CURRENCY:USD}
+    google:
+      image-unit-cost: ${AIGC_COST_GOOGLE_IMAGE_UNIT:0}
+      video-unit-cost: ${AIGC_COST_GOOGLE_VIDEO_UNIT:0}
+      audio-unit-cost: ${AIGC_COST_GOOGLE_AUDIO_UNIT:0}
   providers:
     mock:
       enabled: ${AIGC_MOCK_ENABLED:true}

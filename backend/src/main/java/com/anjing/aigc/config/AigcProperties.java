@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,11 @@ public class AigcProperties {
      * Provider 管理配置
      */
     private ProviderManagementConfig providerManagement = new ProviderManagementConfig();
+
+    /**
+     * Provider 成本估算配置
+     */
+    private CostConfig cost = new CostConfig();
     
     /**
      * 提供商凭证配置
@@ -71,6 +77,26 @@ public class AigcProperties {
          * 允许管理 Provider 路由、凭证和参数模板的角色。
          */
         private List<String> adminRoles = new ArrayList<>(List.of("R_SUPER", "R_ADMIN"));
+    }
+
+    @Data
+    public static class CostConfig {
+        /**
+         * 估算成本币种。
+         */
+        private String currency = "USD";
+
+        /**
+         * Google Provider 单任务估算成本。默认不写死官方价格，生产按实际合同或价格表配置。
+         */
+        private GoogleCostConfig google = new GoogleCostConfig();
+    }
+
+    @Data
+    public static class GoogleCostConfig {
+        private BigDecimal imageUnitCost = BigDecimal.ZERO;
+        private BigDecimal videoUnitCost = BigDecimal.ZERO;
+        private BigDecimal audioUnitCost = BigDecimal.ZERO;
     }
     
     // ==================== 提供商凭证配置 ====================

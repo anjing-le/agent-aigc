@@ -247,6 +247,35 @@ for (const token of [
   requireToken('backend/src/main/java/com/anjing/aigc/service/impl/AigcServiceImpl.java', token)
 }
 
+for (const token of [
+  'AigcProviderCostEstimator',
+  'STATUS_ESTIMATED',
+  'STATUS_ESTIMATE_NOT_CONFIGURED',
+  'getCost().getGoogle()'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderCostEstimator.java', token)
+}
+
+for (const token of [
+  'costEstimator.estimate(task)',
+  'setEstimatedCostAmount',
+  'setEstimatedCostCurrency',
+  'setCostDescription'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcTaskExecutor.java', token)
+}
+
+for (const token of [
+  'estimatedCostAmount',
+  'estimatedCostCurrency',
+  'costUnit',
+  'costDescription'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/model/response/ProviderExecutionSummary.java', token)
+  requireToken('frontend/src/views/aigc/studio/components/GenerationPreview.vue', token)
+  requireToken('frontend/src/views/aigc/assets/index.vue', token)
+}
+
 requireToken(
   'backend/src/main/java/com/anjing/aigc/provider/google/GoogleImageProvider.java',
   'paramConfigService.getGoogleImageAspectRatio()'

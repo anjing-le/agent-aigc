@@ -290,7 +290,12 @@
     WarningFilled
   } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
-  import type { TaskStatusResponse, AssetItem, ContentType } from '@/api/model/aigcModel'
+  import type {
+    TaskStatusResponse,
+    AssetItem,
+    ContentType,
+    ProviderExecutionSummary
+  } from '@/api/model/aigcModel'
   import { downloadAigcAsset } from '@/utils/aigcAsset'
 
   interface Props {
@@ -349,7 +354,8 @@
       { label: 'Provider', value: execution.providerName || execution.providerType },
       { label: '模型', value: execution.model },
       { label: '耗时', value: formatDuration(execution.durationMs) },
-      { label: '成本', value: formatCostStatus(execution.costStatus) }
+      { label: '成本', value: formatCost(execution) },
+      { label: '成本说明', value: execution.costDescription }
     ].filter((item): item is { label: string; value: string } => Boolean(item.value))
   })
 
@@ -409,10 +415,21 @@
     return `${(durationMs / 1000).toFixed(1)}s`
   }
 
+  const formatCost = (execution: ProviderExecutionSummary) => {
+    if (execution.estimatedCostAmount !== undefined && execution.estimatedCostAmount !== null) {
+      const currency = execution.estimatedCostCurrency || 'USD'
+      const unit = execution.costUnit ? `/${execution.costUnit}` : ''
+      return `${currency} ${Number(execution.estimatedCostAmount).toFixed(6)}${unit}`
+    }
+    return formatCostStatus(execution.costStatus)
+  }
+
   const formatCostStatus = (status?: string) => {
     const map: Record<string, string> = {
       PENDING: '统计中',
       MOCK_FREE: '模拟免费',
+      ESTIMATED: '已估算',
+      ESTIMATE_NOT_CONFIGURED: '待配置',
       UNTRACKED: '待接入'
     }
     return status ? map[status] || status : ''

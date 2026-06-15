@@ -538,8 +538,12 @@ export interface ProviderCredentialUpdateResponse {
 }
 
 export interface ProviderExecutionSummary {
+  costDescription?: string
   costStatus?: string
+  costUnit?: string
   durationMs?: number
+  estimatedCostAmount?: number
+  estimatedCostCurrency?: string
   model?: string
   providerName?: string
   providerType?: string

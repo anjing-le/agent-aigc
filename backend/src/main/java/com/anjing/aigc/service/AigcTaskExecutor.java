@@ -5,6 +5,7 @@ import com.anjing.aigc.exception.AigcException;
 import com.anjing.aigc.model.entity.AigcAsset;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.aigc.model.response.ProviderCostEstimate;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ProviderRouter;
@@ -29,6 +30,7 @@ public class AigcTaskExecutor {
     private final ProviderRouter providerRouter;
     private final AigcTaskRepository taskRepository;
     private final AigcAssetRepository assetRepository;
+    private final AigcProviderCostEstimator costEstimator;
 
     @Async
     @Transactional
@@ -52,6 +54,7 @@ public class AigcTaskExecutor {
                         taskId, result.getErrorCode(), result.getErrorMessage());
                 task.setStatus(TaskStatus.FAILED);
                 task.setDurationMs(durationMs);
+                applyCostEstimate(task);
                 task.setErrorMessage(result.getErrorMessage());
                 task.setErrorCode(result.getErrorCode());
                 task.setUpdatedAt(DateUtils.nowLocalDateTime());
@@ -76,6 +79,7 @@ public class AigcTaskExecutor {
             task.setResultUrl(result.getUrl());
             task.setThumbnailUrl(result.getThumbnailUrl());
             task.setDurationMs(durationMs);
+            applyCostEstimate(task);
             task.setUpdatedAt(DateUtils.nowLocalDateTime());
             taskRepository.save(task);
 
@@ -85,6 +89,7 @@ public class AigcTaskExecutor {
             taskRepository.findByTaskId(taskId).ifPresent(task -> {
                 task.setStatus(TaskStatus.FAILED);
                 task.setDurationMs(System.currentTimeMillis() - startTime);
+                applyCostEstimate(task);
                 task.setErrorMessage(e.getMessage());
                 task.setErrorCode(resolveErrorCode(e));
                 task.setUpdatedAt(DateUtils.nowLocalDateTime());
@@ -104,5 +109,19 @@ public class AigcTaskExecutor {
         ContentProvider provider = providerRouter.getProvider(task.getContentType());
         task.setProviderName(provider.getProviderName());
         task.setProviderType(provider.getProviderType().name());
+        task.setCostStatus(AigcProviderCostEstimator.STATUS_PENDING);
+        task.setEstimatedCostAmount(null);
+        task.setEstimatedCostCurrency(null);
+        task.setCostUnit(null);
+        task.setCostDescription(null);
+    }
+
+    private void applyCostEstimate(AigcTask task) {
+        ProviderCostEstimate estimate = costEstimator.estimate(task);
+        task.setCostStatus(estimate.getCostStatus());
+        task.setEstimatedCostAmount(estimate.getEstimatedCostAmount());
+        task.setEstimatedCostCurrency(estimate.getEstimatedCostCurrency());
+        task.setCostUnit(estimate.getCostUnit());
+        task.setCostDescription(estimate.getCostDescription());
     }
 }

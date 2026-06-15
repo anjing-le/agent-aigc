@@ -46,6 +46,7 @@ class AigcServiceImplAssetTest {
     private final ProviderRouter providerRouter = mock(ProviderRouter.class);
     private final AigcProperties aigcProperties = new AigcProperties();
     private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
+    private final AigcProviderCostEstimator costEstimator = new AigcProviderCostEstimator(aigcProperties);
     private final AigcProviderManagementPermissionService permissionService =
             mock(AigcProviderManagementPermissionService.class);
     private final AigcProviderCredentialConfigRepository credentialConfigRepository =
@@ -73,6 +74,7 @@ class AigcServiceImplAssetTest {
             providerRouter,
             aigcProperties,
             auditLogService,
+            costEstimator,
             permissionService,
             credentialConfigService,
             paramConfigService,
@@ -136,6 +138,8 @@ class AigcServiceImplAssetTest {
         assertEquals(0.8, detail.getTask().getAgentAnalysis().getConfidence());
         assertEquals("Mock Image Provider", detail.getTask().getProviderExecution().getProviderName());
         assertEquals("MOCK_FREE", detail.getTask().getProviderExecution().getCostStatus());
+        assertEquals(0, detail.getTask().getProviderExecution().getEstimatedCostAmount().signum());
+        assertEquals("USD", detail.getTask().getProviderExecution().getEstimatedCostCurrency());
     }
 
     @Test

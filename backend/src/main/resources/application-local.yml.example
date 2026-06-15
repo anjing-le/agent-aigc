@@ -26,6 +26,13 @@ aigc:
     admin-roles:
       - R_SUPER
       - R_ADMIN
+  cost:
+    currency: USD
+    google:
+      # 本地估算单价，不代表官方价格；按你的实际合同或价格表配置。
+      image-unit-cost: 0
+      video-unit-cost: 0
+      audio-unit-cost: 0
 
   providers:
     # Google GenAI - 图片/视频/TTS 共用一个 Key
