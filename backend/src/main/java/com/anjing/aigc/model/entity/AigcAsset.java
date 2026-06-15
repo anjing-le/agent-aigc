@@ -57,7 +57,18 @@ public class AigcAsset {
     @Column(name = "is_published")
     private Boolean isPublished;
 
+    /** 灵感广场点赞数 */
+    @Column(name = "like_count")
+    private Integer likeCount;
+
     /** 创建时间 */
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (likeCount == null) {
+            likeCount = 0;
+        }
+    }
 }

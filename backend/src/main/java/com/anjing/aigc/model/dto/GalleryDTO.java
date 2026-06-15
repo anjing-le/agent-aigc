@@ -54,4 +54,7 @@ public class GalleryDTO {
 
     /** 点赞数 */
     private Integer likeCount;
+
+    /** 当前用户/会话是否已点赞。V1 前端会话内维护，后端默认 false。 */
+    private Boolean likedByCurrentUser;
 }

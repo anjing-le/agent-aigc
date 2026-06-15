@@ -351,6 +351,41 @@ class AigcServiceImplAssetTest {
         assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
     }
 
+    @Test
+    void likeGalleryAssetIncrementsPublishedAssetLikeCount() {
+        AigcAsset asset = asset("asset-liked");
+        asset.setIsPublished(true);
+        asset.setLikeCount(2);
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-liked")).thenReturn(Optional.of(asset));
+        when(assetRepository.save(asset)).thenReturn(asset);
+
+        assertEquals(3, aigcService.likeGalleryAsset("asset-liked").getLikeCount());
+        assertEquals(3, asset.getLikeCount());
+        verify(assetRepository).save(asset);
+    }
+
+    @Test
+    void unlikeGalleryAssetDoesNotGoBelowZero() {
+        AigcAsset asset = asset("asset-unliked");
+        asset.setIsPublished(true);
+        asset.setLikeCount(0);
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-unliked")).thenReturn(Optional.of(asset));
+        when(assetRepository.save(asset)).thenReturn(asset);
+
+        assertEquals(0, aigcService.unlikeGalleryAsset("asset-unliked").getLikeCount());
+        assertEquals(0, asset.getLikeCount());
+        verify(assetRepository).save(asset);
+    }
+
+    @Test
+    void likeGalleryAssetRequiresPublishedAsset() {
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("draft")).thenReturn(Optional.empty());
+
+        AigcException error = assertThrows(AigcException.class, () -> aigcService.likeGalleryAsset("draft"));
+
+        assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
+    }
+
     private AigcAsset asset(String assetId) {
         AigcAsset asset = new AigcAsset();
         asset.setAssetId(assetId);
@@ -358,6 +393,7 @@ class AigcServiceImplAssetTest {
         asset.setPrompt("prompt");
         asset.setModel("mock-image-preview");
         asset.setIsPublished(false);
+        asset.setLikeCount(0);
         return asset;
     }
 

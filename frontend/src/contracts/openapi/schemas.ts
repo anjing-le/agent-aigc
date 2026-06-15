@@ -64,6 +64,15 @@ export interface APIResponseCurrentUserResponse {
   timestamp?: number
 }
 
+export interface APIResponseGalleryDTO {
+  code?: string
+  data?: GalleryDTO
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGenerateResponse {
   code?: string
   data?: GenerateResponse
@@ -346,6 +355,7 @@ export interface GalleryDTO {
   id?: string
   isPublished?: boolean
   likeCount?: number
+  likedByCurrentUser?: boolean
   model?: string
   previewUrl?: string
   prompt?: string
@@ -940,6 +950,7 @@ export interface OpenApiSchemas {
   APIResponseAssetDetailResponse: APIResponseAssetDetailResponse
   APIResponseAuthTokenResponse: APIResponseAuthTokenResponse
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
+  APIResponseGalleryDTO: APIResponseGalleryDTO
   APIResponseGenerateResponse: APIResponseGenerateResponse
   APIResponseMapStringObject: APIResponseMapStringObject
   APIResponseMaterialUploadResponse: APIResponseMaterialUploadResponse

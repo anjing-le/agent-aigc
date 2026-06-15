@@ -35,6 +35,17 @@
             {{ getCategoryLabel(item.category) }}
           </el-tag>
 
+          <el-button
+            size="small"
+            :icon="Star"
+            :type="item.likedByCurrentUser ? 'warning' : undefined"
+            plain
+            class="prompt-card__like-btn"
+            @click.stop="handleLike"
+          >
+            {{ item.likeCount || 0 }}
+          </el-button>
+
           <!-- 复制按钮 -->
           <el-button
             type="primary"
@@ -52,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-  import { Picture, User, DocumentCopy } from '@element-plus/icons-vue'
+  import { Picture, User, DocumentCopy, Star } from '@element-plus/icons-vue'
   import type { GalleryItem, ContentType } from '@/api/model/aigcModel'
   import { resolveAigcGalleryPreviewUrl } from '@/utils/aigcAsset'
 
@@ -63,6 +74,7 @@
   interface Emits {
     copy: [item: GalleryItem]
     use: [item: GalleryItem]
+    like: [item: GalleryItem]
   }
 
   const props = defineProps<Props>()
@@ -102,6 +114,10 @@
   /** 复制提示词 */
   const handleCopy = () => {
     emit('copy', props.item)
+  }
+
+  const handleLike = () => {
+    emit('like', props.item)
   }
 </script>
 

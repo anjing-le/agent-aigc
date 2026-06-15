@@ -3,6 +3,7 @@ import type {
   GenerateRequest,
   GenerateResponse,
   TaskStatusResponse,
+  GalleryItem,
   GalleryListResponse,
   AssetListResponse,
   GallerySearchParams,
@@ -216,6 +217,26 @@ export function fetchRemoveFromGallery(assetId: string) {
   return openApiRequest('removeFromGallery', {
     pathParams: { assetId }
   }) as unknown as Promise<void>
+}
+
+/**
+ * 点赞灵感广场作品
+ * @param assetId 资产ID
+ */
+export function fetchLikeGalleryAsset(assetId: string) {
+  return openApiRequest('likeGalleryAsset', {
+    pathParams: { assetId }
+  }) as Promise<GalleryItem>
+}
+
+/**
+ * 取消点赞灵感广场作品
+ * @param assetId 资产ID
+ */
+export function fetchUnlikeGalleryAsset(assetId: string) {
+  return openApiRequest('unlikeGalleryAsset', {
+    pathParams: { assetId }
+  }) as Promise<GalleryItem>
 }
 
 /**

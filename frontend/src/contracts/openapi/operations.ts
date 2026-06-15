@@ -123,6 +123,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/health",
     operationId: "health"
   },
+  likeGalleryAsset: {
+    method: "POST",
+    path: "/api/aigc/gallery/{assetId}/like",
+    operationId: "likeGalleryAsset"
+  },
   listItems: {
     method: "GET",
     path: "/api/test/items",
@@ -197,6 +202,11 @@ export const OPENAPI_OPERATIONS = {
     method: "GET",
     path: "/api/test/exception/system",
     operationId: "testSystemException"
+  },
+  unlikeGalleryAsset: {
+    method: "DELETE",
+    path: "/api/aigc/gallery/{assetId}/like",
+    operationId: "unlikeGalleryAsset"
   },
   updateActiveProvider: {
     method: "POST",
@@ -382,6 +392,13 @@ export interface OpenApiOperationTypes {
     response: Schemas.APIResponseMapStringObject
     data: NonNullable<Schemas.APIResponseMapStringObject['data']>
   }
+  likeGalleryAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseGalleryDTO
+    data: NonNullable<Schemas.APIResponseGalleryDTO['data']>
+  }
   listItems: {
     pathParams: undefined
     query: { keyword?: string }
@@ -486,6 +503,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseVoid
     data: NonNullable<Schemas.APIResponseVoid['data']>
+  }
+  unlikeGalleryAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseGalleryDTO
+    data: NonNullable<Schemas.APIResponseGalleryDTO['data']>
   }
   updateActiveProvider: {
     pathParams: undefined

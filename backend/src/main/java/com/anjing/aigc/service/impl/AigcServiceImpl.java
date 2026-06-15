@@ -1036,6 +1036,22 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    @Transactional
+    public GalleryDTO likeGalleryAsset(String assetId) {
+        AigcAsset asset = findPublishedAsset(assetId);
+        asset.setLikeCount(resolveLikeCount(asset) + 1);
+        return toGalleryDTO(assetRepository.save(asset));
+    }
+
+    @Override
+    @Transactional
+    public GalleryDTO unlikeGalleryAsset(String assetId) {
+        AigcAsset asset = findPublishedAsset(assetId);
+        asset.setLikeCount(Math.max(0, resolveLikeCount(asset) - 1));
+        return toGalleryDTO(assetRepository.save(asset));
+    }
+
+    @Override
     public PageResult<AssetDTO> getAssetList(Integer current, Integer size, String contentType) {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
@@ -1136,6 +1152,11 @@ public class AigcServiceImpl implements AigcService {
                 ownershipService.currentOwnerId(),
                 ownershipService.currentTenantId()
         );
+    }
+
+    private AigcAsset findPublishedAsset(String assetId) {
+        return assetRepository.findByAssetIdAndIsPublishedTrue(assetId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
     }
 
     private AgentAnalysis resolveAgentAnalysis(AigcTask task) {
@@ -1290,8 +1311,13 @@ public class AigcServiceImpl implements AigcService {
                 .isPublished(asset.getIsPublished())
                 .createdAt(asset.getCreatedAt())
                 .authorName(null) // TODO: 关联用户
-                .likeCount(0) // TODO: 点赞功能
+                .likeCount(resolveLikeCount(asset))
+                .likedByCurrentUser(false)
                 .build();
+    }
+
+    private int resolveLikeCount(AigcAsset asset) {
+        return asset.getLikeCount() == null ? 0 : asset.getLikeCount();
     }
 
     private String buildGalleryPreviewUrl(AigcAsset asset) {

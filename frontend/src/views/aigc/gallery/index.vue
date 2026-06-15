@@ -73,6 +73,7 @@
           :item="item"
           @copy="handleCopy(item)"
           @use="handleUse(item)"
+          @like="handleLike(item)"
         />
       </div>
 
@@ -96,7 +97,7 @@
   import { useDebounceFn, useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import PromptCard from './components/PromptCard.vue'
-  import { fetchGetGalleryList } from '@/api/aigc'
+  import { fetchGetGalleryList, fetchLikeGalleryAsset, fetchUnlikeGalleryAsset } from '@/api/aigc'
   import type { ContentType, GalleryItem } from '@/api/model/aigcModel'
 
   defineOptions({ name: 'AIGCGallery' })
@@ -109,6 +110,7 @@
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(24)
+  const likedAssetIds = ref<Set<string>>(new Set())
 
   // 搜索筛选
   const searchKeyword = ref('')
@@ -188,7 +190,8 @@
 
       const records = (res?.records || []).map((item: any) => ({
         ...item,
-        likeCount: item.likeCount ?? 0
+        likeCount: item.likeCount ?? 0,
+        likedByCurrentUser: likedAssetIds.value.has(item.id)
       }))
 
       // 后端无已发布作品时，自动切换到静态数据后备
@@ -238,6 +241,7 @@
         ...item,
         contentType: (item.contentType || 'IMAGE').toUpperCase(),
         likeCount: Math.floor(Math.random() * 100) + 10,
+        likedByCurrentUser: likedAssetIds.value.has(item.id),
         url: item.thumbnailUrl || '',
         isPublished: true
       }))
@@ -306,6 +310,45 @@
     } catch {
       ElMessage.error('复制失败')
     }
+  }
+
+  const handleLike = async (item: GalleryItem) => {
+    if (dataSource.value === 'static') {
+      updateGalleryLikeState(item.id, {
+        likeCount: Math.max(0, (item.likeCount || 0) + (item.likedByCurrentUser ? -1 : 1)),
+        likedByCurrentUser: !item.likedByCurrentUser
+      })
+      return
+    }
+
+    try {
+      const response = item.likedByCurrentUser
+        ? await fetchUnlikeGalleryAsset(item.id)
+        : await fetchLikeGalleryAsset(item.id)
+
+      updateGalleryLikeState(item.id, {
+        likeCount: response.likeCount ?? 0,
+        likedByCurrentUser: !item.likedByCurrentUser
+      })
+    } catch (error) {
+      console.error('更新点赞失败:', error)
+      ElMessage.error('点赞失败，请稍后重试')
+    }
+  }
+
+  const updateGalleryLikeState = (
+    assetId: string,
+    patch: Pick<GalleryItem, 'likeCount' | 'likedByCurrentUser'>
+  ) => {
+    galleryList.value = galleryList.value.map((item) =>
+      item.id === assetId ? { ...item, ...patch } : item
+    )
+    if (patch.likedByCurrentUser) {
+      likedAssetIds.value.add(assetId)
+    } else {
+      likedAssetIds.value.delete(assetId)
+    }
+    likedAssetIds.value = new Set(likedAssetIds.value)
   }
 
   /** 使用提示词（跳转到创作工作台） */

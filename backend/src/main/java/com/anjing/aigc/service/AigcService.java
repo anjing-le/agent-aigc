@@ -149,6 +149,22 @@ public interface AigcService {
     void removeFromGallery(String assetId);
 
     /**
+     * 点赞灵感广场作品
+     *
+     * @param assetId 资产ID
+     * @return 更新后的广场作品
+     */
+    GalleryDTO likeGalleryAsset(String assetId);
+
+    /**
+     * 取消点赞灵感广场作品
+     *
+     * @param assetId 资产ID
+     * @return 更新后的广场作品
+     */
+    GalleryDTO unlikeGalleryAsset(String assetId);
+
+    /**
      * 获取我的资产列表
      *
      * @param current 当前页
