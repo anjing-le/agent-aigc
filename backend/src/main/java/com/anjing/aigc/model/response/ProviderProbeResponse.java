@@ -23,6 +23,7 @@ public class ProviderProbeResponse {
     private String providerType;
     private String activeProvider;
     private String credentialSource;
+    private String credentialStorageMode;
     private Boolean registered;
     private Boolean active;
     private Boolean available;

@@ -140,10 +140,26 @@ for (const token of [
   'getGoogleCredential',
   'isGoogleConfigured',
   'getGoogleCredentialSource',
+  'getGoogleCredentialStorageMode',
+  'AigcProviderCredentialCodec',
   'saveGoogleCredential'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderCredentialConfigService.java', token)
 }
+
+for (const token of [
+  'AES/GCM/NoPadding',
+  'ENCRYPTED_PREFIX',
+  'aigcProperties.getSecurity().getCredentialMasterKey()'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderCredentialCodec.java', token)
+}
+
+requireAbsent(
+  'backend/src/main/java/com/anjing/aigc/service/AigcProviderCredentialConfigService.java',
+  /setCredentialValue\(normalizedCredential\)/,
+  'provider credential stored without codec'
+)
 
 for (const token of [
   'getDefaultParams',
@@ -286,6 +302,8 @@ for (const token of [
 ]) {
   requireToken('frontend/src/api/model/aigcModel.ts', token)
 }
+
+requireToken('frontend/src/views/aigc/models/index.vue', 'formatCredentialStorageMode')
 
 for (const token of [
   "OpenApiOperationQuery<'getProviderAuditLogs'>",

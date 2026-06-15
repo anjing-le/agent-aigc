@@ -43,6 +43,9 @@ public class ModelInfo {
     /** Provider 凭证来源：configuration、database 或 missing */
     private String credentialSource;
 
+    /** Provider 凭证存储模式：encrypted-database、legacy-database、configuration、not-required 或 missing */
+    private String credentialStorageMode;
+
     /** Provider 凭证更新时间，仅数据库来源时返回 */
     private String credentialUpdatedAt;
 

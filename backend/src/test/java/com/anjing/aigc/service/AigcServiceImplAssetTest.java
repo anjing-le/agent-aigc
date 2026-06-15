@@ -48,8 +48,10 @@ class AigcServiceImplAssetTest {
     private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
     private final AigcProviderCredentialConfigRepository credentialConfigRepository =
             mock(AigcProviderCredentialConfigRepository.class);
+    private final AigcProviderCredentialCodec credentialCodec =
+            new AigcProviderCredentialCodec(aigcProperties);
     private final AigcProviderCredentialConfigService credentialConfigService =
-            new AigcProviderCredentialConfigService(aigcProperties, credentialConfigRepository);
+            new AigcProviderCredentialConfigService(aigcProperties, credentialConfigRepository, credentialCodec);
     private final AigcProviderParamConfigRepository paramConfigRepository =
             mock(AigcProviderParamConfigRepository.class);
     private final AigcProviderParamConfigService paramConfigService =

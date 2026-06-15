@@ -30,6 +30,7 @@ public class AigcProviderCredentialConfigService {
 
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigRepository credentialConfigRepository;
+    private final AigcProviderCredentialCodec credentialCodec;
 
     public Optional<String> getGoogleCredential() {
         return getDatabaseCredential(GOOGLE_PROVIDER_KEY)
@@ -52,6 +53,15 @@ public class AigcProviderCredentialConfigService {
         return "missing";
     }
 
+    public String getGoogleCredentialStorageMode() {
+        return credentialConfigRepository.findByProviderKey(GOOGLE_PROVIDER_KEY)
+                .map(AigcProviderCredentialConfig::getCredentialValue)
+                .flatMap(this::resolveDatabaseStorageMode)
+                .or(() -> normalizeCredential(aigcProperties.getProviders().getGoogle().getApiKey())
+                        .map(credential -> "configuration"))
+                .orElse("missing");
+    }
+
     public LocalDateTime getGoogleCredentialUpdatedAt() {
         return credentialConfigRepository.findByProviderKey(GOOGLE_PROVIDER_KEY)
                 .map(AigcProviderCredentialConfig::getUpdatedAt)
@@ -67,7 +77,7 @@ public class AigcProviderCredentialConfigService {
         config.setProviderKey(GOOGLE_PROVIDER_KEY);
         config.setProviderName(provider.getProviderName());
         config.setProviderType(provider.getProviderType().name());
-        config.setCredentialValue(normalizedCredential);
+        config.setCredentialValue(credentialCodec.encode(normalizedCredential));
         config.setCredentialFingerprint(sha256Hex(normalizedCredential));
         config.setUpdatedBy(UPDATED_BY_RUNTIME_PAGE);
         return credentialConfigRepository.save(config);
@@ -78,11 +88,13 @@ public class AigcProviderCredentialConfigService {
                 .flatMap(config -> normalizeCredential(config.getCredentialValue()));
     }
 
+    private Optional<String> resolveDatabaseStorageMode(String storedValue) {
+        return credentialCodec.decode(storedValue)
+                .map(credential -> credentialCodec.isEncrypted(storedValue) ? "encrypted-database" : "legacy-database");
+    }
+
     private Optional<String> normalizeCredential(String value) {
-        if (value == null || value.isBlank() || value.startsWith("<")) {
-            return Optional.empty();
-        }
-        return Optional.of(value.trim());
+        return credentialCodec.decode(value);
     }
 
     private String sha256Hex(String value) {

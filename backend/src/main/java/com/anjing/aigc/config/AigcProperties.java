@@ -22,6 +22,11 @@ import java.util.Map;
 @Component
 @ConfigurationProperties(prefix = "aigc")
 public class AigcProperties {
+
+    /**
+     * AIGC 安全配置
+     */
+    private SecurityConfig security = new SecurityConfig();
     
     /**
      * 提供商凭证配置
@@ -42,6 +47,16 @@ public class AigcProperties {
      * 音频生成路由配置
      */
     private AudioRouteConfig audio = new AudioRouteConfig();
+
+    @Data
+    public static class SecurityConfig {
+        /**
+         * Provider 凭证加密主密钥。
+         *
+         * <p>生产环境应通过环境变量注入；未配置时仅用于本地教学和演示。</p>
+         */
+        private String credentialMasterKey = "agent-aigc-local-dev-credential-master-key";
+    }
     
     // ==================== 提供商凭证配置 ====================
     

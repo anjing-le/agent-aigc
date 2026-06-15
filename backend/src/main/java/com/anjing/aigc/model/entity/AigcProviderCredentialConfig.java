@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 /**
  * AIGC Provider 凭证配置。
  *
- * <p>V1 只做运行时页面覆盖和不回显边界；生产级加密/KMS 后续接入。</p>
+ * <p>运行时页面覆盖的密文配置；生产级 KMS 后续可在 codec 边界替换。</p>
  */
 @Entity
 @Table(name = "aigc_provider_credential_config")
@@ -39,7 +39,7 @@ public class AigcProviderCredentialConfig {
     @Column(name = "provider_type", length = 32)
     private String providerType;
 
-    /** 运行时凭证值：只写入，不通过接口回显 */
+    /** 运行时凭证密文：只写入，不通过接口回显 */
     @Column(name = "credential_value", nullable = false, length = 4096)
     private String credentialValue;
 

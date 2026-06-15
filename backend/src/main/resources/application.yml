@@ -189,6 +189,8 @@ springdoc:
 # AIGC 默认配置。
 # dev/test 默认不要求外部 API Key；真实生成能力通过 application-local.yml 或环境变量开启。
 aigc:
+  security:
+    credential-master-key: ${AIGC_CREDENTIAL_MASTER_KEY:agent-aigc-local-dev-credential-master-key}
   providers:
     mock:
       enabled: ${AIGC_MOCK_ENABLED:true}

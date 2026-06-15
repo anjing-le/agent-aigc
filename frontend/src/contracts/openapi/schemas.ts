@@ -427,6 +427,7 @@ export interface ModelInfo {
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   credentialSource?: string
+  credentialStorageMode?: string
   credentialUpdatedAt?: string
   defaultParams?: Record<string, unknown>
   description?: string
@@ -528,6 +529,7 @@ export interface ProviderCredentialUpdateResponse {
   configurationComplete?: boolean
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   credentialSource?: string
+  credentialStorageMode?: string
   message?: string
   providerName?: string
   providerType?: string
@@ -602,6 +604,7 @@ export interface ProviderProbeResponse {
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   credentialSource?: string
+  credentialStorageMode?: string
   defaultParams?: Record<string, unknown>
   message?: string
   missingConfig?: string
@@ -640,6 +643,7 @@ export interface ProviderRouteUpdateResponse {
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   credentialSource?: string
+  credentialStorageMode?: string
   defaultParams?: Record<string, unknown>
   message?: string
   missingConfig?: string

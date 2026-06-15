@@ -58,6 +58,10 @@
                   <span>凭证</span>
                   <strong>{{ formatCredentialSource(model.credentialSource) }}</strong>
                 </div>
+                <div>
+                  <span>安全</span>
+                  <strong>{{ formatCredentialStorageMode(model.credentialStorageMode) }}</strong>
+                </div>
                 <div v-if="model.credentialUpdatedAt">
                   <span>更新</span>
                   <strong>{{ formatProbeTime(model.credentialUpdatedAt) }}</strong>
@@ -374,6 +378,15 @@
 
   const formatCredentialSource = (source?: string) => {
     return formatConfigSource(source)
+  }
+
+  const formatCredentialStorageMode = (mode?: string) => {
+    if (mode === 'encrypted-database') return '加密托管'
+    if (mode === 'legacy-database') return '旧明文'
+    if (mode === 'configuration') return '环境配置'
+    if (mode === 'not-required') return '无需配置'
+    if (mode === 'missing') return '未配置'
+    return '-'
   }
 
   const formatConfigSource = (source?: string) => {

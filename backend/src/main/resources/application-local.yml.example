@@ -19,6 +19,10 @@ spring:
 # AIGC 配置
 # ==========================================
 aigc:
+  security:
+    # 本地可保留示例值；生产环境必须通过 AIGC_CREDENTIAL_MASTER_KEY 注入强随机值。
+    credential-master-key: your_local_credential_master_key
+
   providers:
     # Google GenAI - 图片/视频/TTS 共用一个 Key
     # 获取方式：https://aistudio.google.com/apikey

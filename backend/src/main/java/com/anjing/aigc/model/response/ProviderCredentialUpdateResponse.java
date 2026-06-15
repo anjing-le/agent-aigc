@@ -19,6 +19,7 @@ public class ProviderCredentialUpdateResponse {
     private String providerName;
     private String providerType;
     private String credentialSource;
+    private String credentialStorageMode;
     private Boolean configurationComplete;
     private Boolean available;
     private String statusReason;

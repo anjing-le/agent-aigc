@@ -232,6 +232,7 @@ public class AigcServiceImpl implements AigcService {
                 .activeProvider(getActiveProvider(contentType))
                 .routeConfigSource(routeConfigService.getRouteConfigSource(contentType))
                 .credentialSource(resolveCredentialSource(provider))
+                .credentialStorageMode(resolveCredentialStorageMode(provider))
                 .credentialUpdatedAt(resolveCredentialUpdatedAt(provider))
                 .active(active)
                 .available(provider.isAvailable())
@@ -257,6 +258,7 @@ public class AigcServiceImpl implements AigcService {
                 .requestedProvider(request.getProvider())
                 .activeProvider(activeProvider)
                 .credentialSource("missing")
+                .credentialStorageMode("missing")
                 .registered(false)
                     .active(false)
                     .available(false)
@@ -284,6 +286,7 @@ public class AigcServiceImpl implements AigcService {
                 .providerType(provider.getProviderType().name())
                 .activeProvider(activeProvider)
                 .credentialSource(resolveCredentialSource(provider))
+                .credentialStorageMode(resolveCredentialStorageMode(provider))
                 .registered(true)
                 .active(active)
                 .available(available)
@@ -334,6 +337,7 @@ public class AigcServiceImpl implements AigcService {
                 .providerName(provider.getProviderName())
                 .providerType(provider.getProviderType().name())
                 .credentialSource(resolveCredentialSource(provider))
+                .credentialStorageMode(resolveCredentialStorageMode(provider))
                 .available(available)
                 .routable(routable)
                 .configurationComplete(configurationComplete)
@@ -395,6 +399,7 @@ public class AigcServiceImpl implements AigcService {
 
         Map<String, Object> beforeSummary = auditSummary(
                 "credentialSource", resolveCredentialSource(provider),
+                "credentialStorageMode", resolveCredentialStorageMode(provider),
                 "configurationComplete", resolveMissingConfig(provider) == null
         );
         credentialConfigService.saveGoogleCredential(request.getCredential(), provider);
@@ -404,6 +409,7 @@ public class AigcServiceImpl implements AigcService {
         boolean configurationComplete = missingConfig == null;
         Map<String, Object> afterSummary = auditSummary(
                 "credentialSource", resolveCredentialSource(provider),
+                "credentialStorageMode", resolveCredentialStorageMode(provider),
                 "configurationComplete", configurationComplete,
                 "available", available
         );
@@ -415,6 +421,7 @@ public class AigcServiceImpl implements AigcService {
                 .providerName(provider.getProviderName())
                 .providerType(provider.getProviderType().name())
                 .credentialSource(resolveCredentialSource(provider))
+                .credentialStorageMode(resolveCredentialStorageMode(provider))
                 .configurationComplete(configurationComplete)
                 .available(available)
                 .statusReason(resolveModelStatusReason(provider, isActiveProvider(provider, getActiveProvider(contentType))))
@@ -554,6 +561,16 @@ public class AigcServiceImpl implements AigcService {
     private String resolveCredentialSource(ContentProvider provider) {
         if (provider.getProviderType() == ContentProvider.ProviderType.GOOGLE) {
             return credentialConfigService.getGoogleCredentialSource();
+        }
+        if (provider.getProviderType() == ContentProvider.ProviderType.OTHER) {
+            return "not-required";
+        }
+        return "missing";
+    }
+
+    private String resolveCredentialStorageMode(ContentProvider provider) {
+        if (provider.getProviderType() == ContentProvider.ProviderType.GOOGLE) {
+            return credentialConfigService.getGoogleCredentialStorageMode();
         }
         if (provider.getProviderType() == ContentProvider.ProviderType.OTHER) {
             return "not-required";
