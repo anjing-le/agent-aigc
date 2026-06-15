@@ -753,6 +753,16 @@ for (const token of [
   requireToken('frontend/src/api/model/aigcModel.ts', token)
 }
 
+for (const token of [
+  'route.query.taskId',
+  'syncTaskRoute',
+  'restoreTaskFromRoute',
+  'cancelActivePolling',
+  'fetchGetTaskStatus'
+]) {
+  requireToken('frontend/src/views/aigc/studio/index.vue', token)
+}
+
 requireToken('frontend/src/views/aigc/models/index.vue', 'formatCredentialStorageMode')
 for (const token of [
   'fetchBackfillOwnership',

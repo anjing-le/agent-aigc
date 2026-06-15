@@ -115,6 +115,7 @@
   defineOptions({ name: 'AIGCStudio' })
 
   const route = useRoute()
+  const router = useRouter()
 
   // ==================== 状态管理 ====================
   // 用户输入（文本 + 文件，仅此而已）
@@ -127,6 +128,7 @@
   const generating = ref(false)
   const currentTask = ref<TaskStatusResponse | null>(null)
   const generationResult = ref<AssetItem | null>(null)
+  const activePollId = ref(0)
 
   // 历史记录
   const historyItems = ref<AssetItem[]>([])
@@ -178,6 +180,8 @@
   // ==================== 方法 ====================
 
   const applyRoutePrompt = () => {
+    if (normalizeQueryValue(route.query.taskId)) return
+
     const prompt = normalizeQueryValue(route.query.prompt)
     if (!prompt || prompt === userInput.value) return
 
@@ -204,6 +208,22 @@
       return contentType
     }
     return null
+  }
+
+  const syncTaskRoute = async (taskId: string) => {
+    if (normalizeQueryValue(route.query.taskId) === taskId) return
+    await router.replace({ query: { taskId } })
+  }
+
+  const clearTaskRoute = () => {
+    if (!normalizeQueryValue(route.query.taskId)) return
+    const query = { ...route.query }
+    delete query.taskId
+    router.replace({ query })
+  }
+
+  const cancelActivePolling = () => {
+    activePollId.value += 1
   }
 
   /** 加载历史记录 */
@@ -272,9 +292,10 @@
         createdAt: nowIsoString(),
         updatedAt: nowIsoString()
       }
+      await syncTaskRoute(response.taskId)
 
       // 开始轮询任务状态
-      await pollTaskStatus(response.taskId)
+      await pollTaskStatus(response.taskId, { clearInputOnComplete: true })
     } catch (error) {
       console.error('创作请求失败:', error)
       ElMessage.error('创作请求失败，请重试')
@@ -303,41 +324,94 @@
     return materials
   }
 
+  type PollTaskOptions = {
+    clearInputOnComplete?: boolean
+    announceComplete?: boolean
+    announceFailure?: boolean
+  }
+
+  const applyTaskStatus = (status: TaskStatusResponse) => {
+    currentTask.value = {
+      ...status,
+      agentAnalysis: status.agentAnalysis || currentTask.value?.agentAnalysis
+    }
+  }
+
+  const applyCompletedTaskResult = (status: TaskStatusResponse) => {
+    if (!status.result) return false
+
+    generationResult.value = {
+      id: status.result.assetId,
+      contentType: status.result.contentType,
+      url: status.result.url,
+      thumbnailUrl: status.result.thumbnailUrl,
+      prompt: status.result.prompt,
+      model: status.result.model,
+      isPublished: false,
+      createdAt: status.createdAt
+    }
+    return true
+  }
+
+  const restoreTaskFromRoute = async () => {
+    const taskId = normalizeQueryValue(route.query.taskId)
+    if (!taskId) return
+    if (currentTask.value?.taskId === taskId && generating.value) return
+
+    try {
+      generating.value = true
+      generationResult.value = null
+      const status = await fetchGetTaskStatus(taskId)
+      applyTaskStatus(status)
+
+      if (status.status === 'COMPLETED' && applyCompletedTaskResult(status)) {
+        return
+      }
+
+      if (status.status === 'FAILED') {
+        ElMessage.error(formatTaskError(status))
+        return
+      }
+
+      await pollTaskStatus(taskId, { announceComplete: false, announceFailure: true })
+    } catch (error) {
+      console.error('恢复任务状态失败:', error)
+      ElMessage.error('恢复任务状态失败，请刷新后重试')
+    } finally {
+      generating.value = false
+    }
+  }
+
   /** 轮询任务状态 */
-  const pollTaskStatus = async (taskId: string) => {
+  const pollTaskStatus = async (taskId: string, options: PollTaskOptions = {}) => {
     const maxAttempts = 180 // 最多轮询3分钟
     const interval = 1000
+    const pollId = activePollId.value + 1
+    activePollId.value = pollId
+    const announceComplete = options.announceComplete !== false
+    const announceFailure = options.announceFailure !== false
 
     for (let i = 0; i < maxAttempts; i++) {
+      if (pollId !== activePollId.value) return
+
       try {
         const status = await fetchGetTaskStatus(taskId)
-        currentTask.value = {
-          ...status,
-          agentAnalysis: status.agentAnalysis || currentTask.value?.agentAnalysis
-        }
+        applyTaskStatus(status)
 
         // 注意：后端返回的枚举是大写
-        if (status.status === 'COMPLETED' && status.result) {
-          generationResult.value = {
-            id: status.result.assetId,
-            contentType: status.result.contentType,
-            url: status.result.url,
-            thumbnailUrl: status.result.thumbnailUrl,
-            prompt: status.result.prompt,
-            model: status.result.model,
-            isPublished: false,
-            createdAt: status.createdAt
-          }
-          ElMessage.success('创作完成！')
+        if (status.status === 'COMPLETED' && applyCompletedTaskResult(status)) {
+          if (announceComplete) ElMessage.success('创作完成！')
           // 清空输入，准备下一次创作
-          userInput.value = ''
-          uploadedFiles.value = []
+          if (options.clearInputOnComplete) {
+            userInput.value = ''
+            uploadedFiles.value = []
+          }
           loadHistory()
           return
         }
 
         if (status.status === 'FAILED') {
-          ElMessage.error(formatTaskError(status))
+          if (announceFailure) ElMessage.error(formatTaskError(status))
           return
         }
 
@@ -367,12 +441,19 @@
 
   /** 处理历史记录选择 */
   const handleHistorySelect = (item: AssetItem) => {
+    cancelActivePolling()
+    generating.value = false
+    currentTask.value = null
     generationResult.value = item
+    clearTaskRoute()
   }
 
   const handleReusePrompt = (prompt: string) => {
+    cancelActivePolling()
     userInput.value = prompt
+    currentTask.value = null
     generationResult.value = null
+    clearTaskRoute()
   }
 
   const handleRetryTask = async (taskId: string) => {
@@ -389,6 +470,7 @@
         createdAt: nowIsoString(),
         updatedAt: nowIsoString()
       }
+      await syncTaskRoute(response.taskId)
 
       await pollTaskStatus(response.taskId)
     } catch (error) {
@@ -400,10 +482,13 @@
   }
 
   const handleHistoryReuse = (item: AssetItem) => {
+    cancelActivePolling()
     userInput.value = item.prompt
     contentTypeHint.value = item.contentType
     generationParams.value = defaultParamsForType(item.contentType)
+    currentTask.value = null
     generationResult.value = item
+    clearTaskRoute()
     ElMessage.success('已填入历史 Prompt')
   }
 
@@ -432,7 +517,11 @@
 
   // ==================== 生命周期 ====================
   onMounted(() => {
-    applyRoutePrompt()
+    if (normalizeQueryValue(route.query.taskId)) {
+      restoreTaskFromRoute()
+    } else {
+      applyRoutePrompt()
+    }
     loadHistory()
     loadModels()
   })
@@ -443,6 +532,17 @@
       applyRoutePrompt()
     }
   )
+
+  watch(
+    () => route.query.taskId,
+    () => {
+      restoreTaskFromRoute()
+    }
+  )
+
+  onBeforeUnmount(() => {
+    cancelActivePolling()
+  })
 </script>
 
 <style lang="scss" scoped>
