@@ -1,11 +1,13 @@
 package com.anjing.aigc.model.dto;
 
 import com.anjing.aigc.model.enums.ContentType;
+import com.anjing.aigc.model.response.ProviderDiagnosticCheck;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,6 +68,15 @@ public class ModelInfo {
 
     /** 默认参数模板更新时间，仅数据库来源时返回 */
     private String paramConfigUpdatedAt;
+
+    /** 成本估算状态 */
+    private String costStatus;
+
+    /** 成本估算是否已配置 */
+    private Boolean costEstimateConfigured;
+
+    /** Provider 诊断检查项 */
+    private List<ProviderDiagnosticCheck> checks;
 
     /** 缺失配置说明 */
     private String missingConfig;

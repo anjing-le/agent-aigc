@@ -424,8 +424,11 @@ export interface ModelInfo {
   active?: boolean
   activeProvider?: string
   available?: boolean
+  checks?: ProviderDiagnosticCheck[]
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  costEstimateConfigured?: boolean
+  costStatus?: string
   credentialSource?: string
   credentialStorageMode?: string
   credentialUpdatedAt?: string
@@ -537,6 +540,13 @@ export interface ProviderCredentialUpdateResponse {
   updatedAt?: string
 }
 
+export interface ProviderDiagnosticCheck {
+  id?: string
+  label?: string
+  message?: string
+  status?: string
+}
+
 export interface ProviderExecutionSummary {
   costDescription?: string
   costStatus?: string
@@ -604,9 +614,12 @@ export interface ProviderProbeResponse {
   activeProvider?: string
   available?: boolean
   checkedAt?: string
+  checks?: ProviderDiagnosticCheck[]
   configurationComplete?: boolean
   configuredModel?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  costEstimateConfigured?: boolean
+  costStatus?: string
   credentialSource?: string
   credentialStorageMode?: string
   defaultParams?: Record<string, unknown>
@@ -755,6 +768,7 @@ export interface OpenApiSchemas {
   ProviderAuditLogResponse: ProviderAuditLogResponse
   ProviderCredentialUpdateRequest: ProviderCredentialUpdateRequest
   ProviderCredentialUpdateResponse: ProviderCredentialUpdateResponse
+  ProviderDiagnosticCheck: ProviderDiagnosticCheck
   ProviderExecutionSummary: ProviderExecutionSummary
   ProviderParamUpdateRequest: ProviderParamUpdateRequest
   ProviderParamUpdateResponse: ProviderParamUpdateResponse

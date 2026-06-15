@@ -38,7 +38,7 @@
 - Agent 决策展示已补充清洗 Prompt、参数摘要和置信度；历史记录支持复用 Prompt，结果区支持重新生成回填。
 - 模型列表已从后端 ProviderRouter 派生，创作页展示可用模型能力，并新增只读模型配置页。
 - 模型配置页已升级为 Provider 配置视图，可展示 active provider、可用性、配置模型、缺失配置和默认参数模板。
-- Provider 配置页已接入运行前探测接口，按 service-boundary、ApiConstants、明确 DTO/VO、OpenAPI 生成类型和 `openApiRequest` 贯通脚手架契约。
+- Provider 配置页已接入运行前探测接口，按 service-boundary、ApiConstants、明确 DTO/VO、OpenAPI 生成类型和 `openApiRequest` 贯通脚手架契约；探测结果已拆成注册、路由、凭证、可用性、模型、参数、成本和生成就绪检查项，便于真实图片 Provider 上线前逐项验证。
 - Provider 配置页已支持持久化切换 active provider：页面调用 `/api/aigc/models/active-provider`，后端写入 `aigc_provider_route_config`，列表返回 `routeConfigSource` 区分环境配置和页面保存。
 - Provider 密钥边界已收口：模型配置接口只返回配置状态、缺失说明和来源，不返回 API Key；启动日志只输出密钥存在性和长度。
 - Provider 凭证管理 V1 已接入：页面通过 `/api/aigc/models/provider-credential` 只写式保存 Google 凭证，后端写入 `aigc_provider_credential_config`，Google 图片/视频/音频 Provider 运行时优先读取数据库凭证，再回退环境配置；响应只返回 `credentialSource`、`credentialStorageMode`、状态和更新时间。
@@ -68,13 +68,13 @@
 
 - 视频/音频 mock 当前是可视化占位，不是真实媒体文件。
 - 素材库和资产库已具备本地文件清理；OSS 清理和权限隔离仍待产品化。
-- Provider 配置已有运行前探测、页面持久化切换、配置来源展示、只写式加密凭证保存、默认参数模板编辑、角色边界、管理审计和密钥脱敏边界；生产级 KMS 托管和细粒度权限仍需要后续管理能力承接。
+- Provider 配置已有运行前探测检查项、页面持久化切换、配置来源展示、只写式加密凭证保存、默认参数模板编辑、角色边界、管理审计和密钥脱敏边界；生产级 KMS 托管和真实付费调用前的显式 smoke test 仍需要后续管理能力承接。
 - 历史记录和作品广场缺少用户维度、收藏、点赞等产品能力。
 - 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口、基础 Provider 调用观测和配置化成本估算；真实用量计费和聚合报表仍需继续产品化。
 
 ## 推荐下一步
 
-1. 做真实图片 provider 验证：至少打通一条生产级图片生成链路。
+1. 做真实图片 provider 显式 smoke test：在用户确认会产生外部调用成本时，发起一次最小图片生成并保存资产。
 2. 做存储产品化：OSS 存储抽象、文件权限隔离、清理审计。
 3. 做 Provider 管理：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
 4. 做用户维度：资产、素材、广场发布、收藏和点赞的用户隔离。

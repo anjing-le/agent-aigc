@@ -31,7 +31,7 @@ AIGC 业务只放在 `com.anjing.aigc`：
 
 - `agent`：意图识别、Prompt 清洗/增强、模型路由决策。
 - `provider`：Mock、Google、后续 OneRouter 等模型供应商适配。
-- `service`：创作任务、素材、资产、重试、发布、本地存储和 Provider 成本估算。
+- `service`：创作任务、素材、资产、重试、发布、本地存储、Provider 成本估算和运行前诊断检查项。
 - `controller`：只暴露 `/api/aigc/**`，继续使用脚手架统一响应。
 - `model` / `repository`：AIGC 任务、资产、素材的实体、DTO、VO 和查询。
 
@@ -49,7 +49,7 @@ AIGC 页面只聚焦创作体验：
 - `frontend/src/views/aigc/materials`：参考素材上传、筛选、引用任务反查。
 - `frontend/src/views/aigc/assets`：个人资产、下载、删除、发布、Prompt 复用。
 - `frontend/src/views/aigc/gallery`：已发布作品、筛选、Prompt 复用到工作台。
-- `frontend/src/views/aigc/models`：Provider 配置、模型能力和运行前探测。
+- `frontend/src/views/aigc/models`：Provider 配置、模型能力、运行前探测和诊断检查项。
 
 ## API 生长方式
 

@@ -25,6 +25,7 @@ import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderExecutionSummary;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderCostEstimate;
+import com.anjing.aigc.model.response.ProviderDiagnosticCheck;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
@@ -228,6 +229,9 @@ public class AigcServiceImpl implements AigcService {
 
     private ModelInfo toModelInfo(ContentProvider provider, ContentType contentType) {
         boolean active = isActiveProvider(provider, getActiveProvider(contentType));
+        boolean available = provider.isAvailable();
+        String missingConfig = resolveMissingConfig(provider);
+        ProviderCostEstimate costEstimate = resolveCostProbe(provider, contentType);
         return ModelInfo.builder()
                 .id(toModelId(provider, contentType))
                 .name(provider.getProviderName())
@@ -240,12 +244,15 @@ public class AigcServiceImpl implements AigcService {
                 .credentialStorageMode(resolveCredentialStorageMode(provider))
                 .credentialUpdatedAt(resolveCredentialUpdatedAt(provider))
                 .active(active)
-                .available(provider.isAvailable())
+                .available(available)
                 .configuredModel(resolveConfiguredModel(provider, contentType))
                 .defaultParams(resolveDefaultParams(provider, contentType))
                 .paramConfigSource(resolveParamConfigSource(provider, contentType))
                 .paramConfigUpdatedAt(resolveParamConfigUpdatedAt(provider, contentType))
-                .missingConfig(resolveMissingConfig(provider))
+                .costStatus(costEstimate.getCostStatus())
+                .costEstimateConfigured(isCostEstimateConfigured(costEstimate))
+                .checks(buildProviderChecks(provider, contentType, true, active, available, missingConfig, costEstimate))
+                .missingConfig(missingConfig)
                 .statusReason(resolveModelStatusReason(provider, active))
                 .icon(contentType.name().toLowerCase())
                 .build();
@@ -260,17 +267,20 @@ public class AigcServiceImpl implements AigcService {
         if (provider == null) {
             return ProviderProbeResponse.builder()
                     .contentType(contentType)
-                .requestedProvider(request.getProvider())
-                .activeProvider(activeProvider)
-                .credentialSource("missing")
-                .credentialStorageMode("missing")
-                .registered(false)
+                    .requestedProvider(request.getProvider())
+                    .activeProvider(activeProvider)
+                    .credentialSource("missing")
+                    .credentialStorageMode("missing")
+                    .registered(false)
                     .active(false)
                     .available(false)
                     .routable(false)
                     .configurationComplete(false)
                     .defaultParams(Map.of())
                     .paramConfigSource("missing")
+                    .costStatus(AigcProviderCostEstimator.STATUS_UNTRACKED)
+                    .costEstimateConfigured(false)
+                    .checks(buildMissingProviderChecks(request.getProvider()))
                     .missingConfig("未找到已注册 Provider")
                     .statusReason("Provider 未注册到 Spring 容器")
                     .message("探测失败：Provider 未注册")
@@ -283,6 +293,7 @@ public class AigcServiceImpl implements AigcService {
         String missingConfig = resolveMissingConfig(provider);
         boolean configurationComplete = missingConfig == null;
         boolean routable = active && available && configurationComplete;
+        ProviderCostEstimate costEstimate = resolveCostProbe(provider, contentType);
 
         return ProviderProbeResponse.builder()
                 .contentType(contentType)
@@ -301,6 +312,9 @@ public class AigcServiceImpl implements AigcService {
                 .defaultParams(resolveDefaultParams(provider, contentType))
                 .paramConfigSource(resolveParamConfigSource(provider, contentType))
                 .paramConfigUpdatedAt(resolveParamConfigUpdatedAt(provider, contentType))
+                .costStatus(costEstimate.getCostStatus())
+                .costEstimateConfigured(isCostEstimateConfigured(costEstimate))
+                .checks(buildProviderChecks(provider, contentType, true, active, available, missingConfig, costEstimate))
                 .missingConfig(missingConfig)
                 .statusReason(resolveModelStatusReason(provider, active))
                 .message(resolveProbeMessage(routable, active, available, configurationComplete))
@@ -466,6 +480,97 @@ public class AigcServiceImpl implements AigcService {
             case AUDIO -> "音频生成 Provider，可用于配音或音乐创作";
             case TEXT -> "文本生成 Provider";
         };
+    }
+
+    private List<ProviderDiagnosticCheck> buildMissingProviderChecks(String requestedProvider) {
+        return List.of(check(
+                "registered",
+                "Provider 注册",
+                "FAIL",
+                "未找到已注册 Provider: " + (requestedProvider == null ? "-" : requestedProvider)
+        ));
+    }
+
+    private List<ProviderDiagnosticCheck> buildProviderChecks(ContentProvider provider, ContentType contentType,
+            boolean registered, boolean active, boolean available, String missingConfig,
+            ProviderCostEstimate costEstimate) {
+        String configuredModel = resolveConfiguredModel(provider, contentType);
+        String paramConfigSource = resolveParamConfigSource(provider, contentType);
+        boolean configurationComplete = missingConfig == null;
+        boolean routable = registered && active && available && configurationComplete;
+
+        return List.of(
+                check("registered", "Provider 注册", registered ? "PASS" : "FAIL",
+                        registered ? "Provider 已注册到 Spring 容器" : "Provider 未注册到 Spring 容器"),
+                check("route", "运行路由", active ? "PASS" : "WARN",
+                        active ? "当前内容类型会路由到此 Provider" : "已注册，但不是当前内容类型的激活路由"),
+                check("credential", "凭证配置", configurationComplete ? "PASS" : "FAIL",
+                        configurationComplete ? "凭证或配置已满足运行要求" : missingConfig),
+                check("availability", "可用性", available ? "PASS" : "FAIL",
+                        available ? "Provider 当前可用" : "Provider 当前不可用"),
+                check("model", "模型配置", configuredModel == null || configuredModel.isBlank() ? "FAIL" : "PASS",
+                        configuredModel == null || configuredModel.isBlank()
+                                ? "缺少内容类型对应的模型配置"
+                                : "模型: " + configuredModel),
+                check("params", "参数模板", "missing".equals(paramConfigSource) ? "WARN" : "PASS",
+                        "参数来源: " + resolveConfigSourceLabel(paramConfigSource)),
+                check("cost", "成本估算", isCostEstimateConfigured(costEstimate) ? "PASS" : "WARN",
+                        resolveCostProbeMessage(costEstimate)),
+                check("routable", "生成就绪", routable ? "PASS" : "WARN",
+                        routable ? "当前 Provider 可执行生成任务" : "生成前仍需处理上方检查项")
+        );
+    }
+
+    private ProviderDiagnosticCheck check(String id, String label, String status, String message) {
+        return ProviderDiagnosticCheck.builder()
+                .id(id)
+                .label(label)
+                .status(status)
+                .message(message)
+                .build();
+    }
+
+    private String resolveConfigSourceLabel(String source) {
+        if ("database".equals(source)) {
+            return "页面保存";
+        }
+        if ("configuration".equals(source)) {
+            return "环境配置";
+        }
+        if ("not-required".equals(source)) {
+            return "无需配置";
+        }
+        if ("missing".equals(source)) {
+            return "未配置";
+        }
+        return "-";
+    }
+
+    private ProviderCostEstimate resolveCostProbe(ContentProvider provider, ContentType contentType) {
+        AigcTask task = new AigcTask();
+        task.setContentType(contentType);
+        task.setProviderName(provider.getProviderName());
+        task.setProviderType(provider.getProviderType().name());
+        task.setDurationMs(1L);
+        return costEstimator.estimate(task);
+    }
+
+    private boolean isCostEstimateConfigured(ProviderCostEstimate costEstimate) {
+        return AigcProviderCostEstimator.STATUS_MOCK_FREE.equals(costEstimate.getCostStatus())
+                || AigcProviderCostEstimator.STATUS_ESTIMATED.equals(costEstimate.getCostStatus());
+    }
+
+    private String resolveCostProbeMessage(ProviderCostEstimate costEstimate) {
+        if (AigcProviderCostEstimator.STATUS_MOCK_FREE.equals(costEstimate.getCostStatus())) {
+            return "本地 mock provider 不产生外部模型成本";
+        }
+        if (AigcProviderCostEstimator.STATUS_ESTIMATED.equals(costEstimate.getCostStatus())) {
+            return costEstimate.getCostDescription();
+        }
+        if (AigcProviderCostEstimator.STATUS_ESTIMATE_NOT_CONFIGURED.equals(costEstimate.getCostStatus())) {
+            return "已接入成本字段，单价待通过 aigc.cost.google.* 配置";
+        }
+        return "暂未接入此 Provider 的成本估算";
     }
 
     private String getActiveProvider(ContentType contentType) {

@@ -74,6 +74,10 @@
                   <span>调参</span>
                   <strong>{{ formatProbeTime(model.paramConfigUpdatedAt) }}</strong>
                 </div>
+                <div>
+                  <span>成本</span>
+                  <strong>{{ formatCostReadiness(model) }}</strong>
+                </div>
               </div>
               <div v-if="model.missingConfig" class="aigc-models__missing">
                 {{ model.missingConfig }}
@@ -132,14 +136,27 @@
               </el-button>
             </div>
             <div v-if="probeResults[model.id]" class="aigc-models__probe">
-              <el-tag
-                size="small"
-                :type="probeResults[model.id].routable ? 'success' : 'warning'"
-                effect="plain"
-              >
-                {{ probeResults[model.id].message }}
-              </el-tag>
-              <span>{{ formatProbeTime(probeResults[model.id].checkedAt) }}</span>
+              <div class="aigc-models__probe-summary">
+                <el-tag
+                  size="small"
+                  :type="probeResults[model.id].routable ? 'success' : 'warning'"
+                  effect="plain"
+                >
+                  {{ probeResults[model.id].message }}
+                </el-tag>
+                <span>{{ formatProbeTime(probeResults[model.id].checkedAt) }}</span>
+              </div>
+              <div class="aigc-models__checks">
+                <el-tag
+                  v-for="check in diagnosticChecks(probeResults[model.id])"
+                  :key="check.id"
+                  size="small"
+                  :type="diagnosticTagType(check.status)"
+                  effect="plain"
+                >
+                  {{ check.label }}: {{ check.message }}
+                </el-tag>
+              </div>
             </div>
           </div>
         </div>
@@ -296,6 +313,8 @@
 
   defineOptions({ name: 'AIGCModels' })
 
+  type ProviderDiagnosticCheck = NonNullable<ProviderProbeResponse['checks']>[number]
+
   type ParamEntry = {
     key: string
     value: string | number | boolean
@@ -420,6 +439,32 @@
 
   const supportsCredentialUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
   const supportsParamUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
+
+  const formatCostReadiness = (model: ModelInfo) => {
+    if (model.costEstimateConfigured) return formatCostStatus(model.costStatus)
+    return `${formatCostStatus(model.costStatus)}，待配置`
+  }
+
+  const formatCostStatus = (status?: string) => {
+    const map: Record<string, string> = {
+      MOCK_FREE: '模拟免费',
+      ESTIMATED: '已估算',
+      ESTIMATE_NOT_CONFIGURED: '待配置',
+      UNTRACKED: '未接入',
+      PENDING: '统计中'
+    }
+    return status ? map[status] || status : '-'
+  }
+
+  const diagnosticChecks = (probe?: ProviderProbeResponse) => {
+    return (probe?.checks || []).filter(Boolean) as ProviderDiagnosticCheck[]
+  }
+
+  const diagnosticTagType = (status?: string) => {
+    if (status === 'PASS') return 'success'
+    if (status === 'FAIL') return 'danger'
+    return 'warning'
+  }
 
   const openCredentialDialog = (model: ModelInfo) => {
     credentialForm.value = {
@@ -813,7 +858,8 @@
 
     &__probe {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: stretch;
       gap: 8px;
       width: 100%;
       padding-top: 10px;
@@ -822,6 +868,26 @@
       span {
         font-size: 12px;
         color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__probe-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    &__checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+
+      :deep(.el-tag) {
+        max-width: 100%;
+        height: auto;
+        min-height: 24px;
+        white-space: normal;
       }
     }
 

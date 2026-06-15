@@ -242,9 +242,31 @@ for (const token of [
   'assertProviderManagementPermission',
   'ACTION_ACTIVE_PROVIDER',
   'ACTION_CREDENTIAL',
-  'ACTION_PARAMS'
+  'ACTION_PARAMS',
+  'buildProviderChecks',
+  'resolveCostProbe',
+  'ProviderDiagnosticCheck'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/impl/AigcServiceImpl.java', token)
+}
+
+for (const token of [
+  'ProviderDiagnosticCheck',
+  'costEstimateConfigured',
+  'checks'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/model/dto/ModelInfo.java', token)
+  requireToken('backend/src/main/java/com/anjing/aigc/model/response/ProviderProbeResponse.java', token)
+  requireToken('frontend/src/views/aigc/models/index.vue', token)
+}
+
+for (const token of [
+  'id',
+  'label',
+  'status',
+  'message'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/model/response/ProviderDiagnosticCheck.java', token)
 }
 
 for (const token of [

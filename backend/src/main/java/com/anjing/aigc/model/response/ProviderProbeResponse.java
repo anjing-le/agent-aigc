@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,6 +34,9 @@ public class ProviderProbeResponse {
     private Map<String, Object> defaultParams;
     private String paramConfigSource;
     private String paramConfigUpdatedAt;
+    private String costStatus;
+    private Boolean costEstimateConfigured;
+    private List<ProviderDiagnosticCheck> checks;
     private String missingConfig;
     private String statusReason;
     private String message;

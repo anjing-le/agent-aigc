@@ -156,10 +156,15 @@ class AigcServiceImplAssetTest {
         assertEquals("configuration", models.getImageModels().get(0).getParamConfigSource());
         assertEquals(true, models.getImageModels().get(0).getActive());
         assertEquals("configuration", models.getImageModels().get(0).getRouteConfigSource());
+        assertEquals("ESTIMATE_NOT_CONFIGURED", models.getImageModels().get(0).getCostStatus());
+        assertEquals(false, models.getImageModels().get(0).getCostEstimateConfigured());
+        assertEquals("registered", models.getImageModels().get(0).getChecks().get(0).getId());
         assertEquals("mock-image-preview", models.getImageModels().get(1).getConfiguredModel());
         assertEquals("not-required", models.getImageModels().get(1).getCredentialSource());
         assertEquals("not-required", models.getImageModels().get(1).getParamConfigSource());
         assertEquals("local-demo", models.getImageModels().get(1).getDefaultParams().get("mode"));
+        assertEquals("MOCK_FREE", models.getImageModels().get(1).getCostStatus());
+        assertEquals(true, models.getImageModels().get(1).getCostEstimateConfigured());
     }
 
     @Test
@@ -177,6 +182,10 @@ class AigcServiceImplAssetTest {
         assertEquals(true, response.getActive());
         assertEquals("缺少 Google Provider 凭证", response.getMissingConfig());
         assertEquals("探测未通过：配置不完整", response.getMessage());
+        assertEquals("ESTIMATE_NOT_CONFIGURED", response.getCostStatus());
+        assertEquals(false, response.getCostEstimateConfigured());
+        assertEquals("credential", response.getChecks().get(2).getId());
+        assertEquals("FAIL", response.getChecks().get(2).getStatus());
     }
 
     @Test
@@ -195,6 +204,9 @@ class AigcServiceImplAssetTest {
         assertEquals(true, response.getAvailable());
         assertEquals(false, response.getRoutable());
         assertEquals("探测通过：Provider 已注册，但不是当前路由", response.getMessage());
+        assertEquals("MOCK_FREE", response.getCostStatus());
+        assertEquals(true, response.getCostEstimateConfigured());
+        assertEquals("WARN", response.getChecks().get(1).getStatus());
     }
 
     @Test
