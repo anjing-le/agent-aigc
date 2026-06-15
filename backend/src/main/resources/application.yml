@@ -228,6 +228,18 @@ aigc:
       enabled: true
       base-path: ${AIGC_LOCAL_STORAGE_PATH:./uploads}
       url-prefix: ${AIGC_LOCAL_STORAGE_URL_PREFIX:http://localhost:10003/files}
+    oss:
+      enabled: ${AIGC_STORAGE_OSS_ENABLED:false}
+      provider: ${AIGC_STORAGE_OSS_PROVIDER:aliyun}
+      endpoint: ${AIGC_STORAGE_OSS_ENDPOINT:}
+      region: ${AIGC_STORAGE_OSS_REGION:us-east-1}
+      access-key-id: ${AIGC_STORAGE_OSS_ACCESS_KEY_ID:}
+      access-key-secret: ${AIGC_STORAGE_OSS_ACCESS_KEY_SECRET:}
+      bucket-name: ${AIGC_STORAGE_OSS_BUCKET:}
+      cdn-domain: ${AIGC_STORAGE_OSS_CDN_DOMAIN:}
+      object-key-prefix: ${AIGC_STORAGE_OSS_OBJECT_KEY_PREFIX:aigc}
+      path-style-access: ${AIGC_STORAGE_OSS_PATH_STYLE_ACCESS:true}
+      public-read: ${AIGC_STORAGE_OSS_PUBLIC_READ:false}
 
 storage:
   oss:

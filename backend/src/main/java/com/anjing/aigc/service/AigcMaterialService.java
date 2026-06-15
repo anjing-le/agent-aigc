@@ -67,10 +67,10 @@ public class AigcMaterialService {
         AigcMaterial material = materialRepository.findByMaterialId(materialId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
         try {
-            aigcStorageService.deleteFile("materials", material.getFileName());
+            aigcStorageService.deleteByUrl(material.getUrl());
         } catch (IOException e) {
-            log.warn("素材文件删除失败，继续删除素材记录: materialId={}, fileName={}",
-                    material.getMaterialId(), material.getFileName(), e);
+            log.warn("素材文件删除失败，继续删除素材记录: materialId={}, url={}",
+                    material.getMaterialId(), material.getUrl(), e);
         }
         materialRepository.deleteByMaterialId(material.getMaterialId());
     }

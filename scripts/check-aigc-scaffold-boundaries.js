@@ -284,11 +284,44 @@ for (const token of [
   'deleteByUrl',
   'buildLocalStatus',
   'buildOssStatus',
+  'OssAigcStorageService',
+  'resolveCleanupSupported',
   'cleanupSupported',
   'endpointConfigured',
   'bucketConfigured'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/storage/AigcStorageService.java', token)
+}
+
+for (const token of [
+  'S3Client',
+  'PutObjectRequest',
+  'DeleteObjectRequest',
+  'RequestBody.fromBytes',
+  'getObjectKeyPrefix',
+  'isPathStyleAccess',
+  'isPublicRead'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/storage/OssAigcStorageService.java', token)
+}
+
+for (const token of [
+  'software.amazon.awssdk',
+  '<artifactId>s3</artifactId>',
+  '<artifactId>commons-logging</artifactId>'
+]) {
+  requireToken('backend/pom.xml', token)
+}
+
+for (const token of [
+  'AIGC_STORAGE_OSS_ENABLED',
+  'AIGC_STORAGE_OSS_ENDPOINT',
+  'AIGC_STORAGE_OSS_ACCESS_KEY_ID',
+  'AIGC_STORAGE_OSS_ACCESS_KEY_SECRET',
+  'AIGC_STORAGE_OSS_BUCKET',
+  'AIGC_STORAGE_OSS_OBJECT_KEY_PREFIX'
+]) {
+  requireToken('backend/src/main/resources/application.yml', token)
 }
 
 for (const relativeFile of [

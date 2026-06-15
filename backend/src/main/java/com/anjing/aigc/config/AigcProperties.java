@@ -371,10 +371,14 @@ public class AigcProperties {
         private boolean enabled = false;
         private String provider = "aliyun";
         private String endpoint;
+        private String region = "us-east-1";
         private String accessKeyId;
         private String accessKeySecret;
         private String bucketName;
         private String cdnDomain;
+        private String objectKeyPrefix = "aigc";
+        private boolean pathStyleAccess = true;
+        private boolean publicRead = false;
     }
     
     // ==================== 便捷方法 ====================

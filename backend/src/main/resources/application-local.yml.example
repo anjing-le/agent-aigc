@@ -89,11 +89,21 @@ aigc:
       default-bpm: 90
       default-temperature: 1.0
 
-# ==========================================
-# 存储
-# ==========================================
-storage:
-  local:
-    enabled: true
-    base-path: ./uploads
-    url-prefix: http://localhost:10003/files
+  # 资产存储
+  storage:
+    local:
+      enabled: true
+      base-path: ./uploads
+      url-prefix: http://localhost:10003/files
+    oss:
+      enabled: false
+      provider: aliyun
+      endpoint:
+      region: us-east-1
+      access-key-id:
+      access-key-secret:
+      bucket-name:
+      cdn-domain:
+      object-key-prefix: aigc
+      path-style-access: true
+      public-read: false

@@ -5,15 +5,12 @@ import com.anjing.aigc.model.response.StorageBackendStatusResponse;
 import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.util.DateUtils;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Base64;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AigcStorageService {
@@ -23,25 +20,27 @@ public class AigcStorageService {
 
     private final AigcProperties aigcProperties;
     private final LocalAigcStorageService localAigcStorageService;
-
-    public String saveBase64(String directory, String fileName, String base64Data) throws IOException {
-        byte[] bytes = Base64.getDecoder().decode(base64Data);
-        return saveBytes(directory, fileName, bytes);
-    }
+    private final OssAigcStorageService ossAigcStorageService;
 
     public String saveBytes(String directory, String fileName, byte[] bytes) throws IOException {
         StorageStatusResponse status = getStorageStatus();
         if (MODE_OSS.equals(status.getActiveMode())) {
-            log.warn("OSS adapter 尚未接入，AIGC 文件写入回退本地存储: directory={}, fileName={}", directory, fileName);
+            return ossAigcStorageService.saveBytes(directory, fileName, bytes);
         }
         return localAigcStorageService.saveBytes(directory, fileName, bytes);
     }
 
     public boolean deleteFile(String directory, String fileName) throws IOException {
+        if (MODE_OSS.equals(getStorageStatus().getActiveMode())) {
+            return ossAigcStorageService.deleteFile(directory, fileName);
+        }
         return localAigcStorageService.deleteFile(directory, fileName);
     }
 
     public boolean deleteByUrl(String url) throws IOException {
+        if (ossAigcStorageService.isConfigured() && ossAigcStorageService.deleteByUrl(url)) {
+            return true;
+        }
         return localAigcStorageService.deleteByUrl(url);
     }
 
@@ -56,8 +55,8 @@ public class AigcStorageService {
                 .activeMode(activeMode)
                 .local(local)
                 .oss(oss)
-                .assetCleanupSupported(Boolean.TRUE.equals(local.getCleanupSupported()))
-                .materialCleanupSupported(Boolean.TRUE.equals(local.getCleanupSupported()))
+                .assetCleanupSupported(resolveCleanupSupported(activeMode, local, oss))
+                .materialCleanupSupported(resolveCleanupSupported(activeMode, local, oss))
                 .message(resolveStatusMessage(activeMode, local, oss))
                 .checkedAt(DateUtils.nowIso())
                 .build();
@@ -105,20 +104,20 @@ public class AigcStorageService {
 
     private StorageBackendStatusResponse buildOssStatus() {
         AigcProperties.OssConfig ossConfig = aigcProperties.getStorage().getOss();
-        boolean enabled = ossConfig.isEnabled();
+        boolean enabled = ossAigcStorageService.isEnabled();
         boolean endpointConfigured = hasText(ossConfig.getEndpoint());
         boolean bucketConfigured = hasText(ossConfig.getBucketName());
         boolean credentialConfigured = hasText(ossConfig.getAccessKeyId()) && hasText(ossConfig.getAccessKeySecret());
-        boolean configured = enabled && endpointConfigured && bucketConfigured && credentialConfigured;
+        boolean configured = ossAigcStorageService.isConfigured();
 
         return StorageBackendStatusResponse.builder()
                 .backend(MODE_OSS)
                 .enabled(enabled)
                 .configured(configured)
-                .available(false)
-                .readable(false)
-                .writable(false)
-                .cleanupSupported(false)
+                .available(configured)
+                .readable(configured)
+                .writable(configured)
+                .cleanupSupported(configured)
                 .provider(ossConfig.getProvider())
                 .endpointConfigured(endpointConfigured)
                 .bucketConfigured(bucketConfigured)
@@ -133,15 +132,20 @@ public class AigcStorageService {
             return "OSS 存储已就绪";
         }
         if (Boolean.TRUE.equals(local.getAvailable())) {
-            if (Boolean.TRUE.equals(oss.getConfigured()) && !Boolean.TRUE.equals(oss.getAvailable())) {
-                return "本地存储已就绪，OSS adapter 待接入";
-            }
             return "本地存储已就绪";
         }
         if (Boolean.TRUE.equals(oss.getEnabled()) && !Boolean.TRUE.equals(oss.getConfigured())) {
             return "OSS 已启用但配置不完整，回退本地存储";
         }
         return local.getMessage();
+    }
+
+    private boolean resolveCleanupSupported(String activeMode, StorageBackendStatusResponse local,
+            StorageBackendStatusResponse oss) {
+        if (MODE_OSS.equals(activeMode)) {
+            return Boolean.TRUE.equals(oss.getCleanupSupported());
+        }
+        return Boolean.TRUE.equals(local.getCleanupSupported());
     }
 
     private String resolveOssMessage(boolean enabled, boolean configured) {
@@ -151,7 +155,7 @@ public class AigcStorageService {
         if (!configured) {
             return "OSS 配置不完整";
         }
-        return "OSS 配置已就绪，adapter 待接入";
+        return "OSS adapter 已就绪";
     }
 
     private boolean hasText(String value) {

@@ -78,11 +78,12 @@ class AigcMaterialServiceTest {
         AigcMaterial material = new AigcMaterial();
         material.setMaterialId("mat-1");
         material.setFileName("material-demo.png");
+        material.setUrl("http://localhost:10003/files/materials/material-demo.png");
         when(materialRepository.findByMaterialId("mat-1")).thenReturn(Optional.of(material));
 
         materialService.deleteMaterial("mat-1");
 
-        verify(storageService).deleteFile("materials", "material-demo.png");
+        verify(storageService).deleteByUrl("http://localhost:10003/files/materials/material-demo.png");
         verify(materialRepository).deleteByMaterialId("mat-1");
     }
 
