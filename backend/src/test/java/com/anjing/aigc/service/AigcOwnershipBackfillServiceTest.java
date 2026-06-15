@@ -16,6 +16,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 class AigcOwnershipBackfillServiceTest {
 
@@ -25,12 +27,14 @@ class AigcOwnershipBackfillServiceTest {
     private final AigcOwnershipService ownershipService = mock(AigcOwnershipService.class);
     private final AigcProviderManagementPermissionService permissionService =
             mock(AigcProviderManagementPermissionService.class);
+    private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
     private final AigcOwnershipBackfillService service = new AigcOwnershipBackfillService(
             assetRepository,
             materialRepository,
             taskRepository,
             ownershipService,
-            permissionService);
+            permissionService,
+            auditLogService);
 
     @Test
     void dryRunCountsCandidatesWithoutUpdatingRows() {
@@ -52,6 +56,14 @@ class AigcOwnershipBackfillServiceTest {
         verify(assetRepository, never()).backfillMissingOwnership("user-1", "tenant-1");
         verify(materialRepository, never()).backfillMissingOwnership("user-1", "tenant-1");
         verify(taskRepository, never()).backfillMissingOwnership("user-1", "tenant-1");
+        verify(auditLogService, never()).record(
+                eq(AigcProviderAuditLogService.ACTION_OWNERSHIP_BACKFILL),
+                any(),
+                any(),
+                any(),
+                any(),
+                any(),
+                any());
         verify(permissionService).assertCanManageAigc(
                 AigcProviderAuditLogService.ACTION_OWNERSHIP_BACKFILL,
                 "AIGC_OWNERSHIP");
@@ -78,6 +90,14 @@ class AigcOwnershipBackfillServiceTest {
         assertEquals(2, response.getAssetUpdated());
         assertEquals(3, response.getMaterialUpdated());
         assertEquals(4, response.getTaskUpdated());
+        verify(auditLogService).record(
+                eq(AigcProviderAuditLogService.ACTION_OWNERSHIP_BACKFILL),
+                any(),
+                eq("AIGC_OWNERSHIP"),
+                eq("AIGC Ownership"),
+                eq("governance"),
+                any(),
+                any());
     }
 
     @Test

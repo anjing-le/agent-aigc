@@ -206,6 +206,63 @@
       </section>
     </div>
 
+    <section class="aigc-models__governance">
+      <div class="aigc-models__governance-header">
+        <div>
+          <h3 class="aigc-models__governance-title">数据治理</h3>
+          <p class="aigc-models__governance-desc">历史空归属数据回填到当前请求上下文</p>
+        </div>
+        <div class="aigc-models__governance-actions">
+          <el-button
+            :icon="DataAnalysis"
+            :loading="ownershipLoading"
+            @click="handleOwnershipDryRun"
+          >
+            检查归属
+          </el-button>
+          <el-button
+            type="primary"
+            plain
+            :icon="Check"
+            :loading="ownershipApplying"
+            :disabled="!ownershipBackfillResult || totalOwnershipCandidates === 0"
+            @click="handleOwnershipApply"
+          >
+            执行回填
+          </el-button>
+        </div>
+      </div>
+      <div class="aigc-models__governance-grid">
+        <div>
+          <span>资产候选</span>
+          <strong>{{ formatGovernanceCount(ownershipBackfillResult?.assetCandidates) }}</strong>
+        </div>
+        <div>
+          <span>素材候选</span>
+          <strong>{{ formatGovernanceCount(ownershipBackfillResult?.materialCandidates) }}</strong>
+        </div>
+        <div>
+          <span>任务候选</span>
+          <strong>{{ formatGovernanceCount(ownershipBackfillResult?.taskCandidates) }}</strong>
+        </div>
+        <div>
+          <span>写入结果</span>
+          <strong>{{ formatOwnershipUpdated(ownershipBackfillResult) }}</strong>
+        </div>
+      </div>
+      <div v-if="ownershipBackfillResult" class="aigc-models__governance-result">
+        <el-tag
+          size="small"
+          :type="ownershipBackfillResult.dryRun ? 'info' : 'success'"
+          effect="plain"
+        >
+          {{ ownershipBackfillResult.dryRun ? '预演' : '已执行' }}
+        </el-tag>
+        <span>{{ formatOwnershipMessage(ownershipBackfillResult) }}</span>
+        <small>{{ formatProbeTime(ownershipBackfillResult.checkedAt) }}</small>
+      </div>
+    </section>
+
     <section class="aigc-models__audit">
       <div class="aigc-models__audit-header">
         <div>
@@ -334,9 +391,10 @@
 </template>
 
 <script setup lang="ts">
-  import { Connection, Key, Refresh, Setting } from '@element-plus/icons-vue'
+  import { Check, Connection, DataAnalysis, Key, Refresh, Setting } from '@element-plus/icons-vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import {
+    fetchBackfillOwnership,
     fetchGetProviderAuditLogs,
     fetchGetModelList,
     fetchProbeProvider,
@@ -350,6 +408,7 @@
     GenerationParams,
     ModelInfo,
     ModelListResponse,
+    OwnershipBackfillResponse,
     ProviderAuditLogItem,
     ProviderProbeResponse,
     ProviderSmokeTestResponse
@@ -400,6 +459,9 @@
   const probeResults = ref<Record<string, ProviderProbeResponse>>({})
   const smokeTestingKey = ref('')
   const smokeResults = ref<Record<string, ProviderSmokeTestResponse>>({})
+  const ownershipLoading = ref(false)
+  const ownershipApplying = ref(false)
+  const ownershipBackfillResult = ref<OwnershipBackfillResponse | null>(null)
 
   const modelGroups = computed<
     Array<{
@@ -475,6 +537,7 @@
     if (action === 'credential') return '凭证'
     if (action === 'params') return '参数'
     if (action === 'smoke-test') return '测试'
+    if (action === 'ownership-backfill') return '归属'
     return action || '-'
   }
 
@@ -483,6 +546,7 @@
     if (action === 'credential') return 'warning'
     if (action === 'params') return 'success'
     if (action === 'smoke-test') return 'info'
+    if (action === 'ownership-backfill') return 'primary'
     return 'info'
   }
 
@@ -531,6 +595,35 @@
       return `${currency} ${Number(execution.estimatedCostAmount).toFixed(6)}${unit}`
     }
     return formatCostStatus(execution.costStatus)
+  }
+
+  const totalOwnershipCandidates = computed(() => {
+    const result = ownershipBackfillResult.value
+    return (
+      Number(result?.assetCandidates || 0) +
+      Number(result?.materialCandidates || 0) +
+      Number(result?.taskCandidates || 0)
+    )
+  })
+
+  const formatGovernanceCount = (value?: number) => {
+    if (value === undefined || value === null) return '-'
+    return Number(value).toLocaleString()
+  }
+
+  const formatOwnershipUpdated = (result?: OwnershipBackfillResponse | null) => {
+    if (!result) return '-'
+    const totalUpdated =
+      Number(result.assetUpdated || 0) +
+      Number(result.materialUpdated || 0) +
+      Number(result.taskUpdated || 0)
+    if (result.dryRun) return '未写入'
+    return `${totalUpdated.toLocaleString()} 条`
+  }
+
+  const formatOwnershipMessage = (result: OwnershipBackfillResponse) => {
+    if (result.dryRun) return '仅预演，未写入数据'
+    return '归属回填已执行'
   }
 
   const openCredentialDialog = (model: ModelInfo) => {
@@ -775,6 +868,58 @@
     }
   }
 
+  const handleOwnershipDryRun = async () => {
+    try {
+      ownershipLoading.value = true
+      ownershipBackfillResult.value = await fetchBackfillOwnership({
+        dryRun: true,
+        confirmBackfill: false
+      })
+      if (totalOwnershipCandidates.value > 0) {
+        ElMessage.warning(`发现 ${totalOwnershipCandidates.value.toLocaleString()} 条空归属记录`)
+      } else {
+        ElMessage.success('未发现空归属记录')
+      }
+    } catch (error) {
+      console.error('归属检查失败:', error)
+      ElMessage.error('归属检查失败')
+    } finally {
+      ownershipLoading.value = false
+    }
+  }
+
+  const handleOwnershipApply = async () => {
+    if (!ownershipBackfillResult.value || totalOwnershipCandidates.value === 0) return
+    try {
+      await ElMessageBox.confirm(
+        `将把 ${totalOwnershipCandidates.value.toLocaleString()} 条历史空归属记录回填到当前用户上下文。`,
+        '确认执行归属回填',
+        {
+          confirmButtonText: '确认回填',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
+      )
+    } catch {
+      return
+    }
+
+    try {
+      ownershipApplying.value = true
+      ownershipBackfillResult.value = await fetchBackfillOwnership({
+        dryRun: false,
+        confirmBackfill: true
+      })
+      ElMessage.success('归属回填已执行')
+      await loadAuditLogs()
+    } catch (error) {
+      console.error('归属回填失败:', error)
+      ElMessage.error('归属回填失败')
+    } finally {
+      ownershipApplying.value = false
+    }
+  }
+
   const formatProbeTime = (time?: string) => (time ? formatDateTime(time) : '')
 
   const loadModels = async () => {
@@ -848,6 +993,85 @@
       border: 1px solid var(--el-border-color-light);
       border-radius: 8px;
       background: var(--el-bg-color);
+    }
+
+    &__governance {
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+      background: var(--el-bg-color);
+    }
+
+    &__governance-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    &__governance-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    &__governance-desc {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      line-height: 1.5;
+    }
+
+    &__governance-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    &__governance-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+
+      div {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid var(--el-border-color-lighter);
+        border-radius: 8px;
+        background: var(--el-fill-color-blank);
+      }
+
+      span {
+        display: block;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        display: block;
+        min-width: 0;
+        margin-top: 6px;
+        overflow: hidden;
+        color: var(--el-text-color-primary);
+        font-size: 18px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    &__governance-result {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
     }
 
     &__audit-header {
@@ -1095,6 +1319,27 @@
 
     @media (max-width: 1180px) {
       &__groups {
+        grid-template-columns: 1fr;
+      }
+
+      &__governance-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      &__header,
+      &__audit-header,
+      &__governance-header {
+        flex-direction: column;
+      }
+
+      &__governance-actions {
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      &__governance-grid {
         grid-template-columns: 1fr;
       }
     }

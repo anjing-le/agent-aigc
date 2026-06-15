@@ -539,7 +539,10 @@ for (const token of [
   'fetchGetStorageStatus',
   'StorageStatusResponse',
   'fetchGetStorageAuditLogs',
-  'StorageAuditLogListResponse'
+  'StorageAuditLogListResponse',
+  'fetchBackfillOwnership',
+  'OwnershipBackfillRequest',
+  'OwnershipBackfillResponse'
 ]) {
   requireToken('frontend/src/api/aigc.ts', token)
 }
@@ -551,6 +554,8 @@ for (const token of [
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageStatus',
   'storageAudits',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits',
+  'ownershipBackfill',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.ownershipBackfill',
   'assetDownload',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDownload',
   'assetPreview',
@@ -715,6 +720,16 @@ for (const token of [
 }
 
 requireToken('frontend/src/views/aigc/models/index.vue', 'formatCredentialStorageMode')
+for (const token of [
+  'fetchBackfillOwnership',
+  'ownershipBackfillResult',
+  'handleOwnershipDryRun',
+  'handleOwnershipApply',
+  'ownership-backfill'
+]) {
+  requireToken('frontend/src/views/aigc/models/index.vue', token)
+}
+
 for (const token of [
   'REQUEST_HEADERS.userRoles',
   'REQUEST_HEADERS.userId',

@@ -1,6 +1,7 @@
 package com.anjing.aigc.service;
 
 import com.anjing.aigc.exception.AigcException;
+import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.request.OwnershipBackfillRequest;
 import com.anjing.aigc.model.response.OwnershipBackfillResponse;
 import com.anjing.aigc.repository.AigcAssetRepository;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.Map;
 
 /**
  * Backfills scaffold ownership fields for legacy AIGC rows.
@@ -27,6 +30,7 @@ public class AigcOwnershipBackfillService {
     private final AigcTaskRepository taskRepository;
     private final AigcOwnershipService ownershipService;
     private final AigcProviderManagementPermissionService permissionService;
+    private final AigcProviderAuditLogService auditLogService;
 
     @Transactional
     public OwnershipBackfillResponse backfill(OwnershipBackfillRequest request) {
@@ -61,6 +65,15 @@ public class AigcOwnershipBackfillService {
             assetUpdated = assetRepository.backfillMissingOwnership(ownerId, tenantId);
             materialUpdated = materialRepository.backfillMissingOwnership(ownerId, tenantId);
             taskUpdated = taskRepository.backfillMissingOwnership(ownerId, tenantId);
+            recordBackfillAudit(
+                    ownerId,
+                    tenantId,
+                    assetCandidates,
+                    materialCandidates,
+                    taskCandidates,
+                    assetUpdated,
+                    materialUpdated,
+                    taskUpdated);
         }
 
         return OwnershipBackfillResponse.builder()
@@ -77,5 +90,27 @@ public class AigcOwnershipBackfillService {
                 .message(dryRun ? "dry-run only; no rows updated" : "ownership backfill applied")
                 .checkedAt(DateUtils.nowIso())
                 .build();
+    }
+
+    private void recordBackfillAudit(String ownerId, String tenantId, long assetCandidates,
+            long materialCandidates, long taskCandidates, int assetUpdated, int materialUpdated, int taskUpdated) {
+        auditLogService.record(
+                AigcProviderAuditLogService.ACTION_OWNERSHIP_BACKFILL,
+                ContentType.IMAGE,
+                RESOURCE_KEY,
+                "AIGC Ownership",
+                "governance",
+                Map.of(
+                        "assetCandidates", assetCandidates,
+                        "materialCandidates", materialCandidates,
+                        "taskCandidates", taskCandidates
+                ),
+                Map.of(
+                        "ownerId", ownerId,
+                        "tenantId", tenantId == null ? "" : tenantId,
+                        "assetUpdated", assetUpdated,
+                        "materialUpdated", materialUpdated,
+                        "taskUpdated", taskUpdated
+                ));
     }
 }
