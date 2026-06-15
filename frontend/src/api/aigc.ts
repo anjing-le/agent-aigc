@@ -24,6 +24,7 @@ import type {
   ProviderRouteUpdateResponse,
   ProviderSmokeTestRequest,
   ProviderSmokeTestResponse,
+  StorageStatusResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
 
@@ -150,6 +151,10 @@ export function fetchUploadMaterial(file: File) {
   return openApiRequest('uploadMaterial', {
     body: { file }
   }) as Promise<MaterialUploadResponse>
+}
+
+export function fetchGetStorageStatus() {
+  return openApiRequest('getStorageStatus') as Promise<StorageStatusResponse>
 }
 
 /**

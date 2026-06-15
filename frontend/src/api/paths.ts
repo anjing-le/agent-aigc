@@ -71,6 +71,7 @@ export const ApiPaths = {
     materialTasks: (materialId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialTasks, { materialId }),
     materialUpload: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialUpload,
+    storageStatus: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageStatus,
     gallery: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallery,
     gallerySave: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallerySave,
     assets: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assets,

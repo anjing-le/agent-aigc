@@ -18,9 +18,11 @@ import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
 import com.anjing.aigc.model.response.ProviderSmokeTestResponse;
+import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.service.AigcMaterialService;
 import com.anjing.aigc.service.AigcService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.constants.ApiConstants;
 import com.anjing.model.response.APIResponse;
 import com.anjing.model.response.PageResult;
@@ -59,6 +61,7 @@ public class AigcController {
 
     private final AigcService aigcService;
     private final AigcMaterialService aigcMaterialService;
+    private final AigcStorageService aigcStorageService;
 
     /**
      * 智能生成接口 - Agent核心入口
@@ -180,6 +183,13 @@ public class AigcController {
             @RequestParam(required = false) String contentType) {
         PageResult<MaterialDTO> materials = aigcMaterialService.getMaterialList(current, size, contentType);
         return APIResponse.success(materials);
+    }
+
+    @GetMapping(ApiConstants.Aigc.STORAGE_STATUS)
+    @Operation(summary = "获取 AIGC 资产存储状态")
+    public APIResponse<StorageStatusResponse> getStorageStatus() {
+        StorageStatusResponse response = aigcStorageService.getStorageStatus();
+        return APIResponse.success(response);
     }
 
     @DeleteMapping(ApiConstants.Aigc.MATERIAL_DETAIL)

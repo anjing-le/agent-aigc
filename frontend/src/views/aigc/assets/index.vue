@@ -8,7 +8,7 @@
         <p class="aigc-assets__subtitle">统一管理生成作品、来源任务、发布状态和下载分发</p>
       </div>
       <div class="aigc-assets__header-actions">
-        <el-button :icon="Refresh" :loading="loading" @click="loadData">刷新</el-button>
+        <el-button :icon="Refresh" :loading="loading" @click="handleRefresh">刷新</el-button>
         <el-button type="primary" :icon="MagicStick" @click="$router.push('/aigc/studio')">
           去创作
         </el-button>
@@ -19,6 +19,38 @@
       <div v-for="item in assetStats" :key="item.label" class="aigc-assets__stat">
         <span>{{ item.label }}</span>
         <strong>{{ item.value }}</strong>
+      </div>
+    </div>
+
+    <div v-if="storageStatus" class="aigc-assets__storage">
+      <div class="aigc-assets__storage-main">
+        <span>存储</span>
+        <strong>{{ formatStorageMode(storageStatus.activeMode) }}</strong>
+        <el-tag size="small" :type="getStorageTagType(storageStatus)" effect="plain">
+          {{ storageStatus.message }}
+        </el-tag>
+      </div>
+      <div class="aigc-assets__storage-grid">
+        <div>
+          <span>本地目录</span>
+          <strong>{{ storageStatus.local?.basePath || '-' }}</strong>
+        </div>
+        <div>
+          <span>写入</span>
+          <strong>{{ formatBooleanStatus(storageStatus.local?.writable) }}</strong>
+        </div>
+        <div>
+          <span>清理</span>
+          <strong>{{ formatBooleanStatus(storageStatus.assetCleanupSupported) }}</strong>
+        </div>
+        <div>
+          <span>访问前缀</span>
+          <strong>{{ storageStatus.local?.urlPrefix || '-' }}</strong>
+        </div>
+        <div>
+          <span>OSS</span>
+          <strong>{{ storageStatus.oss?.message || '-' }}</strong>
+        </div>
       </div>
     </div>
 
@@ -294,12 +326,14 @@
     fetchGetAssetList,
     fetchGetAssetDetail,
     fetchDeleteAsset,
+    fetchGetStorageStatus,
     fetchSaveToGallery
   } from '@/api/aigc'
   import type {
     AssetItem,
     ContentType,
     ProviderExecutionSummary,
+    StorageStatusResponse,
     TaskStatus,
     TaskStatusResponse
   } from '@/api/model/aigcModel'
@@ -320,6 +354,7 @@
   const publishStatus = ref<'ALL' | 'PUBLISHED' | 'UNPUBLISHED'>('ALL')
   const keyword = ref('')
   const viewMode = ref<'card' | 'table'>('card')
+  const storageStatus = ref<StorageStatusResponse | null>(null)
 
   // 预览
   const previewVisible = ref(false)
@@ -379,6 +414,19 @@
     } finally {
       loading.value = false
     }
+  }
+
+  const loadStorageStatus = async () => {
+    try {
+      storageStatus.value = await fetchGetStorageStatus()
+    } catch (error) {
+      console.error('加载存储状态失败:', error)
+    }
+  }
+
+  const handleRefresh = () => {
+    loadData()
+    loadStorageStatus()
   }
 
   /** 筛选 */
@@ -545,6 +593,25 @@
     return status ? map[status] || status : ''
   }
 
+  const formatStorageMode = (mode?: string) => {
+    const map: Record<string, string> = {
+      LOCAL: '本地',
+      OSS: 'OSS'
+    }
+    return mode ? map[mode] || mode : '-'
+  }
+
+  const formatBooleanStatus = (value?: boolean) => {
+    if (value === undefined || value === null) return '-'
+    return value ? '是' : '否'
+  }
+
+  const getStorageTagType = (status: StorageStatusResponse) => {
+    if (status.local?.available) return 'success'
+    if (status.oss?.enabled && !status.oss.configured) return 'warning'
+    return 'danger'
+  }
+
   const agentParamsText = computed(() => {
     const analysis = previewTask.value?.agentAnalysis
     const intent = analysis?.analyzedIntent
@@ -585,6 +652,7 @@
   // ==================== 生命周期 ====================
   onMounted(() => {
     loadData()
+    loadStorageStatus()
   })
 </script>
 
@@ -655,6 +723,71 @@
         margin-top: 8px;
         font-size: 24px;
         line-height: 1;
+        color: var(--el-text-color-primary);
+      }
+    }
+
+    &__storage {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__storage-main {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+
+      span {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        font-size: 20px;
+        line-height: 1;
+        color: var(--el-text-color-primary);
+      }
+    }
+
+    &__storage-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+
+      div {
+        min-width: 0;
+        padding: 8px 10px;
+        border: 1px solid var(--el-border-color-lighter);
+        border-radius: 6px;
+        background: var(--el-fill-color-light);
+      }
+
+      span,
+      strong {
+        display: block;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      span {
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        margin-top: 4px;
+        font-size: 13px;
+        font-weight: 500;
         color: var(--el-text-color-primary);
       }
     }
@@ -772,6 +905,14 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      &__storage {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      &__storage-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
       &__filter {
         align-items: flex-start;
         flex-direction: column;
@@ -795,6 +936,10 @@
 
       &__stats {
         grid-template-columns: 1fr;
+      }
+
+      &__storage-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
   }

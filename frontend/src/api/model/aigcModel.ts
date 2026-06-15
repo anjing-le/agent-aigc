@@ -236,6 +236,9 @@ export type AssetDetailResponse = Omit<
   task?: TaskStatusResponse | null
 }
 
+/** AIGC 存储状态响应 */
+export type StorageStatusResponse = OpenApiOperationData<'getStorageStatus'>
+
 /** 参考素材项 */
 export type MaterialItem = RequiredKeys<
   Schemas.MaterialDTO,

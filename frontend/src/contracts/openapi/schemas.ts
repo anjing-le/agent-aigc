@@ -199,6 +199,15 @@ export interface APIResponseProviderSmokeTestResponse {
   timestamp?: number
 }
 
+export interface APIResponseStorageStatusResponse {
+  code?: string
+  data?: StorageStatusResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseString {
   code?: string
   data?: string
@@ -749,6 +758,33 @@ export interface SaveToGalleryRequest {
   assetId: string
 }
 
+export interface StorageBackendStatusResponse {
+  available?: boolean
+  backend?: string
+  basePath?: string
+  bucketConfigured?: boolean
+  cdnConfigured?: boolean
+  cleanupSupported?: boolean
+  configured?: boolean
+  enabled?: boolean
+  endpointConfigured?: boolean
+  message?: string
+  provider?: string
+  readable?: boolean
+  urlPrefix?: string
+  writable?: boolean
+}
+
+export interface StorageStatusResponse {
+  activeMode?: string
+  assetCleanupSupported?: boolean
+  checkedAt?: string
+  local?: StorageBackendStatusResponse
+  materialCleanupSupported?: boolean
+  message?: string
+  oss?: StorageBackendStatusResponse
+}
+
 export interface TaskStatusResponse {
   agentAnalysis?: AgentAnalysis
   createdAt?: string
@@ -795,6 +831,7 @@ export interface OpenApiSchemas {
   APIResponseProviderProbeResponse: APIResponseProviderProbeResponse
   APIResponseProviderRouteUpdateResponse: APIResponseProviderRouteUpdateResponse
   APIResponseProviderSmokeTestResponse: APIResponseProviderSmokeTestResponse
+  APIResponseStorageStatusResponse: APIResponseStorageStatusResponse
   APIResponseString: APIResponseString
   APIResponseTaskStatusResponse: APIResponseTaskStatusResponse
   APIResponseVoid: APIResponseVoid
@@ -836,6 +873,8 @@ export interface OpenApiSchemas {
   ProviderSmokeTestResponse: ProviderSmokeTestResponse
   RefreshTokenRequest: RefreshTokenRequest
   SaveToGalleryRequest: SaveToGalleryRequest
+  StorageBackendStatusResponse: StorageBackendStatusResponse
+  StorageStatusResponse: StorageStatusResponse
   TaskStatusResponse: TaskStatusResponse
   VideoParams: VideoParams
 }
