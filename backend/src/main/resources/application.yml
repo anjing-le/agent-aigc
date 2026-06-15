@@ -240,6 +240,11 @@ aigc:
       object-key-prefix: ${AIGC_STORAGE_OSS_OBJECT_KEY_PREFIX:aigc}
       path-style-access: ${AIGC_STORAGE_OSS_PATH_STYLE_ACCESS:true}
       public-read: ${AIGC_STORAGE_OSS_PUBLIC_READ:false}
+      signed-url-enabled: ${AIGC_STORAGE_OSS_SIGNED_URL_ENABLED:false}
+      signed-url-expiration-seconds: ${AIGC_STORAGE_OSS_SIGNED_URL_EXPIRATION_SECONDS:3600}
+      retry-count: ${AIGC_STORAGE_OSS_RETRY_COUNT:1}
+      retry-interval-ms: ${AIGC_STORAGE_OSS_RETRY_INTERVAL_MS:500}
+      cleanup-audit-enabled: ${AIGC_STORAGE_CLEANUP_AUDIT_ENABLED:true}
 
 storage:
   oss:

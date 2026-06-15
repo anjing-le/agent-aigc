@@ -107,3 +107,8 @@ aigc:
       object-key-prefix: aigc
       path-style-access: true
       public-read: false
+      signed-url-enabled: false
+      signed-url-expiration-seconds: 3600
+      retry-count: 1
+      retry-interval-ms: 500
+      cleanup-audit-enabled: true

@@ -764,13 +764,21 @@ export interface StorageBackendStatusResponse {
   basePath?: string
   bucketConfigured?: boolean
   cdnConfigured?: boolean
+  cleanupAuditEnabled?: boolean
   cleanupSupported?: boolean
   configured?: boolean
   enabled?: boolean
   endpointConfigured?: boolean
   message?: string
+  objectKeyPrefix?: string
+  pathStyleAccess?: boolean
   provider?: string
+  publicRead?: boolean
   readable?: boolean
+  retryCount?: number
+  retryIntervalMs?: number
+  signedUrlEnabled?: boolean
+  signedUrlExpirationSeconds?: number
   urlPrefix?: string
   writable?: boolean
 }

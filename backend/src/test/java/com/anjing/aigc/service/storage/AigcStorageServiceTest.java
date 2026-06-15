@@ -26,7 +26,8 @@ class AigcStorageServiceTest {
         AigcStorageService storageService = new AigcStorageService(
                 properties,
                 new LocalAigcStorageService(properties),
-                new OssAigcStorageService(properties)
+                new OssAigcStorageService(properties),
+                mock(AigcStorageAuditLogService.class)
         );
 
         StorageStatusResponse response = storageService.getStorageStatus();
@@ -47,10 +48,14 @@ class AigcStorageServiceTest {
         properties.getStorage().getOss().setBucketName("agent-aigc");
         properties.getStorage().getOss().setAccessKeyId("access-key-id");
         properties.getStorage().getOss().setAccessKeySecret("secret-value");
+        properties.getStorage().getOss().setRetryCount(2);
+        properties.getStorage().getOss().setRetryIntervalMs(100L);
+        properties.getStorage().getOss().setSignedUrlEnabled(true);
         AigcStorageService storageService = new AigcStorageService(
                 properties,
                 new LocalAigcStorageService(properties),
-                new OssAigcStorageService(properties)
+                new OssAigcStorageService(properties),
+                mock(AigcStorageAuditLogService.class)
         );
 
         StorageStatusResponse response = storageService.getStorageStatus();
@@ -60,6 +65,10 @@ class AigcStorageServiceTest {
         assertTrue(response.getOss().getAvailable());
         assertEquals(true, response.getOss().getEndpointConfigured());
         assertEquals(true, response.getOss().getBucketConfigured());
+        assertEquals(true, response.getOss().getCleanupAuditEnabled());
+        assertEquals(true, response.getOss().getSignedUrlEnabled());
+        assertEquals(2, response.getOss().getRetryCount());
+        assertEquals(100L, response.getOss().getRetryIntervalMs());
         assertEquals("OSS adapter 已就绪", response.getOss().getMessage());
     }
 
@@ -69,15 +78,29 @@ class AigcStorageServiceTest {
         properties.getStorage().getLocal().setBasePath(tempDir.toString());
         LocalAigcStorageService localStorageService = mock(LocalAigcStorageService.class);
         OssAigcStorageService ossStorageService = mock(OssAigcStorageService.class);
+        AigcStorageAuditLogService auditLogService = mock(AigcStorageAuditLogService.class);
         byte[] bytes = new byte[]{1, 2, 3};
         when(localStorageService.saveBytes("images", "asset.png", bytes))
                 .thenReturn("http://localhost:10003/files/images/asset.png");
-        AigcStorageService storageService = new AigcStorageService(properties, localStorageService, ossStorageService);
+        AigcStorageService storageService = new AigcStorageService(
+                properties,
+                localStorageService,
+                ossStorageService,
+                auditLogService
+        );
 
         String url = storageService.saveBytes("images", "asset.png", bytes);
 
         assertEquals("http://localhost:10003/files/images/asset.png", url);
         verify(localStorageService).saveBytes("images", "asset.png", bytes);
+        verify(auditLogService).recordSuccess(
+                AigcStorageAuditLogService.ACTION_UPLOAD,
+                "LOCAL",
+                "images",
+                "asset.png",
+                "http://localhost:10003/files/images/asset.png",
+                3L
+        );
     }
 
     @Test
@@ -89,17 +112,31 @@ class AigcStorageServiceTest {
         properties.getStorage().getOss().setBucketName("agent-aigc");
         LocalAigcStorageService localStorageService = mock(LocalAigcStorageService.class);
         OssAigcStorageService ossStorageService = mock(OssAigcStorageService.class);
+        AigcStorageAuditLogService auditLogService = mock(AigcStorageAuditLogService.class);
         byte[] bytes = new byte[]{1, 2, 3};
         when(ossStorageService.isEnabled()).thenReturn(true);
         when(ossStorageService.isConfigured()).thenReturn(true);
         when(ossStorageService.saveBytes("images", "asset.png", bytes))
                 .thenReturn("https://cdn.example.com/aigc/images/asset.png");
-        AigcStorageService storageService = new AigcStorageService(properties, localStorageService, ossStorageService);
+        AigcStorageService storageService = new AigcStorageService(
+                properties,
+                localStorageService,
+                ossStorageService,
+                auditLogService
+        );
 
         String url = storageService.saveBytes("images", "asset.png", bytes);
 
         assertEquals("https://cdn.example.com/aigc/images/asset.png", url);
         verify(ossStorageService).saveBytes("images", "asset.png", bytes);
+        verify(auditLogService).recordSuccess(
+                AigcStorageAuditLogService.ACTION_UPLOAD,
+                "OSS",
+                "images",
+                "asset.png",
+                "https://cdn.example.com/aigc/images/asset.png",
+                3L
+        );
     }
 
     @Test
@@ -107,16 +144,30 @@ class AigcStorageServiceTest {
         AigcProperties properties = new AigcProperties();
         LocalAigcStorageService localStorageService = mock(LocalAigcStorageService.class);
         OssAigcStorageService ossStorageService = mock(OssAigcStorageService.class);
+        AigcStorageAuditLogService auditLogService = mock(AigcStorageAuditLogService.class);
         String localUrl = "http://localhost:10003/files/images/asset.png";
         when(ossStorageService.isConfigured()).thenReturn(true);
         when(ossStorageService.deleteByUrl(localUrl)).thenReturn(false);
         when(localStorageService.deleteByUrl(localUrl)).thenReturn(true);
-        AigcStorageService storageService = new AigcStorageService(properties, localStorageService, ossStorageService);
+        AigcStorageService storageService = new AigcStorageService(
+                properties,
+                localStorageService,
+                ossStorageService,
+                auditLogService
+        );
 
         boolean deleted = storageService.deleteByUrl(localUrl);
 
         assertTrue(deleted);
         verify(ossStorageService).deleteByUrl(localUrl);
         verify(localStorageService).deleteByUrl(localUrl);
+        verify(auditLogService).recordSuccess(
+                AigcStorageAuditLogService.ACTION_DELETE_URL,
+                "LOCAL",
+                null,
+                null,
+                localUrl,
+                null
+        );
     }
 }

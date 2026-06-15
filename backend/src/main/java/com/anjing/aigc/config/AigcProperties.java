@@ -379,6 +379,11 @@ public class AigcProperties {
         private String objectKeyPrefix = "aigc";
         private boolean pathStyleAccess = true;
         private boolean publicRead = false;
+        private boolean signedUrlEnabled = false;
+        private long signedUrlExpirationSeconds = 3600L;
+        private int retryCount = 1;
+        private long retryIntervalMs = 500L;
+        private boolean cleanupAuditEnabled = true;
     }
     
     // ==================== 便捷方法 ====================

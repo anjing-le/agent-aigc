@@ -54,7 +54,8 @@ public class OssAigcStorageService {
             requestBuilder.acl(ObjectCannedACL.PUBLIC_READ);
         }
 
-        client().putObject(requestBuilder.build(), RequestBody.fromBytes(bytes));
+        executeWithRetry("putObject", objectKey,
+                () -> client().putObject(requestBuilder.build(), RequestBody.fromBytes(bytes)));
         log.info("AIGC 文件已上传 OSS: provider={}, bucket={}, key={}, size={} bytes",
                 ossConfig.getProvider(), ossConfig.getBucketName(), objectKey, bytes.length);
         return buildPublicUrl(objectKey);
@@ -78,12 +79,13 @@ public class OssAigcStorageService {
         return deleteObject(objectKey);
     }
 
-    private boolean deleteObject(String objectKey) {
+    private boolean deleteObject(String objectKey) throws IOException {
         AigcProperties.OssConfig ossConfig = config();
-        client().deleteObject(DeleteObjectRequest.builder()
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(ossConfig.getBucketName())
                 .key(objectKey)
-                .build());
+                .build();
+        executeWithRetry("deleteObject", objectKey, () -> client().deleteObject(request));
         log.info("AIGC OSS 文件已删除: provider={}, bucket={}, key={}",
                 ossConfig.getProvider(), ossConfig.getBucketName(), objectKey);
         return true;
@@ -202,6 +204,46 @@ public class OssAigcStorageService {
         return "application/octet-stream";
     }
 
+    private void executeWithRetry(String operation, String objectKey, StorageOperation operationCall) throws IOException {
+        AigcProperties.OssConfig ossConfig = config();
+        int retryCount = Math.max(0, ossConfig.getRetryCount());
+        long retryIntervalMs = Math.max(0, ossConfig.getRetryIntervalMs());
+        RuntimeException lastError = null;
+
+        for (int attempt = 0; attempt <= retryCount; attempt++) {
+            try {
+                operationCall.run();
+                if (attempt > 0) {
+                    log.info("AIGC OSS 操作重试成功: operation={}, key={}, attempt={}",
+                            operation, objectKey, attempt + 1);
+                }
+                return;
+            } catch (RuntimeException e) {
+                lastError = e;
+                if (attempt >= retryCount) {
+                    break;
+                }
+                log.warn("AIGC OSS 操作失败，准备重试: operation={}, key={}, attempt={}, maxRetry={}, error={}",
+                        operation, objectKey, attempt + 1, retryCount, e.getMessage());
+                sleepBeforeRetry(retryIntervalMs, operation, objectKey);
+            }
+        }
+
+        throw new IOException("OSS " + operation + " 失败: " + objectKey, lastError);
+    }
+
+    private void sleepBeforeRetry(long retryIntervalMs, String operation, String objectKey) throws IOException {
+        if (retryIntervalMs <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(retryIntervalMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("OSS " + operation + " 重试等待被中断: " + objectKey, e);
+        }
+    }
+
     private void ensureConfigured() throws IOException {
         if (!isConfigured()) {
             throw new IOException("OSS 存储未启用或配置不完整");
@@ -233,5 +275,10 @@ public class OssAigcStorageService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank() && !value.startsWith("<");
+    }
+
+    @FunctionalInterface
+    private interface StorageOperation {
+        void run();
     }
 }

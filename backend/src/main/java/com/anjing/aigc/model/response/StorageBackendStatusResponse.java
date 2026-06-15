@@ -21,6 +21,8 @@ public class StorageBackendStatusResponse {
 
     private Boolean cleanupSupported;
 
+    private Boolean cleanupAuditEnabled;
+
     private String basePath;
 
     private String urlPrefix;
@@ -32,6 +34,20 @@ public class StorageBackendStatusResponse {
     private Boolean bucketConfigured;
 
     private Boolean cdnConfigured;
+
+    private Boolean publicRead;
+
+    private Boolean signedUrlEnabled;
+
+    private Long signedUrlExpirationSeconds;
+
+    private Integer retryCount;
+
+    private Long retryIntervalMs;
+
+    private String objectKeyPrefix;
+
+    private Boolean pathStyleAccess;
 
     private String message;
 }

@@ -285,8 +285,12 @@ for (const token of [
   'buildLocalStatus',
   'buildOssStatus',
   'OssAigcStorageService',
+  'AigcStorageAuditLogService',
   'resolveCleanupSupported',
+  'recordSuccess',
+  'recordFailure',
   'cleanupSupported',
+  'cleanupAuditEnabled',
   'endpointConfigured',
   'bucketConfigured'
 ]) {
@@ -298,11 +302,41 @@ for (const token of [
   'PutObjectRequest',
   'DeleteObjectRequest',
   'RequestBody.fromBytes',
+  'executeWithRetry',
+  'getRetryCount',
+  'getRetryIntervalMs',
   'getObjectKeyPrefix',
   'isPathStyleAccess',
   'isPublicRead'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/storage/OssAigcStorageService.java', token)
+}
+
+for (const token of [
+  'AigcStorageAuditLogRepository',
+  'GlobalRequestContextHolder',
+  'ACTION_UPLOAD',
+  'ACTION_DELETE_URL',
+  'isCleanupAuditEnabled'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/storage/AigcStorageAuditLogService.java', token)
+}
+
+for (const token of [
+  'AigcStorageAuditLog',
+  'aigc_storage_audit_log',
+  'requestId',
+  'traceId',
+  'operatorId'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/model/entity/AigcStorageAuditLog.java', token)
+}
+
+for (const token of [
+  'AigcStorageAuditLogRepository',
+  'JpaRepository'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcStorageAuditLogRepository.java', token)
 }
 
 for (const token of [
@@ -319,7 +353,10 @@ for (const token of [
   'AIGC_STORAGE_OSS_ACCESS_KEY_ID',
   'AIGC_STORAGE_OSS_ACCESS_KEY_SECRET',
   'AIGC_STORAGE_OSS_BUCKET',
-  'AIGC_STORAGE_OSS_OBJECT_KEY_PREFIX'
+  'AIGC_STORAGE_OSS_OBJECT_KEY_PREFIX',
+  'AIGC_STORAGE_OSS_SIGNED_URL_ENABLED',
+  'AIGC_STORAGE_OSS_RETRY_COUNT',
+  'AIGC_STORAGE_CLEANUP_AUDIT_ENABLED'
 ]) {
   requireToken('backend/src/main/resources/application.yml', token)
 }

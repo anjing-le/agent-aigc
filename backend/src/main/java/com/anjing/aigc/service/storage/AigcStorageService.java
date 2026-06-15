@@ -21,27 +21,101 @@ public class AigcStorageService {
     private final AigcProperties aigcProperties;
     private final LocalAigcStorageService localAigcStorageService;
     private final OssAigcStorageService ossAigcStorageService;
+    private final AigcStorageAuditLogService auditLogService;
 
     public String saveBytes(String directory, String fileName, byte[] bytes) throws IOException {
-        StorageStatusResponse status = getStorageStatus();
-        if (MODE_OSS.equals(status.getActiveMode())) {
-            return ossAigcStorageService.saveBytes(directory, fileName, bytes);
+        String backend = getStorageStatus().getActiveMode();
+        Long sizeBytes = bytes == null ? null : (long) bytes.length;
+        try {
+            String url = MODE_OSS.equals(backend)
+                    ? ossAigcStorageService.saveBytes(directory, fileName, bytes)
+                    : localAigcStorageService.saveBytes(directory, fileName, bytes);
+            auditLogService.recordSuccess(
+                    AigcStorageAuditLogService.ACTION_UPLOAD,
+                    backend,
+                    directory,
+                    fileName,
+                    url,
+                    sizeBytes
+            );
+            return url;
+        } catch (IOException e) {
+            recordFailure(AigcStorageAuditLogService.ACTION_UPLOAD, backend, directory, fileName, null, sizeBytes, e);
+            throw e;
+        } catch (RuntimeException e) {
+            recordFailure(AigcStorageAuditLogService.ACTION_UPLOAD, backend, directory, fileName, null, sizeBytes, e);
+            throw e;
         }
-        return localAigcStorageService.saveBytes(directory, fileName, bytes);
     }
 
     public boolean deleteFile(String directory, String fileName) throws IOException {
-        if (MODE_OSS.equals(getStorageStatus().getActiveMode())) {
-            return ossAigcStorageService.deleteFile(directory, fileName);
+        String backend = getStorageStatus().getActiveMode();
+        try {
+            boolean deleted = MODE_OSS.equals(backend)
+                    ? ossAigcStorageService.deleteFile(directory, fileName)
+                    : localAigcStorageService.deleteFile(directory, fileName);
+            auditLogService.recordSuccess(
+                    AigcStorageAuditLogService.ACTION_DELETE_FILE,
+                    backend,
+                    directory,
+                    fileName,
+                    null,
+                    null
+            );
+            return deleted;
+        } catch (IOException e) {
+            recordFailure(AigcStorageAuditLogService.ACTION_DELETE_FILE, backend, directory, fileName, null, null, e);
+            throw e;
+        } catch (RuntimeException e) {
+            recordFailure(AigcStorageAuditLogService.ACTION_DELETE_FILE, backend, directory, fileName, null, null, e);
+            throw e;
         }
-        return localAigcStorageService.deleteFile(directory, fileName);
     }
 
     public boolean deleteByUrl(String url) throws IOException {
-        if (ossAigcStorageService.isConfigured() && ossAigcStorageService.deleteByUrl(url)) {
-            return true;
+        if (ossAigcStorageService.isConfigured()) {
+            try {
+                boolean deletedByOss = ossAigcStorageService.deleteByUrl(url);
+                if (deletedByOss) {
+                    auditLogService.recordSuccess(
+                            AigcStorageAuditLogService.ACTION_DELETE_URL,
+                            MODE_OSS,
+                            null,
+                            null,
+                            url,
+                            null
+                    );
+                    return true;
+                }
+            } catch (IOException e) {
+                recordFailure(AigcStorageAuditLogService.ACTION_DELETE_URL, MODE_OSS, null, null, url, null, e);
+                throw e;
+            } catch (RuntimeException e) {
+                recordFailure(AigcStorageAuditLogService.ACTION_DELETE_URL, MODE_OSS, null, null, url, null, e);
+                throw e;
+            }
         }
-        return localAigcStorageService.deleteByUrl(url);
+
+        try {
+            boolean deletedByLocal = localAigcStorageService.deleteByUrl(url);
+            if (deletedByLocal) {
+                auditLogService.recordSuccess(
+                        AigcStorageAuditLogService.ACTION_DELETE_URL,
+                        MODE_LOCAL,
+                        null,
+                        null,
+                        url,
+                        null
+                );
+            }
+            return deletedByLocal;
+        } catch (IOException e) {
+            recordFailure(AigcStorageAuditLogService.ACTION_DELETE_URL, MODE_LOCAL, null, null, url, null, e);
+            throw e;
+        } catch (RuntimeException e) {
+            recordFailure(AigcStorageAuditLogService.ACTION_DELETE_URL, MODE_LOCAL, null, null, url, null, e);
+            throw e;
+        }
     }
 
     public StorageStatusResponse getStorageStatus() {
@@ -96,6 +170,7 @@ public class AigcStorageService {
                 .readable(readable)
                 .writable(writable)
                 .cleanupSupported(enabled && configured)
+                .cleanupAuditEnabled(aigcProperties.getStorage().getOss().isCleanupAuditEnabled())
                 .basePath(basePath == null ? null : basePath.toString())
                 .urlPrefix(localConfig.getUrlPrefix())
                 .message(message)
@@ -107,7 +182,6 @@ public class AigcStorageService {
         boolean enabled = ossAigcStorageService.isEnabled();
         boolean endpointConfigured = hasText(ossConfig.getEndpoint());
         boolean bucketConfigured = hasText(ossConfig.getBucketName());
-        boolean credentialConfigured = hasText(ossConfig.getAccessKeyId()) && hasText(ossConfig.getAccessKeySecret());
         boolean configured = ossAigcStorageService.isConfigured();
 
         return StorageBackendStatusResponse.builder()
@@ -118,12 +192,25 @@ public class AigcStorageService {
                 .readable(configured)
                 .writable(configured)
                 .cleanupSupported(configured)
+                .cleanupAuditEnabled(ossConfig.isCleanupAuditEnabled())
                 .provider(ossConfig.getProvider())
                 .endpointConfigured(endpointConfigured)
                 .bucketConfigured(bucketConfigured)
                 .cdnConfigured(hasText(ossConfig.getCdnDomain()))
+                .publicRead(ossConfig.isPublicRead())
+                .signedUrlEnabled(ossConfig.isSignedUrlEnabled())
+                .signedUrlExpirationSeconds(ossConfig.getSignedUrlExpirationSeconds())
+                .retryCount(ossConfig.getRetryCount())
+                .retryIntervalMs(ossConfig.getRetryIntervalMs())
+                .objectKeyPrefix(ossConfig.getObjectKeyPrefix())
+                .pathStyleAccess(ossConfig.isPathStyleAccess())
                 .message(resolveOssMessage(enabled, configured))
                 .build();
+    }
+
+    private void recordFailure(String action, String backend, String directory, String fileName,
+            String url, Long sizeBytes, Exception error) {
+        auditLogService.recordFailure(action, backend, directory, fileName, url, sizeBytes, error);
     }
 
     private String resolveStatusMessage(String activeMode, StorageBackendStatusResponse local,
