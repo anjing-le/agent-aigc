@@ -138,6 +138,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/gallery/save",
     operationId: "saveToGallery"
   },
+  smokeTestProvider: {
+    method: "POST",
+    path: "/api/aigc/models/provider-smoke-test",
+    operationId: "smokeTestProvider"
+  },
   testBizException: {
     method: "GET",
     path: "/api/test/exception/biz",
@@ -352,6 +357,13 @@ export interface OpenApiOperationTypes {
     request: Schemas.SaveToGalleryRequest
     response: Schemas.APIResponseVoid
     data: NonNullable<Schemas.APIResponseVoid['data']>
+  }
+  smokeTestProvider: {
+    pathParams: undefined
+    query: undefined
+    request: Schemas.ProviderSmokeTestRequest
+    response: Schemas.APIResponseProviderSmokeTestResponse
+    data: NonNullable<Schemas.APIResponseProviderSmokeTestResponse['data']>
   }
   testBizException: {
     pathParams: undefined

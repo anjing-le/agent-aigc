@@ -28,6 +28,7 @@ public class AigcProviderAuditLogService {
     public static final String ACTION_ACTIVE_PROVIDER = "active-provider";
     public static final String ACTION_CREDENTIAL = "credential";
     public static final String ACTION_PARAMS = "params";
+    public static final String ACTION_SMOKE_TEST = "smoke-test";
     public static final String ACTION_PERMISSION_DENIED = "permission-denied";
 
     private final AigcProviderAuditLogRepository auditLogRepository;

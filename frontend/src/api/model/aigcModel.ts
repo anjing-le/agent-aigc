@@ -331,6 +331,18 @@ export type ProviderParamUpdateRequest = Omit<
 /** Provider 默认参数模板更新响应 */
 export type ProviderParamUpdateResponse = OpenApiOperationData<'updateProviderParams'>
 
+/** Provider smoke test 请求 */
+export type ProviderSmokeTestRequest = Omit<
+  OpenApiOperationRequest<'smokeTestProvider'>,
+  'contentType'
+> & {
+  /** 内容类型 */
+  contentType: ContentType
+}
+
+/** Provider smoke test 响应 */
+export type ProviderSmokeTestResponse = OpenApiOperationData<'smokeTestProvider'>
+
 /** Provider 管理审计日志项 */
 export type ProviderAuditLogItem = Schemas.ProviderAuditLogResponse
 

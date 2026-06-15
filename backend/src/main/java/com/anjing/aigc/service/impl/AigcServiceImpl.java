@@ -16,6 +16,7 @@ import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
+import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
@@ -29,8 +30,10 @@ import com.anjing.aigc.model.response.ProviderDiagnosticCheck;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
+import com.anjing.aigc.model.response.ProviderSmokeTestResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.provider.ContentProvider;
+import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
@@ -456,9 +459,207 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    @Transactional
+    public ProviderSmokeTestResponse smokeTestProvider(ProviderSmokeTestRequest request) {
+        ContentType contentType = request.getContentType();
+        ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
+        if (provider == null) {
+            return smokeTestSkipped(request, null, "Provider 未注册，无法运行 smoke test");
+        }
+        if (contentType != ContentType.IMAGE || !(provider instanceof ImageGenerationProvider)) {
+            return smokeTestSkipped(request, provider, "V1 smoke test 仅支持图片 Provider");
+        }
+        boolean confirmExternalCall = Boolean.TRUE.equals(request.getConfirmExternalCall());
+        if (provider.getProviderType() == ContentProvider.ProviderType.GOOGLE && !confirmExternalCall) {
+            return smokeTestSkipped(request, provider, "Google smoke test 会触发外部调用，请显式确认");
+        }
+        if (!provider.isAvailable()) {
+            String missingConfig = resolveMissingConfig(provider);
+            return smokeTestSkipped(request, provider,
+                    missingConfig != null ? missingConfig : "Provider 当前不可用，无法运行 smoke test");
+        }
+
+        long startTime = System.currentTimeMillis();
+        AigcTask task = createSmokeTestTask(request, provider);
+        taskRepository.save(task);
+
+        GenerationResult result;
+        try {
+            result = provider.generate(task);
+        } catch (Exception e) {
+            result = GenerationResult.failure(
+                    task.getTaskId(),
+                    AigcErrorCode.PROVIDER_CALL_FAILED.getCode(),
+                    e.getMessage()
+            );
+        }
+
+        long durationMs = System.currentTimeMillis() - startTime;
+        if (result != null && result.isSuccess()) {
+            AigcAsset asset = createAssetFromSmokeTest(task, result);
+            assetRepository.save(asset);
+            task.setStatus(TaskStatus.COMPLETED);
+            task.setProgress(100);
+            task.setAssetId(asset.getAssetId());
+            task.setResultUrl(result.getUrl());
+            task.setThumbnailUrl(result.getThumbnailUrl());
+            task.setModel(result.getModel());
+            task.setDurationMs(durationMs);
+            applyCostEstimate(task);
+            task.setUpdatedAt(DateUtils.nowLocalDateTime());
+            taskRepository.save(task);
+
+            recordProviderAudit(AigcProviderAuditLogService.ACTION_SMOKE_TEST,
+                    contentType, request.getProvider(), provider,
+                    Map.of(),
+                    auditSummary(
+                            "status", "COMPLETED",
+                            "taskId", task.getTaskId(),
+                            "assetId", asset.getAssetId(),
+                            "model", task.getModel(),
+                            "durationMs", durationMs
+                    ));
+
+            return ProviderSmokeTestResponse.builder()
+                    .contentType(contentType)
+                    .providerName(provider.getProviderName())
+                    .providerType(provider.getProviderType().name())
+                    .taskId(task.getTaskId())
+                    .assetId(asset.getAssetId())
+                    .success(true)
+                    .status(TaskStatus.COMPLETED.name())
+                    .model(task.getModel())
+                    .prompt(task.getPrompt())
+                    .url(result.getUrl())
+                    .thumbnailUrl(result.getThumbnailUrl())
+                    .durationMs(durationMs)
+                    .providerExecution(resolveProviderExecution(task))
+                    .message("Smoke test 通过，已保存测试资产")
+                    .checkedAt(DateUtils.nowIso())
+                    .build();
+        }
+
+        String errorCode = result == null || result.getErrorCode() == null
+                ? AigcErrorCode.PROVIDER_CALL_FAILED.getCode()
+                : result.getErrorCode();
+        String errorMessage = result == null || result.getErrorMessage() == null
+                ? "Provider 未返回有效结果"
+                : result.getErrorMessage();
+        task.setStatus(TaskStatus.FAILED);
+        task.setProgress(100);
+        task.setDurationMs(durationMs);
+        task.setErrorCode(errorCode);
+        task.setErrorMessage(errorMessage);
+        applyCostEstimate(task);
+        task.setUpdatedAt(DateUtils.nowLocalDateTime());
+        taskRepository.save(task);
+
+        recordProviderAudit(AigcProviderAuditLogService.ACTION_SMOKE_TEST,
+                contentType, request.getProvider(), provider,
+                Map.of(),
+                auditSummary(
+                        "status", "FAILED",
+                        "taskId", task.getTaskId(),
+                        "errorCode", errorCode,
+                        "durationMs", durationMs
+                ));
+
+        return ProviderSmokeTestResponse.builder()
+                .contentType(contentType)
+                .providerName(provider.getProviderName())
+                .providerType(provider.getProviderType().name())
+                .taskId(task.getTaskId())
+                .success(false)
+                .status(TaskStatus.FAILED.name())
+                .model(task.getModel())
+                .prompt(task.getPrompt())
+                .durationMs(durationMs)
+                .providerExecution(resolveProviderExecution(task))
+                .errorCode(errorCode)
+                .errorMessage(errorMessage)
+                .message("Smoke test 失败，请查看错误信息")
+                .checkedAt(DateUtils.nowIso())
+                .build();
+    }
+
+    @Override
     public PageResult<ProviderAuditLogResponse> getProviderAuditLogs(
             Integer current, Integer size, String contentType, String action) {
         return auditLogService.getAuditLogs(current, size, parseContentType(contentType), action);
+    }
+
+    private AigcTask createSmokeTestTask(ProviderSmokeTestRequest request, ContentProvider provider) {
+        String prompt = normalizeSmokeTestPrompt(request.getPrompt());
+        String model = resolveConfiguredModel(provider, request.getContentType());
+        AigcTask task = new AigcTask();
+        task.setTaskId(IdUtils.uuid());
+        task.setPrompt(prompt);
+        task.setOptimizedPrompt(prompt);
+        task.setContentType(request.getContentType());
+        task.setIntent("provider_smoke_test");
+        task.setModel(model);
+        task.setProviderName(provider.getProviderName());
+        task.setProviderType(provider.getProviderType().name());
+        task.setStatus(TaskStatus.PROCESSING);
+        task.setProgress(10);
+        task.setCostStatus(AigcProviderCostEstimator.STATUS_PENDING);
+        task.setAgentAnalysis(AgentAnalysis.builder()
+                .intent("provider_smoke_test")
+                .contentType(request.getContentType())
+                .selectedModel(model)
+                .originalPrompt(prompt)
+                .cleanPrompt(prompt)
+                .optimizedPrompt(prompt)
+                .confidence(1.0)
+                .build());
+        task.setCreatedAt(DateUtils.nowLocalDateTime());
+        task.setUpdatedAt(DateUtils.nowLocalDateTime());
+        return task;
+    }
+
+    private AigcAsset createAssetFromSmokeTest(AigcTask task, GenerationResult result) {
+        AigcAsset asset = new AigcAsset();
+        asset.setAssetId(IdUtils.uuid());
+        asset.setContentType(ContentType.IMAGE);
+        asset.setUrl(result.getUrl());
+        asset.setThumbnailUrl(result.getThumbnailUrl());
+        asset.setPrompt(task.getPrompt());
+        asset.setModel(result.getModel());
+        asset.setIsPublished(false);
+        asset.setCreatedAt(DateUtils.nowLocalDateTime());
+        return asset;
+    }
+
+    private String normalizeSmokeTestPrompt(String prompt) {
+        if (prompt == null || prompt.isBlank()) {
+            return "A tiny clean smoke test image for agent-aigc provider validation";
+        }
+        return prompt.trim();
+    }
+
+    private ProviderSmokeTestResponse smokeTestSkipped(ProviderSmokeTestRequest request, ContentProvider provider,
+            String message) {
+        return ProviderSmokeTestResponse.builder()
+                .contentType(request.getContentType())
+                .providerName(provider == null ? request.getProviderName() : provider.getProviderName())
+                .providerType(provider == null ? request.getProvider() : provider.getProviderType().name())
+                .success(false)
+                .status("SKIPPED")
+                .prompt(normalizeSmokeTestPrompt(request.getPrompt()))
+                .errorCode(AigcErrorCode.PROVIDER_UNAVAILABLE.getCode())
+                .errorMessage(message)
+                .message(message)
+                .checkedAt(DateUtils.nowIso())
+                .build();
+    }
+
+    private void applyCostEstimate(AigcTask task) {
+        ProviderCostEstimate estimate = costEstimator.estimate(task);
+        task.setCostStatus(estimate.getCostStatus());
+        task.setEstimatedCostAmount(estimate.getEstimatedCostAmount());
+        task.setEstimatedCostCurrency(estimate.getEstimatedCostCurrency());
+        task.setCostUnit(estimate.getCostUnit());
+        task.setCostDescription(estimate.getCostDescription());
     }
 
     private String toModelId(ContentProvider provider, ContentType contentType) {

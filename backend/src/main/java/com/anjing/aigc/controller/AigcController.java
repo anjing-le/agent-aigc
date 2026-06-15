@@ -6,6 +6,7 @@ import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
+import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.request.SaveToGalleryRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
@@ -16,6 +17,7 @@ import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
+import com.anjing.aigc.model.response.ProviderSmokeTestResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.service.AigcMaterialService;
 import com.anjing.aigc.service.AigcService;
@@ -140,6 +142,14 @@ public class AigcController {
     public APIResponse<ProviderParamUpdateResponse> updateProviderParams(
             @Valid @RequestBody ProviderParamUpdateRequest request) {
         ProviderParamUpdateResponse response = aigcService.updateProviderParams(request);
+        return APIResponse.success(response);
+    }
+
+    @PostMapping(ApiConstants.Aigc.MODEL_PROVIDER_SMOKE_TEST)
+    @Operation(summary = "显式运行 AIGC Provider smoke test")
+    public APIResponse<ProviderSmokeTestResponse> smokeTestProvider(
+            @Valid @RequestBody ProviderSmokeTestRequest request) {
+        ProviderSmokeTestResponse response = aigcService.smokeTestProvider(request);
         return APIResponse.success(response);
     }
 

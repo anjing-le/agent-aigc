@@ -49,7 +49,7 @@ AIGC 页面只聚焦创作体验：
 - `frontend/src/views/aigc/materials`：参考素材上传、筛选、引用任务反查。
 - `frontend/src/views/aigc/assets`：个人资产、下载、删除、发布、Prompt 复用。
 - `frontend/src/views/aigc/gallery`：已发布作品、筛选、Prompt 复用到工作台。
-- `frontend/src/views/aigc/models`：Provider 配置、模型能力、运行前探测和诊断检查项。
+- `frontend/src/views/aigc/models`：Provider 配置、模型能力、运行前探测、诊断检查项和显式 smoke test。
 
 ## API 生长方式
 

@@ -84,6 +84,7 @@
         { "name": "modelActiveProvider", "backendConstant": "MODEL_ACTIVE_PROVIDER_FULL", "frontendKey": "modelActiveProvider", "path": "/api/aigc/models/active-provider", "methods": ["POST"] },
         { "name": "modelProviderCredential", "backendConstant": "MODEL_PROVIDER_CREDENTIAL_FULL", "frontendKey": "modelProviderCredential", "path": "/api/aigc/models/provider-credential", "methods": ["POST"] },
         { "name": "modelProviderParams", "backendConstant": "MODEL_PROVIDER_PARAMS_FULL", "frontendKey": "modelProviderParams", "path": "/api/aigc/models/provider-params", "methods": ["POST"] },
+        { "name": "modelProviderSmokeTest", "backendConstant": "MODEL_PROVIDER_SMOKE_TEST_FULL", "frontendKey": "modelProviderSmokeTest", "path": "/api/aigc/models/provider-smoke-test", "methods": ["POST"] },
         { "name": "modelProviderAudits", "backendConstant": "MODEL_PROVIDER_AUDITS_FULL", "frontendKey": "modelProviderAudits", "path": "/api/aigc/models/provider-audits", "methods": ["GET"] },
         { "name": "materials", "backendConstant": "MATERIALS_FULL", "frontendKey": "materials", "path": "/api/aigc/materials", "methods": ["GET"] },
         { "name": "materialDetail", "backendConstant": "MATERIAL_DETAIL_FULL", "frontendKey": "materialDetail", "path": "/api/aigc/materials/{materialId}", "methods": ["DELETE"] },

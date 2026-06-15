@@ -284,6 +284,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "modelProviderSmokeTest",
+          "backendConstant": "MODEL_PROVIDER_SMOKE_TEST_FULL",
+          "frontendKey": "modelProviderSmokeTest",
+          "path": "/api/aigc/models/provider-smoke-test",
+          "methods": [
+            "POST"
+          ]
+        },
+        {
           "name": "modelProviderAudits",
           "backendConstant": "MODEL_PROVIDER_AUDITS_FULL",
           "frontendKey": "modelProviderAudits",
@@ -432,6 +441,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "modelProviderAudits": "/api/aigc/models/provider-audits",
     "modelProviderCredential": "/api/aigc/models/provider-credential",
     "modelProviderParams": "/api/aigc/models/provider-params",
+    "modelProviderSmokeTest": "/api/aigc/models/provider-smoke-test",
     "models": "/api/aigc/models",
     "taskRetry": "/api/aigc/task/{taskId}/retry",
     "taskStatus": "/api/aigc/task/{taskId}"

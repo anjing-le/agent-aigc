@@ -199,6 +199,8 @@ requireAbsentInFiles([
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderProbeResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderRouteUpdateResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderCredentialUpdateResponse.java',
+  'backend/src/main/java/com/anjing/aigc/model/request/ProviderSmokeTestRequest.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/ProviderSmokeTestResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderAuditLogResponse.java',
   'frontend/src/api/model/aigcModel.ts',
   'frontend/src/views/aigc/models/index.vue'
@@ -243,11 +245,45 @@ for (const token of [
   'ACTION_ACTIVE_PROVIDER',
   'ACTION_CREDENTIAL',
   'ACTION_PARAMS',
+  'ACTION_SMOKE_TEST',
   'buildProviderChecks',
   'resolveCostProbe',
-  'ProviderDiagnosticCheck'
+  'ProviderDiagnosticCheck',
+  'smokeTestProvider',
+  'confirmExternalCall',
+  'createSmokeTestTask'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/impl/AigcServiceImpl.java', token)
+}
+
+for (const token of [
+  'MODEL_PROVIDER_SMOKE_TEST',
+  'MODEL_PROVIDER_SMOKE_TEST_FULL'
+]) {
+  requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
+}
+
+for (const token of [
+  'ProviderSmokeTestRequest',
+  'ProviderSmokeTestResponse',
+  'MODEL_PROVIDER_SMOKE_TEST'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/controller/AigcController.java', token)
+}
+
+for (const token of [
+  'fetchSmokeTestProvider',
+  'ProviderSmokeTestRequest',
+  'ProviderSmokeTestResponse'
+]) {
+  requireToken('frontend/src/api/aigc.ts', token)
+}
+
+for (const token of [
+  'modelProviderSmokeTest',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderSmokeTest'
+]) {
+  requireToken('frontend/src/api/paths.ts', token)
 }
 
 for (const token of [

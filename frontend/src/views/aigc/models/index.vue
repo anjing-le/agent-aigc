@@ -125,6 +125,16 @@
                 参数
               </el-button>
               <el-button
+                v-if="supportsSmokeTest(model)"
+                size="small"
+                :icon="Connection"
+                plain
+                :loading="smokeTestingKey === model.id"
+                @click="handleSmokeTest(model)"
+              >
+                测试
+              </el-button>
+              <el-button
                 v-if="!model.active"
                 size="small"
                 type="primary"
@@ -156,6 +166,39 @@
                 >
                   {{ check.label }}: {{ check.message }}
                 </el-tag>
+              </div>
+            </div>
+            <div v-if="smokeResults[model.id]" class="aigc-models__smoke">
+              <div class="aigc-models__probe-summary">
+                <el-tag
+                  size="small"
+                  :type="smokeResults[model.id].success ? 'success' : 'warning'"
+                  effect="plain"
+                >
+                  {{ smokeResults[model.id].message || smokeResults[model.id].status }}
+                </el-tag>
+                <span>{{ formatProbeTime(smokeResults[model.id].checkedAt) }}</span>
+              </div>
+              <div class="aigc-models__smoke-grid">
+                <div>
+                  <span>任务</span>
+                  <strong>{{ smokeResults[model.id].taskId || '-' }}</strong>
+                </div>
+                <div>
+                  <span>资产</span>
+                  <strong>{{ smokeResults[model.id].assetId || '-' }}</strong>
+                </div>
+                <div>
+                  <span>耗时</span>
+                  <strong>{{ formatDuration(smokeResults[model.id].durationMs) }}</strong>
+                </div>
+                <div>
+                  <span>成本</span>
+                  <strong>{{ formatProviderExecutionCost(smokeResults[model.id]) }}</strong>
+                </div>
+              </div>
+              <div v-if="smokeResults[model.id].errorMessage" class="aigc-models__missing">
+                {{ smokeResults[model.id].errorMessage }}
               </div>
             </div>
           </div>
@@ -292,11 +335,12 @@
 
 <script setup lang="ts">
   import { Connection, Key, Refresh, Setting } from '@element-plus/icons-vue'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElMessageBox } from 'element-plus'
   import {
     fetchGetProviderAuditLogs,
     fetchGetModelList,
     fetchProbeProvider,
+    fetchSmokeTestProvider,
     fetchUpdateActiveProvider,
     fetchUpdateProviderCredential,
     fetchUpdateProviderParams
@@ -307,7 +351,8 @@
     ModelInfo,
     ModelListResponse,
     ProviderAuditLogItem,
-    ProviderProbeResponse
+    ProviderProbeResponse,
+    ProviderSmokeTestResponse
   } from '@/api/model/aigcModel'
   import { formatDateTime } from '@/utils/time'
 
@@ -353,6 +398,8 @@
     entries: []
   })
   const probeResults = ref<Record<string, ProviderProbeResponse>>({})
+  const smokeTestingKey = ref('')
+  const smokeResults = ref<Record<string, ProviderSmokeTestResponse>>({})
 
   const modelGroups = computed<
     Array<{
@@ -427,6 +474,7 @@
     if (action === 'active-provider') return '路由'
     if (action === 'credential') return '凭证'
     if (action === 'params') return '参数'
+    if (action === 'smoke-test') return '测试'
     return action || '-'
   }
 
@@ -434,11 +482,13 @@
     if (action === 'active-provider') return 'primary'
     if (action === 'credential') return 'warning'
     if (action === 'params') return 'success'
+    if (action === 'smoke-test') return 'info'
     return 'info'
   }
 
   const supportsCredentialUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
   const supportsParamUpdate = (model: ModelInfo) => model.provider === 'GOOGLE'
+  const supportsSmokeTest = (model: ModelInfo) => model.contentType === 'IMAGE'
 
   const formatCostReadiness = (model: ModelInfo) => {
     if (model.costEstimateConfigured) return formatCostStatus(model.costStatus)
@@ -464,6 +514,23 @@
     if (status === 'PASS') return 'success'
     if (status === 'FAIL') return 'danger'
     return 'warning'
+  }
+
+  const formatDuration = (durationMs?: number) => {
+    if (durationMs === undefined || durationMs === null) return '-'
+    if (durationMs < 1000) return `${durationMs}ms`
+    return `${(durationMs / 1000).toFixed(1)}s`
+  }
+
+  const formatProviderExecutionCost = (result: ProviderSmokeTestResponse) => {
+    const execution = result.providerExecution
+    if (!execution) return '-'
+    if (execution.estimatedCostAmount !== undefined && execution.estimatedCostAmount !== null) {
+      const currency = execution.estimatedCostCurrency || 'USD'
+      const unit = execution.costUnit ? `/${execution.costUnit}` : ''
+      return `${currency} ${Number(execution.estimatedCostAmount).toFixed(6)}${unit}`
+    }
+    return formatCostStatus(execution.costStatus)
   }
 
   const openCredentialDialog = (model: ModelInfo) => {
@@ -588,6 +655,51 @@
       ElMessage.error('Provider 探测失败')
     } finally {
       probingKey.value = ''
+    }
+  }
+
+  const handleSmokeTest = async (model: ModelInfo) => {
+    const confirmExternalCall = model.provider === 'GOOGLE'
+    if (confirmExternalCall) {
+      try {
+        await ElMessageBox.confirm(
+          '这会立即调用外部 Google 图片 Provider，并可能产生模型费用。',
+          '确认运行 smoke test',
+          {
+            confirmButtonText: '确认测试',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+      } catch {
+        return
+      }
+    }
+
+    try {
+      smokeTestingKey.value = model.id
+      const result = await fetchSmokeTestProvider({
+        contentType: model.contentType,
+        provider: model.provider,
+        providerName: model.name,
+        confirmExternalCall,
+        prompt: 'A tiny clean smoke test image for agent-aigc provider validation'
+      })
+      smokeResults.value = {
+        ...smokeResults.value,
+        [model.id]: result
+      }
+      if (result.success) {
+        ElMessage.success(result.message || 'Smoke test 通过')
+      } else {
+        ElMessage.warning(result.message || result.errorMessage || 'Smoke test 未通过')
+      }
+      await loadModelConsole()
+    } catch (error) {
+      console.error('Provider smoke test 失败:', error)
+      ElMessage.error('Provider smoke test 失败')
+    } finally {
+      smokeTestingKey.value = ''
     }
   }
 
@@ -888,6 +1000,46 @@
         height: auto;
         min-height: 24px;
         white-space: normal;
+      }
+    }
+
+    &__smoke {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      padding-top: 10px;
+      border-top: 1px dashed var(--el-border-color-lighter);
+    }
+
+    &__smoke-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 12px;
+
+      div {
+        min-width: 0;
+        padding: 8px;
+        border: 1px solid var(--el-border-color-lighter);
+        border-radius: 6px;
+        background: var(--el-fill-color-light);
+      }
+
+      span {
+        display: block;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        display: block;
+        min-width: 0;
+        margin-top: 4px;
+        overflow: hidden;
+        color: var(--el-text-color-primary);
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
 

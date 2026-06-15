@@ -7,6 +7,7 @@ import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
+import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -15,6 +16,7 @@ import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
+import com.anjing.aigc.model.response.ProviderSmokeTestResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.model.response.PageResult;
 
@@ -99,6 +101,14 @@ public interface AigcService {
      * @return 更新后的参数模板摘要
      */
     ProviderParamUpdateResponse updateProviderParams(ProviderParamUpdateRequest request);
+
+    /**
+     * 显式运行 Provider smoke test。
+     *
+     * @param request smoke test 请求
+     * @return smoke test 结果
+     */
+    ProviderSmokeTestResponse smokeTestProvider(ProviderSmokeTestRequest request);
 
     /**
      * 获取 Provider 管理审计日志。

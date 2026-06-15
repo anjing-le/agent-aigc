@@ -22,6 +22,8 @@ import type {
   ProviderAuditLogSearchParams,
   ProviderRouteUpdateRequest,
   ProviderRouteUpdateResponse,
+  ProviderSmokeTestRequest,
+  ProviderSmokeTestResponse,
   MaterialUploadResponse
 } from './model/aigcModel'
 
@@ -136,6 +138,12 @@ export function fetchGetProviderAuditLogs(params: ProviderAuditLogSearchParams) 
   return openApiRequest('getProviderAuditLogs', {
     query: params
   }) as Promise<ProviderAuditLogListResponse>
+}
+
+export function fetchSmokeTestProvider(data: ProviderSmokeTestRequest) {
+  return openApiRequest('smokeTestProvider', {
+    body: data
+  }) as Promise<ProviderSmokeTestResponse>
 }
 
 export function fetchUploadMaterial(file: File) {

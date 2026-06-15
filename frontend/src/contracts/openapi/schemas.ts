@@ -190,6 +190,15 @@ export interface APIResponseProviderRouteUpdateResponse {
   timestamp?: number
 }
 
+export interface APIResponseProviderSmokeTestResponse {
+  code?: string
+  data?: ProviderSmokeTestResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseString {
   code?: string
   data?: string
@@ -675,6 +684,52 @@ export interface ProviderRouteUpdateResponse {
 }
 
 /**
+ * Provider 显式 smoke test 请求
+ */
+export interface ProviderSmokeTestRequest {
+  /**
+   * 确认会触发外部 Provider 调用；Google Provider 必须显式传 true
+   */
+  confirmExternalCall?: boolean
+  /**
+   * 内容类型；V1 仅支持 IMAGE
+   */
+  contentType: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * 测试 Prompt；为空时使用最小验证 Prompt
+   */
+  prompt?: string
+  /**
+   * Provider 类型或名称
+   */
+  provider: string
+  /**
+   * Provider 展示名称
+   */
+  providerName?: string
+}
+
+export interface ProviderSmokeTestResponse {
+  assetId?: string
+  checkedAt?: string
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  durationMs?: number
+  errorCode?: string
+  errorMessage?: string
+  message?: string
+  model?: string
+  prompt?: string
+  providerExecution?: ProviderExecutionSummary
+  providerName?: string
+  providerType?: string
+  status?: string
+  success?: boolean
+  taskId?: string
+  thumbnailUrl?: string
+  url?: string
+}
+
+/**
  * Refresh token request
  */
 export interface RefreshTokenRequest {
@@ -739,6 +794,7 @@ export interface OpenApiSchemas {
   APIResponseProviderParamUpdateResponse: APIResponseProviderParamUpdateResponse
   APIResponseProviderProbeResponse: APIResponseProviderProbeResponse
   APIResponseProviderRouteUpdateResponse: APIResponseProviderRouteUpdateResponse
+  APIResponseProviderSmokeTestResponse: APIResponseProviderSmokeTestResponse
   APIResponseString: APIResponseString
   APIResponseTaskStatusResponse: APIResponseTaskStatusResponse
   APIResponseVoid: APIResponseVoid
@@ -776,6 +832,8 @@ export interface OpenApiSchemas {
   ProviderProbeResponse: ProviderProbeResponse
   ProviderRouteUpdateRequest: ProviderRouteUpdateRequest
   ProviderRouteUpdateResponse: ProviderRouteUpdateResponse
+  ProviderSmokeTestRequest: ProviderSmokeTestRequest
+  ProviderSmokeTestResponse: ProviderSmokeTestResponse
   RefreshTokenRequest: RefreshTokenRequest
   SaveToGalleryRequest: SaveToGalleryRequest
   TaskStatusResponse: TaskStatusResponse

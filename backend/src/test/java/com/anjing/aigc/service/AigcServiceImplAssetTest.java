@@ -9,11 +9,14 @@ import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
+import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
+import com.anjing.aigc.model.response.ProviderSmokeTestResponse;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.provider.ProviderRouter;
@@ -246,6 +249,65 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void smokeTestProviderRunsMockImageProviderAndSavesAsset() {
+        ImageGenerationProvider mockProvider = givenSingleMockImageProvider();
+        when(mockProvider.generate(org.mockito.ArgumentMatchers.any(AigcTask.class)))
+                .thenReturn(GenerationResult.builder()
+                        .success(true)
+                        .taskId("task-smoke")
+                        .contentType(ContentType.IMAGE)
+                        .url("data:image/svg+xml,test")
+                        .thumbnailUrl("data:image/svg+xml,test")
+                        .prompt("prompt")
+                        .model("mock-image-preview")
+                        .build());
+
+        ProviderSmokeTestRequest request = new ProviderSmokeTestRequest();
+        request.setContentType(ContentType.IMAGE);
+        request.setProvider("OTHER");
+        request.setProviderName("Mock Image Provider");
+        request.setPrompt("smoke prompt");
+
+        ProviderSmokeTestResponse response = aigcService.smokeTestProvider(request);
+
+        assertEquals(true, response.getSuccess());
+        assertEquals("COMPLETED", response.getStatus());
+        assertEquals("mock-image-preview", response.getModel());
+        assertEquals("MOCK_FREE", response.getProviderExecution().getCostStatus());
+        verify(assetRepository).save(org.mockito.ArgumentMatchers.argThat(asset ->
+                asset.getContentType() == ContentType.IMAGE
+                        && "mock-image-preview".equals(asset.getModel())
+                        && "smoke prompt".equals(asset.getPrompt())));
+        verify(taskRepository, org.mockito.Mockito.atLeastOnce()).save(org.mockito.ArgumentMatchers.argThat(task ->
+                task.getContentType() == ContentType.IMAGE
+                        && "provider_smoke_test".equals(task.getIntent())));
+        verify(auditLogService).record(
+                org.mockito.ArgumentMatchers.eq("smoke-test"),
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.eq("OTHER"),
+                org.mockito.ArgumentMatchers.eq("Mock Image Provider"),
+                org.mockito.ArgumentMatchers.eq("OTHER"),
+                org.mockito.ArgumentMatchers.anyMap(),
+                org.mockito.ArgumentMatchers.anyMap());
+    }
+
+    @Test
+    void smokeTestProviderRequiresExplicitExternalConfirmationForGoogle() {
+        givenImageProviders();
+
+        ProviderSmokeTestRequest request = new ProviderSmokeTestRequest();
+        request.setContentType(ContentType.IMAGE);
+        request.setProvider("GOOGLE");
+        request.setProviderName("Google Nano Banana");
+
+        ProviderSmokeTestResponse response = aigcService.smokeTestProvider(request);
+
+        assertEquals(false, response.getSuccess());
+        assertEquals("SKIPPED", response.getStatus());
+        assertEquals("Google smoke test 会触发外部调用，请显式确认", response.getMessage());
+    }
+
+    @Test
     void deleteAssetContinuesWhenLocalFileDeleteFails() throws Exception {
         AigcAsset asset = asset("asset-2");
         asset.setUrl("http://localhost:10003/files/images/asset-2.png");
@@ -295,5 +357,16 @@ class AigcServiceImplAssetTest {
         when(mockProvider.isAvailable()).thenReturn(true);
 
         when(providerRouter.getImageProviders()).thenReturn(List.of(googleProvider, mockProvider));
+    }
+
+    private ImageGenerationProvider givenSingleMockImageProvider() {
+        aigcProperties.getImage().setActiveProvider("mock");
+        when(routeConfigRepository.findByContentType(ContentType.IMAGE)).thenReturn(Optional.empty());
+        ImageGenerationProvider mockProvider = mock(ImageGenerationProvider.class);
+        when(mockProvider.getProviderName()).thenReturn("Mock Image Provider");
+        when(mockProvider.getProviderType()).thenReturn(ContentProvider.ProviderType.OTHER);
+        when(mockProvider.isAvailable()).thenReturn(true);
+        when(providerRouter.getImageProviders()).thenReturn(List.of(mockProvider));
+        return mockProvider;
     }
 }
