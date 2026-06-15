@@ -10,7 +10,7 @@ import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcProviderParamConfigService;
-import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,7 +54,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderParamConfigService paramConfigService;
-    private final LocalAigcStorageService localAigcStorageService;
+    private final AigcStorageService aigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     // API 端点会根据配置动态选择（直连 or 中转）
@@ -221,7 +221,7 @@ public class GoogleImageProvider implements ImageGenerationProvider {
         // 保存第一张图片并返回 URL
         if (imageResult.getImages() != null && !imageResult.getImages().isEmpty()) {
             ImageGenerationResult.GeneratedImage firstImage = imageResult.getImages().get(0);
-            String url = saveImageToLocal(firstImage.getBase64Data(), firstImage.getMimeType(), task.getTaskId());
+            String url = saveImageToStorage(firstImage.getBase64Data(), firstImage.getMimeType(), task.getTaskId());
             if (url == null) {
                 return GenerationResult.failure(
                         task.getTaskId(),
@@ -293,15 +293,15 @@ public class GoogleImageProvider implements ImageGenerationProvider {
     }
     
     /**
-     * 保存图片到本地
+     * 保存图片到 AIGC 存储 adapter
      */
-    private String saveImageToLocal(String base64Data, String mimeType, String taskId) {
+    private String saveImageToStorage(String base64Data, String mimeType, String taskId) {
         try {
             byte[] imageBytes = Base64.getDecoder().decode(base64Data);
             String extension = mimeType.contains("png") ? "png" : "jpg";
             String fileName = taskId + "." + extension;
             
-            return localAigcStorageService.saveBytes("images", fileName, imageBytes);
+            return aigcStorageService.saveBytes("images", fileName, imageBytes);
         } catch (Exception e) {
             log.error("保存图片失败", e);
             return null;

@@ -4,7 +4,7 @@ import com.anjing.aigc.exception.AigcException;
 import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.repository.AigcMaterialRepository;
-import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 
 class AigcMaterialServiceTest {
 
-    private final LocalAigcStorageService storageService = mock(LocalAigcStorageService.class);
+    private final AigcStorageService storageService = mock(AigcStorageService.class);
     private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
     private final AigcMaterialService materialService = new AigcMaterialService(storageService, materialRepository);
 

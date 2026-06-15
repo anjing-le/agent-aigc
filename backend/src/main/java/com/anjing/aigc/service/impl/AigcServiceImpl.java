@@ -47,7 +47,7 @@ import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
 import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
-import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.aigc.exception.AigcException;
 import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.model.response.PageResult;
@@ -96,7 +96,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcAssetRepository assetRepository;
     private final AigcMaterialRepository materialRepository;
     private final AigcReferenceMaterialPolicy referenceMaterialPolicy;
-    private final LocalAigcStorageService localAigcStorageService;
+    private final AigcStorageService aigcStorageService;
 
     @Override
     @Transactional
@@ -1045,7 +1045,7 @@ public class AigcServiceImpl implements AigcService {
     public void deleteAsset(String assetId) {
         AigcAsset asset = assetRepository.findByAssetId(assetId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
-        deleteLocalAssetFiles(asset);
+        deleteAssetFiles(asset);
         assetRepository.deleteByAssetId(asset.getAssetId());
     }
 
@@ -1077,18 +1077,18 @@ public class AigcServiceImpl implements AigcService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private void deleteLocalAssetFiles(AigcAsset asset) {
-        deleteLocalAssetFile(asset.getUrl(), asset.getAssetId(), "url");
+    private void deleteAssetFiles(AigcAsset asset) {
+        deleteAssetFile(asset.getUrl(), asset.getAssetId(), "url");
         if (asset.getThumbnailUrl() != null && !asset.getThumbnailUrl().equals(asset.getUrl())) {
-            deleteLocalAssetFile(asset.getThumbnailUrl(), asset.getAssetId(), "thumbnailUrl");
+            deleteAssetFile(asset.getThumbnailUrl(), asset.getAssetId(), "thumbnailUrl");
         }
     }
 
-    private void deleteLocalAssetFile(String url, String assetId, String fieldName) {
+    private void deleteAssetFile(String url, String assetId, String fieldName) {
         try {
-            localAigcStorageService.deleteByUrl(url);
+            aigcStorageService.deleteByUrl(url);
         } catch (IOException e) {
-            log.warn("资产本地文件删除失败，继续删除资产记录: assetId={}, field={}, url={}",
+            log.warn("资产文件删除失败，继续删除资产记录: assetId={}, field={}, url={}",
                     assetId, fieldName, url, e);
         }
     }

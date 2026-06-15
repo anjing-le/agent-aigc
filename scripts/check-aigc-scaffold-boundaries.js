@@ -280,6 +280,8 @@ for (const token of [
 
 for (const token of [
   'getStorageStatus',
+  'saveBytes',
+  'deleteByUrl',
   'buildLocalStatus',
   'buildOssStatus',
   'cleanupSupported',
@@ -287,6 +289,17 @@ for (const token of [
   'bucketConfigured'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/storage/AigcStorageService.java', token)
+}
+
+for (const relativeFile of [
+  'backend/src/main/java/com/anjing/aigc/service/AigcMaterialService.java',
+  'backend/src/main/java/com/anjing/aigc/service/impl/AigcServiceImpl.java',
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleImageProvider.java',
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleVideoProvider.java',
+  'backend/src/main/java/com/anjing/aigc/provider/google/GoogleAudioProvider.java'
+]) {
+  requireToken(relativeFile, 'AigcStorageService')
+  requireAbsent(relativeFile, /LocalAigcStorageService/, 'direct local storage dependency outside storage adapter boundary')
 }
 
 for (const token of [

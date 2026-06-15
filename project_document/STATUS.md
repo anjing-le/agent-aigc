@@ -13,7 +13,7 @@
 | 本地演示 | Ready | 默认使用 mock provider，无 Google/OneRouter Key 也能端到端创建作品 |
 | 真实模型接入 | In progress | Google GenAI 和 OneRouter 路径保留，支持环境变量配置、页面运行时切换 active provider、加密托管凭证、默认参数模板、角色边界和管理审计 |
 | 作品管理 | V0.9 | 已完成资产管理页、详情溯源、发布到广场、下载、删除、Prompt 复用、卡片/表格视图和存储状态展示 |
-| 素材库 | V0.9 | 已提供上传 API、素材记录、列表/删除 API、前端素材库、任务引用 ID 记录、结果区引用展示、基础引用统计、引用任务预览和本地文件清理；后续补 OSS adapter 和权限隔离 |
+| 素材库 | V0.9 | 已提供上传 API、素材记录、列表/删除 API、前端素材库、任务引用 ID 记录、结果区引用展示、基础引用统计、引用任务预览和文件清理；后续补真实 OSS SDK 和权限隔离 |
 | 前端体验 | V0.9 | 工作台、素材库、我的资产、灵感广场、模型配置已统一到脚手架后台页面范式，并形成 Prompt 复用闭环 |
 
 ## 已完成
@@ -47,7 +47,7 @@
 - Provider 参数模板 V1 已接入：页面通过 `/api/aigc/models/provider-params` 保存 Google 图片/视频/音频默认参数，后端写入 `aigc_provider_param_config`，模型列表返回 `paramConfigSource` 和更新时间；Google 图片宽高比/尺寸、视频比例/清晰度/时长、音频默认音色运行时优先读取页面配置，再回退环境配置。
 - Provider 管理审计 V1 已接入：页面通过 `/api/aigc/models/provider-audits` 查看最近变更，后端写入 `aigc_provider_audit_log`，覆盖 active provider 切换、只写式凭证保存和参数模板保存；审计记录继承脚手架 `GlobalRequestContextHolder` 的 requestId、traceId、tenantId、userId、callerId 和客户端 IP，凭证审计只记录来源和状态，不记录明文。
 - Provider 管理权限 V1 已接入：Provider 路由切换、凭证保存和默认参数模板保存统一经过 `AigcProviderManagementPermissionService`，默认要求 `R_SUPER` 或 `R_ADMIN`；前端统一 HTTP client 通过平台 `REQUEST_HEADERS` 透传 userId、userName、userRoles，拒绝操作会写入 `permission-denied` 审计。
-- AIGC 本地文件保存已收口到 `LocalAigcStorageService`，Google 图片/视频/音频 provider 不再各自硬编码上传目录和访问前缀。
+- AIGC 文件保存已收口到 `AigcStorageService` adapter 边界，素材上传、资产删除和 Google 图片/视频/音频 provider 不再直接依赖本地存储实现。
 - AIGC 存储状态诊断 V1 已接入：新增 `/api/aigc/storage/status`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；资产页展示 activeMode、本地目录可读写、清理能力、URL 前缀和 OSS 配置状态，响应不暴露任何密钥字段。
 - Google 图片 Provider 已加入 429/5xx 短重试、统一 Provider 调用错误码和本地保存失败兜底。
 - 删除资产时会清理本地生成文件和缩略图；清理失败只记录 warning，不阻断资产记录删除。
@@ -69,14 +69,14 @@
 ## 风险与缺口
 
 - 视频/音频 mock 当前是可视化占位，不是真实媒体文件。
-- 素材库和资产库已具备本地文件清理和存储状态诊断；真正 OSS adapter、OSS 清理、文件权限隔离和清理审计仍待产品化。
+- 素材库和资产库已具备统一 storage adapter、文件清理和存储状态诊断；真正 OSS SDK 上传、OSS 清理、文件权限隔离和清理审计仍待产品化。
 - Provider 配置已有运行前探测检查项、显式 smoke test、页面持久化切换、配置来源展示、只写式加密凭证保存、默认参数模板编辑、角色边界、管理审计和密钥脱敏边界；生产级 KMS 托管和批量测试策略仍需要后续管理能力承接。
 - 历史记录和作品广场缺少用户维度、收藏、点赞等产品能力。
 - 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口、基础 Provider 调用观测和配置化成本估算；真实用量计费和聚合报表仍需继续产品化。
 
 ## 推荐下一步
 
-1. 做存储产品化：接入真正 OSS adapter、文件权限隔离、清理审计。
+1. 做存储产品化：接入真正 OSS SDK adapter、文件权限隔离、清理审计。
 2. 做 Provider 管理：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
 3. 做真实调用报表：按 Provider、模型、内容类型聚合成功率、耗时和估算成本。
 4. 做用户维度：资产、素材、广场发布、收藏和点赞的用户隔离。

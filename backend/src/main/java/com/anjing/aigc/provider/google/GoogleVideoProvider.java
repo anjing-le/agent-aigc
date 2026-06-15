@@ -8,7 +8,7 @@ import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.VideoGenerationProvider;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcProviderParamConfigService;
-import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -52,7 +52,7 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderParamConfigService paramConfigService;
-    private final LocalAigcStorageService localAigcStorageService;
+    private final AigcStorageService aigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     private static final String GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -413,7 +413,7 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
                 
                 if (firstVideo.has("video") && firstVideo.get("video").has("videoBytes")) {
                     String base64Data = firstVideo.get("video").get("videoBytes").asText();
-                    return saveVideoToLocal(base64Data, taskId);
+                    return saveVideoToStorage(base64Data, taskId);
                 }
             }
         }
@@ -446,20 +446,20 @@ public class GoogleVideoProvider implements VideoGenerationProvider {
             log.info("视频下载完成, 大小: {} bytes", videoBytes.length);
             
             String fileName = taskId + ".mp4";
-            String url = localAigcStorageService.saveBytes("videos", fileName, videoBytes);
+            String url = aigcStorageService.saveBytes("videos", fileName, videoBytes);
             log.info("视频保存成功: {}", url);
             return url;
         }
     }
     
     /**
-     * 保存视频到本地
+     * 保存视频到 AIGC 存储 adapter
      */
-    private String saveVideoToLocal(String base64Data, String taskId) throws IOException {
+    private String saveVideoToStorage(String base64Data, String taskId) throws IOException {
         byte[] videoBytes = Base64.getDecoder().decode(base64Data);
         
         String fileName = taskId + ".mp4";
-        return localAigcStorageService.saveBytes("videos", fileName, videoBytes);
+        return aigcStorageService.saveBytes("videos", fileName, videoBytes);
     }
     
     private String truncate(String str, int maxLength) {

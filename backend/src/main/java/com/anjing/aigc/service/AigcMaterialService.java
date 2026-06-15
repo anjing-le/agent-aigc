@@ -5,7 +5,7 @@ import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.repository.AigcMaterialRepository;
-import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import com.anjing.util.DateUtils;
 import com.anjing.util.IdUtils;
@@ -39,7 +39,7 @@ public class AigcMaterialService {
             "video/webm", "webm"
     );
 
-    private final LocalAigcStorageService localAigcStorageService;
+    private final AigcStorageService aigcStorageService;
     private final AigcMaterialRepository materialRepository;
 
     public PageResult<MaterialDTO> getMaterialList(Integer current, Integer size, String contentType) {
@@ -67,9 +67,9 @@ public class AigcMaterialService {
         AigcMaterial material = materialRepository.findByMaterialId(materialId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
         try {
-            localAigcStorageService.deleteFile("materials", material.getFileName());
+            aigcStorageService.deleteFile("materials", material.getFileName());
         } catch (IOException e) {
-            log.warn("素材本地文件删除失败，继续删除素材记录: materialId={}, fileName={}",
+            log.warn("素材文件删除失败，继续删除素材记录: materialId={}, fileName={}",
                     material.getMaterialId(), material.getFileName(), e);
         }
         materialRepository.deleteByMaterialId(material.getMaterialId());
@@ -96,7 +96,7 @@ public class AigcMaterialService {
 
         String fileName = "material-" + IdUtils.uuid() + "." + extension;
         try {
-            String url = localAigcStorageService.saveBytes("materials", fileName, file.getBytes());
+            String url = aigcStorageService.saveBytes("materials", fileName, file.getBytes());
             AigcMaterial material = new AigcMaterial();
             material.setMaterialId(IdUtils.uuid());
             material.setFileName(fileName);

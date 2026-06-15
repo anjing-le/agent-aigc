@@ -8,7 +8,7 @@ import com.anjing.aigc.provider.AudioGenerationProvider;
 import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcProviderParamConfigService;
-import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -62,7 +62,7 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
     private final AigcProperties aigcProperties;
     private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderParamConfigService paramConfigService;
-    private final LocalAigcStorageService localAigcStorageService;
+    private final AigcStorageService aigcStorageService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     private static final String GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -284,7 +284,7 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
                 
                 if (data != null && !data.isBlank()) {
                     // 保存音频文件
-                    return saveAudioToLocal(data, mimeType, taskId);
+                    return saveAudioToStorage(data, mimeType, taskId);
                 }
             }
         }
@@ -293,15 +293,15 @@ public class GoogleAudioProvider implements AudioGenerationProvider {
     }
     
     /**
-     * 保存音频到本地
+     * 保存音频到 AIGC 存储 adapter
      */
-    private String saveAudioToLocal(String base64Data, String mimeType, String taskId) throws IOException {
+    private String saveAudioToStorage(String base64Data, String mimeType, String taskId) throws IOException {
         byte[] audioBytes = Base64.getDecoder().decode(base64Data);
         
         String extension = getExtensionFromMimeType(mimeType);
         String fileName = taskId + "_tts." + extension;
         
-        return localAigcStorageService.saveBytes("audio", fileName, audioBytes);
+        return aigcStorageService.saveBytes("audio", fileName, audioBytes);
     }
     
     /**

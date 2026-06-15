@@ -27,7 +27,7 @@ import com.anjing.aigc.repository.AigcProviderParamConfigRepository;
 import com.anjing.aigc.repository.AigcProviderRouteConfigRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.impl.AigcServiceImpl;
-import com.anjing.aigc.service.storage.LocalAigcStorageService;
+import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import org.junit.jupiter.api.Test;
 
@@ -70,7 +70,7 @@ class AigcServiceImplAssetTest {
     private final AigcAssetRepository assetRepository = mock(AigcAssetRepository.class);
     private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
     private final AigcReferenceMaterialPolicy referenceMaterialPolicy = mock(AigcReferenceMaterialPolicy.class);
-    private final LocalAigcStorageService storageService = mock(LocalAigcStorageService.class);
+    private final AigcStorageService storageService = mock(AigcStorageService.class);
     private final AigcServiceImpl aigcService = new AigcServiceImpl(
             routingAgent,
             taskExecutor,
