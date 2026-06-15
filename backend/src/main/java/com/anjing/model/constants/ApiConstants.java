@@ -263,6 +263,7 @@ public class ApiConstants {
         public static final String MATERIALS = "/materials";
         public static final String MATERIAL_DETAIL = "/materials/{materialId}";
         public static final String MATERIAL_TASKS = "/materials/{materialId}/tasks";
+        public static final String MATERIAL_DOWNLOAD = "/materials/{materialId}/download";
         public static final String MATERIAL_UPLOAD = "/materials/upload";
         public static final String STORAGE_STATUS = "/storage/status";
         public static final String STORAGE_AUDITS = "/storage/audits";
@@ -270,6 +271,7 @@ public class ApiConstants {
         public static final String GALLERY_SAVE = "/gallery/save";
         public static final String ASSETS = "/assets";
         public static final String ASSET_DETAIL = "/assets/{assetId}";
+        public static final String ASSET_DOWNLOAD = "/assets/{assetId}/download";
 
         public static final String GENERATE_FULL = BASE + GENERATE;
         public static final String TASK_STATUS_FULL = BASE + TASK_STATUS;
@@ -284,6 +286,7 @@ public class ApiConstants {
         public static final String MATERIALS_FULL = BASE + MATERIALS;
         public static final String MATERIAL_DETAIL_FULL = BASE + MATERIAL_DETAIL;
         public static final String MATERIAL_TASKS_FULL = BASE + MATERIAL_TASKS;
+        public static final String MATERIAL_DOWNLOAD_FULL = BASE + MATERIAL_DOWNLOAD;
         public static final String MATERIAL_UPLOAD_FULL = BASE + MATERIAL_UPLOAD;
         public static final String STORAGE_STATUS_FULL = BASE + STORAGE_STATUS;
         public static final String STORAGE_AUDITS_FULL = BASE + STORAGE_AUDITS;
@@ -291,6 +294,7 @@ public class ApiConstants {
         public static final String GALLERY_SAVE_FULL = BASE + GALLERY_SAVE;
         public static final String ASSETS_FULL = BASE + ASSETS;
         public static final String ASSET_DETAIL_FULL = BASE + ASSET_DETAIL;
+        public static final String ASSET_DOWNLOAD_FULL = BASE + ASSET_DOWNLOAD;
 
         private Aigc() {
         }

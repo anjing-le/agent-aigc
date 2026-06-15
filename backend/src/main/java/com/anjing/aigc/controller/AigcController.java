@@ -21,6 +21,7 @@ import com.anjing.aigc.model.response.ProviderSmokeTestResponse;
 import com.anjing.aigc.model.response.StorageAuditLogResponse;
 import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
+import com.anjing.aigc.service.AigcDownloadService;
 import com.anjing.aigc.service.AigcMaterialService;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.storage.AigcStorageAuditLogService;
@@ -34,6 +35,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -63,6 +66,7 @@ public class AigcController {
 
     private final AigcService aigcService;
     private final AigcMaterialService aigcMaterialService;
+    private final AigcDownloadService aigcDownloadService;
     private final AigcStorageService aigcStorageService;
     private final AigcStorageAuditLogService aigcStorageAuditLogService;
 
@@ -225,6 +229,12 @@ public class AigcController {
         return APIResponse.success(tasks);
     }
 
+    @GetMapping(ApiConstants.Aigc.MATERIAL_DOWNLOAD)
+    @Operation(summary = "授权下载 AIGC 参考素材")
+    public ResponseEntity<Resource> downloadMaterial(@PathVariable String materialId) {
+        return aigcDownloadService.downloadMaterial(materialId);
+    }
+
     /**
      * 获取灵感广场作品列表
      *
@@ -283,6 +293,12 @@ public class AigcController {
     public APIResponse<AssetDetailResponse> getAssetDetail(@PathVariable String assetId) {
         AssetDetailResponse detail = aigcService.getAssetDetail(assetId);
         return APIResponse.success(detail);
+    }
+
+    @GetMapping(ApiConstants.Aigc.ASSET_DOWNLOAD)
+    @Operation(summary = "授权下载 AIGC 资产文件")
+    public ResponseEntity<Resource> downloadAsset(@PathVariable String assetId) {
+        return aigcDownloadService.downloadAsset(assetId);
     }
 
     /**

@@ -1,15 +1,19 @@
 package com.anjing.aigc.service.storage;
 
 import com.anjing.aigc.config.AigcProperties;
+import com.anjing.aigc.model.response.AigcStorageDownloadResource;
 import com.anjing.aigc.model.response.StorageBackendStatusResponse;
 import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.util.DateUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -116,6 +120,31 @@ public class AigcStorageService {
             recordFailure(AigcStorageAuditLogService.ACTION_DELETE_URL, MODE_LOCAL, null, null, url, null, e);
             throw e;
         }
+    }
+
+    public AigcStorageDownloadResource resolveDownload(String url, String fileName) throws IOException {
+        Resource localResource = localAigcStorageService.getResourceByUrl(url);
+        if (localResource != null && localResource.exists()) {
+            return AigcStorageDownloadResource.builder()
+                    .resource(localResource)
+                    .fileName(resolveDownloadFileName(fileName, url))
+                    .contentType(resolveContentType(resolveDownloadFileName(fileName, url)))
+                    .contentLength(localAigcStorageService.getContentLength(url))
+                    .build();
+        }
+
+        if (ossAigcStorageService.isConfigured()) {
+            String authorizedUrl = ossAigcStorageService.buildAuthorizedDownloadUrl(url);
+            if (hasText(authorizedUrl)) {
+                return AigcStorageDownloadResource.builder()
+                        .redirectUri(URI.create(authorizedUrl))
+                        .fileName(resolveDownloadFileName(fileName, url))
+                        .contentType(resolveContentType(resolveDownloadFileName(fileName, url)))
+                        .build();
+            }
+        }
+
+        throw new IOException("文件不存在或不在受管存储边界");
     }
 
     public StorageStatusResponse getStorageStatus() {
@@ -247,5 +276,34 @@ public class AigcStorageService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank() && !value.startsWith("<");
+    }
+
+    private String resolveDownloadFileName(String fileName, String url) {
+        if (hasText(fileName)) {
+            return fileName.trim();
+        }
+        if (url == null || url.isBlank()) {
+            return "aigc-file";
+        }
+        int queryIndex = url.indexOf('?');
+        String withoutQuery = queryIndex >= 0 ? url.substring(0, queryIndex) : url;
+        int slashIndex = withoutQuery.lastIndexOf('/');
+        String resolved = slashIndex >= 0 ? withoutQuery.substring(slashIndex + 1) : withoutQuery;
+        return hasText(resolved) ? resolved : "aigc-file";
+    }
+
+    private String resolveContentType(String fileName) {
+        String lower = fileName == null ? "" : fileName.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".webp")) return "image/webp";
+        if (lower.endsWith(".gif")) return "image/gif";
+        if (lower.endsWith(".mp4")) return "video/mp4";
+        if (lower.endsWith(".mov")) return "video/quicktime";
+        if (lower.endsWith(".webm")) return "video/webm";
+        if (lower.endsWith(".mp3")) return "audio/mpeg";
+        if (lower.endsWith(".wav")) return "audio/wav";
+        if (lower.endsWith(".ogg")) return "audio/ogg";
+        return "application/octet-stream";
     }
 }

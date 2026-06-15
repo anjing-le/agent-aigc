@@ -265,7 +265,11 @@ for (const token of [
   'STORAGE_STATUS',
   'STORAGE_STATUS_FULL',
   'STORAGE_AUDITS',
-  'STORAGE_AUDITS_FULL'
+  'STORAGE_AUDITS_FULL',
+  'ASSET_DOWNLOAD',
+  'ASSET_DOWNLOAD_FULL',
+  'MATERIAL_DOWNLOAD',
+  'MATERIAL_DOWNLOAD_FULL'
 ]) {
   requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
 }
@@ -275,11 +279,15 @@ for (const token of [
   'ProviderSmokeTestResponse',
   'StorageStatusResponse',
   'StorageAuditLogResponse',
+  'AigcDownloadService',
   'AigcStorageAuditLogService',
   'AigcStorageService',
   'MODEL_PROVIDER_SMOKE_TEST',
   'STORAGE_STATUS',
-  'STORAGE_AUDITS'
+  'STORAGE_AUDITS',
+  'ASSET_DOWNLOAD',
+  'MATERIAL_DOWNLOAD',
+  'ResponseEntity<Resource>'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/controller/AigcController.java', token)
 }
@@ -288,6 +296,7 @@ for (const token of [
   'getStorageStatus',
   'saveBytes',
   'deleteByUrl',
+  'resolveDownload',
   'buildLocalStatus',
   'buildOssStatus',
   'OssAigcStorageService',
@@ -304,16 +313,38 @@ for (const token of [
 }
 
 for (const token of [
+  'AigcDownloadService',
+  'findVisibleByAssetId',
+  'findVisibleByMaterialId',
+  'storageService.resolveDownload',
+  'ContentDisposition.attachment'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcDownloadService.java', token)
+}
+
+for (const token of [
+  'getResourceByUrl',
+  'resolvePathByUrl',
+  'startsWith(basePath)'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/storage/LocalAigcStorageService.java', token)
+}
+
+for (const token of [
   'S3Client',
   'PutObjectRequest',
   'DeleteObjectRequest',
+  'GetObjectRequest',
+  'S3Presigner',
   'RequestBody.fromBytes',
   'executeWithRetry',
   'getRetryCount',
   'getRetryIntervalMs',
   'getObjectKeyPrefix',
   'isPathStyleAccess',
-  'isPublicRead'
+  'isPublicRead',
+  'buildAuthorizedDownloadUrl',
+  'presignGetObjectUrl'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/storage/OssAigcStorageService.java', token)
 }
@@ -462,9 +493,23 @@ for (const token of [
   'storageStatus',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageStatus',
   'storageAudits',
-  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits'
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits',
+  'assetDownload',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDownload',
+  'materialDownload',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDownload'
 ]) {
   requireToken('frontend/src/api/paths.ts', token)
+}
+
+for (const token of [
+  'ApiPaths.aigc.assetDownload',
+  'buildRequestContextHeaders',
+  'REQUEST_HEADERS.userId',
+  'fetch(resolveApiPath',
+  'response.blob()'
+]) {
+  requireToken('frontend/src/utils/aigcAsset.ts', token)
 }
 
 for (const token of [

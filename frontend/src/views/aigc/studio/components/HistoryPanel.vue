@@ -196,8 +196,13 @@
   }
 
   /** 处理下载 */
-  const handleDownload = (item: AssetItem) => {
-    downloadAigcAsset(item)
+  const handleDownload = async (item: AssetItem) => {
+    try {
+      await downloadAigcAsset(item)
+    } catch (error) {
+      console.error('下载历史作品失败:', error)
+      ElMessage.error('下载失败，请稍后重试')
+    }
   }
 
   /** 处理分享 */

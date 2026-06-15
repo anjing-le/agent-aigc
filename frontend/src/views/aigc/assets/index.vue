@@ -522,8 +522,13 @@
   }
 
   /** 下载 */
-  const handleDownload = (item: AssetItem) => {
-    downloadAigcAsset(item)
+  const handleDownload = async (item: AssetItem) => {
+    try {
+      await downloadAigcAsset(item)
+    } catch (error) {
+      console.error('下载资产失败:', error)
+      ElMessage.error('下载失败，请稍后重试')
+    }
   }
 
   const handleReuse = (item: AssetItem) => {

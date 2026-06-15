@@ -33,6 +33,16 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/materials/{materialId}",
     operationId: "deleteMaterial"
   },
+  downloadAsset: {
+    method: "GET",
+    path: "/api/aigc/assets/{assetId}/download",
+    operationId: "downloadAsset"
+  },
+  downloadMaterial: {
+    method: "GET",
+    path: "/api/aigc/materials/{materialId}/download",
+    operationId: "downloadMaterial"
+  },
   features: {
     method: "GET",
     path: "/api/test/features",
@@ -220,6 +230,20 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseVoid
     data: NonNullable<Schemas.APIResponseVoid['data']>
+  }
+  downloadAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: File
+    data: unknown
+  }
+  downloadMaterial: {
+    pathParams: { materialId: string }
+    query: undefined
+    request: undefined
+    response: File
+    data: unknown
   }
   features: {
     pathParams: undefined

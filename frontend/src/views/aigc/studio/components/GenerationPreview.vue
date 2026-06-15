@@ -443,9 +443,14 @@
   }
 
   /** 处理下载 */
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!props.result) return
-    downloadAigcAsset(props.result)
+    try {
+      await downloadAigcAsset(props.result)
+    } catch (error) {
+      console.error('下载作品失败:', error)
+      ElMessage.error('下载失败，请稍后重试')
+    }
   }
 
   /** 处理重新生成 */

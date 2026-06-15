@@ -3,6 +3,8 @@ package com.anjing.aigc.service.storage;
 import com.anjing.aigc.config.AigcProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -60,25 +62,56 @@ public class LocalAigcStorageService {
     }
 
     public boolean deleteByUrl(String url) throws IOException {
-        if (url == null || url.isBlank()) {
+        Path path = resolvePathByUrl(url);
+        if (path == null) {
             return false;
+        }
+
+        boolean deleted = Files.deleteIfExists(path);
+        log.debug("AIGC 文件删除结果: {}, path={}", deleted, path);
+        return deleted;
+    }
+
+    public Resource getResourceByUrl(String url) throws IOException {
+        Path path = resolvePathByUrl(url);
+        if (path == null || !Files.isRegularFile(path)) {
+            return null;
+        }
+        return new FileSystemResource(path);
+    }
+
+    public Long getContentLength(String url) throws IOException {
+        Path path = resolvePathByUrl(url);
+        if (path == null || !Files.isRegularFile(path)) {
+            return null;
+        }
+        return Files.size(path);
+    }
+
+    private Path resolvePathByUrl(String url) throws IOException {
+        if (url == null || url.isBlank()) {
+            return null;
         }
 
         String prefix = aigcProperties.getStorage().getLocal().getUrlPrefix();
         String normalizedPrefix = prefix.endsWith("/") ? prefix : prefix + "/";
         if (!url.startsWith(normalizedPrefix)) {
-            return false;
+            return null;
         }
 
         String relativePath = url.substring(normalizedPrefix.length());
-        int separatorIndex = relativePath.indexOf('/');
-        if (separatorIndex <= 0 || separatorIndex == relativePath.length() - 1) {
-            return false;
+        if (relativePath.isBlank() || relativePath.contains("..")) {
+            throw new IOException("非法文件路径: " + relativePath);
         }
 
-        String directory = relativePath.substring(0, separatorIndex);
-        String fileName = relativePath.substring(separatorIndex + 1);
-        return deleteFile(directory, fileName);
+        Path basePath = Path.of(aigcProperties.getStorage().getLocal().getBasePath())
+                .toAbsolutePath()
+                .normalize();
+        Path outputPath = basePath.resolve(relativePath).normalize();
+        if (!outputPath.startsWith(basePath)) {
+            throw new IOException("非法文件路径: " + relativePath);
+        }
+        return outputPath;
     }
 
     private String buildUrl(String directory, String fileName) {

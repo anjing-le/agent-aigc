@@ -11,11 +11,15 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Locale;
 
 @Slf4j
@@ -26,6 +30,7 @@ public class OssAigcStorageService {
     private final AigcProperties aigcProperties;
 
     private volatile S3Client s3Client;
+    private volatile S3Presigner s3Presigner;
 
     public boolean isEnabled() {
         return config().isEnabled();
@@ -79,6 +84,23 @@ public class OssAigcStorageService {
         return deleteObject(objectKey);
     }
 
+    public String buildAuthorizedDownloadUrl(String url) throws IOException {
+        ensureConfigured();
+        String objectKey = resolveObjectKeyFromUrl(url);
+        if (!hasText(objectKey)) {
+            return null;
+        }
+
+        AigcProperties.OssConfig ossConfig = config();
+        if (ossConfig.isSignedUrlEnabled()) {
+            return presignGetObjectUrl(objectKey);
+        }
+        if (ossConfig.isPublicRead()) {
+            return url;
+        }
+        throw new IOException("OSS 私有文件未启用签名访问");
+    }
+
     private boolean deleteObject(String objectKey) throws IOException {
         AigcProperties.OssConfig ossConfig = config();
         DeleteObjectRequest request = DeleteObjectRequest.builder()
@@ -112,6 +134,42 @@ public class OssAigcStorageService {
             }
             return s3Client;
         }
+    }
+
+    private S3Presigner presigner() {
+        S3Presigner current = s3Presigner;
+        if (current != null) {
+            return current;
+        }
+        synchronized (this) {
+            if (s3Presigner == null) {
+                AigcProperties.OssConfig ossConfig = config();
+                s3Presigner = S3Presigner.builder()
+                        .endpointOverride(URI.create(ossConfig.getEndpoint()))
+                        .region(Region.of(hasText(ossConfig.getRegion()) ? ossConfig.getRegion() : "us-east-1"))
+                        .credentialsProvider(StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(ossConfig.getAccessKeyId(), ossConfig.getAccessKeySecret())
+                        ))
+                        .serviceConfiguration(S3Configuration.builder()
+                                .pathStyleAccessEnabled(ossConfig.isPathStyleAccess())
+                                .build())
+                        .build();
+            }
+            return s3Presigner;
+        }
+    }
+
+    private String presignGetObjectUrl(String objectKey) {
+        AigcProperties.OssConfig ossConfig = config();
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(ossConfig.getBucketName())
+                .key(objectKey)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofSeconds(Math.max(60, ossConfig.getSignedUrlExpirationSeconds())))
+                .getObjectRequest(getObjectRequest)
+                .build();
+        return presigner().presignGetObject(presignRequest).url().toString();
     }
 
     private String buildObjectKey(String directory, String fileName) {

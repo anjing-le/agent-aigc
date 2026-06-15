@@ -329,6 +329,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "materialDownload",
+          "backendConstant": "MATERIAL_DOWNLOAD_FULL",
+          "frontendKey": "materialDownload",
+          "path": "/api/aigc/materials/{materialId}/download",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "materialUpload",
           "backendConstant": "MATERIAL_UPLOAD_FULL",
           "frontendKey": "materialUpload",
@@ -391,6 +400,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
             "GET",
             "DELETE"
           ]
+        },
+        {
+          "name": "assetDownload",
+          "backendConstant": "ASSET_DOWNLOAD_FULL",
+          "frontendKey": "assetDownload",
+          "path": "/api/aigc/assets/{assetId}/download",
+          "methods": [
+            "GET"
+          ]
         }
       ]
     },
@@ -446,11 +464,13 @@ export const SERVICE_BOUNDARY_BASE_PATHS = {
 export const SERVICE_BOUNDARY_ROUTE_PATHS = {
   "aigc": {
     "assetDetail": "/api/aigc/assets/{assetId}",
+    "assetDownload": "/api/aigc/assets/{assetId}/download",
     "assets": "/api/aigc/assets",
     "gallery": "/api/aigc/gallery",
     "gallerySave": "/api/aigc/gallery/save",
     "generate": "/api/aigc/generate",
     "materialDetail": "/api/aigc/materials/{materialId}",
+    "materialDownload": "/api/aigc/materials/{materialId}/download",
     "materials": "/api/aigc/materials",
     "materialTasks": "/api/aigc/materials/{materialId}/tasks",
     "materialUpload": "/api/aigc/materials/upload",
