@@ -815,6 +815,7 @@ export interface StorageBackendStatusResponse {
   retryIntervalMs?: number
   signedUrlEnabled?: boolean
   signedUrlExpirationSeconds?: number
+  staticServingEnabled?: boolean
   urlPrefix?: string
   writable?: boolean
 }

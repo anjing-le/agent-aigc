@@ -314,6 +314,7 @@ for (const token of [
   'recordFailure',
   'cleanupSupported',
   'cleanupAuditEnabled',
+  'staticServingEnabled',
   'endpointConfigured',
   'bucketConfigured'
 ]) {
@@ -339,6 +340,26 @@ for (const token of [
   'startsWith(basePath)'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/storage/LocalAigcStorageService.java', token)
+}
+
+for (const token of [
+  'staticServingEnabled'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/config/AigcProperties.java', token)
+}
+
+for (const token of [
+  'static-serving-enabled',
+  'AIGC_LOCAL_STATIC_SERVING_ENABLED'
+]) {
+  requireToken('backend/src/main/resources/application.yml', token)
+}
+
+for (const token of [
+  'staticServingEnabled'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/model/response/StorageBackendStatusResponse.java', token)
+  requireToken('frontend/src/views/aigc/assets/index.vue', token)
 }
 
 for (const token of [

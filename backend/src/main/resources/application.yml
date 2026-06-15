@@ -228,6 +228,7 @@ aigc:
       enabled: true
       base-path: ${AIGC_LOCAL_STORAGE_PATH:./uploads}
       url-prefix: ${AIGC_LOCAL_STORAGE_URL_PREFIX:http://localhost:10003/files}
+      static-serving-enabled: ${AIGC_LOCAL_STATIC_SERVING_ENABLED:true}
     oss:
       enabled: ${AIGC_STORAGE_OSS_ENABLED:false}
       provider: ${AIGC_STORAGE_OSS_PROVIDER:aliyun}

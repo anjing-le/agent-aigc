@@ -23,6 +23,8 @@ public class StorageBackendStatusResponse {
 
     private Boolean cleanupAuditEnabled;
 
+    private Boolean staticServingEnabled;
+
     private String basePath;
 
     private String urlPrefix;

@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 /**
  * WebMvc 配置
  * 
- * <p>配置静态资源映射，用于访问生成的图片、视频、音频等文件</p>
+ * <p>配置静态资源兼容映射。AIGC 私有文件访问优先通过 AIGC preview/download API。</p>
  *
  * @author AIGC Team
  */
@@ -28,8 +28,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // 获取本地存储配置
         AigcProperties.LocalStorageConfig localConfig = aigcProperties.getStorage().getLocal();
         
-        if (localConfig.isEnabled()) {
-            // 将 /files/** 映射到本地存储目录
+        if (localConfig.isEnabled() && localConfig.isStaticServingEnabled()) {
             String basePath = localConfig.getBasePath();
             Path absolutePath = Paths.get(basePath).toAbsolutePath();
             String resourceLocation = "file:" + absolutePath.toString() + "/";
@@ -37,8 +36,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
             registry.addResourceHandler("/files/**")
                     .addResourceLocations(resourceLocation);
             
-            log.info("✅ 静态资源映射配置完成: /files/** -> {}", resourceLocation);
+            log.info("AIGC 本地静态资源兼容映射已启用: /files/** -> {}", resourceLocation);
+        } else if (localConfig.isEnabled()) {
+            log.info("AIGC 本地静态资源兼容映射已关闭，请通过 AIGC preview/download API 访问私有文件");
         }
     }
 }
-

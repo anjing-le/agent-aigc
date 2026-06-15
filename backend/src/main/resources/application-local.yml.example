@@ -95,6 +95,7 @@ aigc:
       enabled: true
       base-path: ./uploads
       url-prefix: http://localhost:10003/files
+      static-serving-enabled: true
     oss:
       enabled: false
       provider: aliyun

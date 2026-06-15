@@ -35,8 +35,29 @@ class AigcStorageServiceTest {
         assertEquals("LOCAL", response.getActiveMode());
         assertTrue(response.getLocal().getAvailable());
         assertTrue(response.getLocal().getWritable());
+        assertTrue(response.getLocal().getStaticServingEnabled());
         assertTrue(response.getAssetCleanupSupported());
         assertEquals("OSS 未启用", response.getOss().getMessage());
+    }
+
+    @Test
+    void getStorageStatusReportsStaticServingSwitchSeparatelyFromLocalStorage() {
+        AigcProperties properties = new AigcProperties();
+        properties.getStorage().getLocal().setBasePath(tempDir.toString());
+        properties.getStorage().getLocal().setUrlPrefix("http://localhost:10003/files");
+        properties.getStorage().getLocal().setStaticServingEnabled(false);
+        AigcStorageService storageService = new AigcStorageService(
+                properties,
+                new LocalAigcStorageService(properties),
+                new OssAigcStorageService(properties),
+                mock(AigcStorageAuditLogService.class)
+        );
+
+        StorageStatusResponse response = storageService.getStorageStatus();
+
+        assertEquals("LOCAL", response.getActiveMode());
+        assertTrue(response.getLocal().getAvailable());
+        assertEquals(false, response.getLocal().getStaticServingEnabled());
     }
 
     @Test

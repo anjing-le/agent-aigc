@@ -200,6 +200,7 @@ public class AigcStorageService {
                 .writable(writable)
                 .cleanupSupported(enabled && configured)
                 .cleanupAuditEnabled(aigcProperties.getStorage().getOss().isCleanupAuditEnabled())
+                .staticServingEnabled(localConfig.isStaticServingEnabled())
                 .basePath(basePath == null ? null : basePath.toString())
                 .urlPrefix(localConfig.getUrlPrefix())
                 .message(message)

@@ -48,6 +48,10 @@
           <strong>{{ storageStatus.local?.urlPrefix || '-' }}</strong>
         </div>
         <div>
+          <span>静态访问</span>
+          <strong>{{ formatStaticServingStatus(storageStatus.local?.staticServingEnabled) }}</strong>
+        </div>
+        <div>
           <span>OSS</span>
           <strong>{{ storageStatus.oss?.message || '-' }}</strong>
         </div>
@@ -676,6 +680,11 @@
   const formatBooleanStatus = (value?: boolean) => {
     if (value === undefined || value === null) return '-'
     return value ? '是' : '否'
+  }
+
+  const formatStaticServingStatus = (value?: boolean) => {
+    if (value === undefined || value === null) return '-'
+    return value ? '兼容开启' : '已关闭'
   }
 
   const getStorageTagType = (status: StorageStatusResponse) => {

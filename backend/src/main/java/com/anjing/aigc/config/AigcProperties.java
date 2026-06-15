@@ -364,6 +364,7 @@ public class AigcProperties {
         private boolean enabled = true;
         private String basePath = "./uploads";
         private String urlPrefix = "http://localhost:10003/files";
+        private boolean staticServingEnabled = true;
     }
     
     @Data
