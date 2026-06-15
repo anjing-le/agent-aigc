@@ -191,6 +191,10 @@ springdoc:
 aigc:
   security:
     credential-master-key: ${AIGC_CREDENTIAL_MASTER_KEY:agent-aigc-local-dev-credential-master-key}
+  provider-management:
+    admin-roles:
+      - R_SUPER
+      - R_ADMIN
   providers:
     mock:
       enabled: ${AIGC_MOCK_ENABLED:true}

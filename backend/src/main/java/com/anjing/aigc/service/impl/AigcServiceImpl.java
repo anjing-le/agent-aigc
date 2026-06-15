@@ -35,6 +35,7 @@ import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcProviderAuditLogService;
+import com.anjing.aigc.service.AigcProviderManagementPermissionService;
 import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
 import com.anjing.aigc.service.AigcProviderRouteConfigService;
@@ -80,6 +81,7 @@ public class AigcServiceImpl implements AigcService {
     private final ProviderRouter providerRouter;
     private final AigcProperties aigcProperties;
     private final AigcProviderAuditLogService auditLogService;
+    private final AigcProviderManagementPermissionService permissionService;
     private final AigcProviderCredentialConfigService credentialConfigService;
     private final AigcProviderParamConfigService paramConfigService;
     private final AigcProviderRouteConfigService routeConfigService;
@@ -306,6 +308,8 @@ public class AigcServiceImpl implements AigcService {
     @Override
     public ProviderRouteUpdateResponse updateActiveProvider(ProviderRouteUpdateRequest request) {
         ContentType contentType = request.getContentType();
+        assertProviderManagementPermission(
+                AigcProviderAuditLogService.ACTION_ACTIVE_PROVIDER, contentType, request.getProvider());
         ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
         if (provider == null) {
             throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "Provider 未注册，无法切换路由");
@@ -355,6 +359,8 @@ public class AigcServiceImpl implements AigcService {
     @Override
     public ProviderParamUpdateResponse updateProviderParams(ProviderParamUpdateRequest request) {
         ContentType contentType = request.getContentType();
+        assertProviderManagementPermission(
+                AigcProviderAuditLogService.ACTION_PARAMS, contentType, request.getProvider());
         ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
         if (provider == null) {
             throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "Provider 未注册，无法更新参数模板");
@@ -389,6 +395,8 @@ public class AigcServiceImpl implements AigcService {
     @Override
     public ProviderCredentialUpdateResponse updateProviderCredential(ProviderCredentialUpdateRequest request) {
         ContentType contentType = request.getContentType();
+        assertProviderManagementPermission(
+                AigcProviderAuditLogService.ACTION_CREDENTIAL, contentType, request.getProvider());
         ContentProvider provider = findProviderForProbe(contentType, request.getProvider(), request.getProviderName());
         if (provider == null) {
             throw new AigcException(AigcErrorCode.PROVIDER_UNAVAILABLE, "Provider 未注册，无法更新凭证");
@@ -648,6 +656,10 @@ public class AigcServiceImpl implements AigcService {
                 beforeSummary,
                 afterSummary
         );
+    }
+
+    private void assertProviderManagementPermission(String action, ContentType contentType, String providerKey) {
+        permissionService.assertCanManageProvider(action, contentType, providerKey);
     }
 
     private Map<String, Object> auditSummary(Object... values) {

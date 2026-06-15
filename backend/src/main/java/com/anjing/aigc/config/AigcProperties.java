@@ -4,7 +4,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,6 +29,11 @@ public class AigcProperties {
      * AIGC 安全配置
      */
     private SecurityConfig security = new SecurityConfig();
+
+    /**
+     * Provider 管理配置
+     */
+    private ProviderManagementConfig providerManagement = new ProviderManagementConfig();
     
     /**
      * 提供商凭证配置
@@ -56,6 +63,14 @@ public class AigcProperties {
          * <p>生产环境应通过环境变量注入；未配置时仅用于本地教学和演示。</p>
          */
         private String credentialMasterKey = "agent-aigc-local-dev-credential-master-key";
+    }
+
+    @Data
+    public static class ProviderManagementConfig {
+        /**
+         * 允许管理 Provider 路由、凭证和参数模板的角色。
+         */
+        private List<String> adminRoles = new ArrayList<>(List.of("R_SUPER", "R_ADMIN"));
     }
     
     // ==================== 提供商凭证配置 ====================

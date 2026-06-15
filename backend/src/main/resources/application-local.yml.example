@@ -22,6 +22,10 @@ aigc:
   security:
     # 本地可保留示例值；生产环境必须通过 AIGC_CREDENTIAL_MASTER_KEY 注入强随机值。
     credential-master-key: your_local_credential_master_key
+  provider-management:
+    admin-roles:
+      - R_SUPER
+      - R_ADMIN
 
   providers:
     # Google GenAI - 图片/视频/TTS 共用一个 Key

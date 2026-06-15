@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,6 +28,7 @@ public class AigcProviderAuditLogService {
     public static final String ACTION_ACTIVE_PROVIDER = "active-provider";
     public static final String ACTION_CREDENTIAL = "credential";
     public static final String ACTION_PARAMS = "params";
+    public static final String ACTION_PERMISSION_DENIED = "permission-denied";
 
     private final AigcProviderAuditLogRepository auditLogRepository;
 
@@ -44,6 +46,20 @@ public class AigcProviderAuditLogService {
         log.setAfterSummary(copySummary(afterSummary));
         applyRequestContext(log);
         return auditLogRepository.save(log);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public AigcProviderAuditLog recordPermissionDenied(ContentType contentType, String providerKey,
+            String managementAction, Map<String, Object> summary) {
+        return record(
+                ACTION_PERMISSION_DENIED,
+                contentType,
+                providerKey,
+                providerKey,
+                null,
+                Map.of(),
+                summary == null ? Map.of() : new LinkedHashMap<>(summary)
+        );
     }
 
     public PageResult<ProviderAuditLogResponse> getAuditLogs(Integer current, Integer size,

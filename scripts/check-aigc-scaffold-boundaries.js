@@ -177,9 +177,20 @@ for (const token of [
   'ACTION_ACTIVE_PROVIDER',
   'ACTION_CREDENTIAL',
   'ACTION_PARAMS',
+  'ACTION_PERMISSION_DENIED',
+  'recordPermissionDenied',
   'getAuditLogs'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderAuditLogService.java', token)
+}
+
+for (const token of [
+  'GlobalRequestContextHolder',
+  'AuthErrorCode.PERMISSION_DENIED',
+  'recordPermissionDenied',
+  'getProviderManagement().getAdminRoles()'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcProviderManagementPermissionService.java', token)
 }
 
 requireAbsentInFiles([
@@ -224,6 +235,16 @@ for (const relativeFile of [
 ]) {
   requireToken(relativeFile, 'credentialConfigService.getGoogleCredential()')
   requireAbsent(relativeFile, /getProviders\(\)\.getGoogle\(\)\.getApiKey\(\)/, 'direct Google credential access')
+}
+
+for (const token of [
+  'AigcProviderManagementPermissionService',
+  'assertProviderManagementPermission',
+  'ACTION_ACTIVE_PROVIDER',
+  'ACTION_CREDENTIAL',
+  'ACTION_PARAMS'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/impl/AigcServiceImpl.java', token)
 }
 
 requireToken(
@@ -304,6 +325,14 @@ for (const token of [
 }
 
 requireToken('frontend/src/views/aigc/models/index.vue', 'formatCredentialStorageMode')
+for (const token of [
+  'REQUEST_HEADERS.userRoles',
+  'REQUEST_HEADERS.userId',
+  'REQUEST_HEADERS.userName',
+  'applyUserContextHeaders'
+]) {
+  requireToken('frontend/src/utils/http/index.ts', token)
+}
 
 for (const token of [
   "OpenApiOperationQuery<'getProviderAuditLogs'>",

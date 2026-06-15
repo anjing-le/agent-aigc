@@ -46,6 +46,8 @@ class AigcServiceImplAssetTest {
     private final ProviderRouter providerRouter = mock(ProviderRouter.class);
     private final AigcProperties aigcProperties = new AigcProperties();
     private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
+    private final AigcProviderManagementPermissionService permissionService =
+            mock(AigcProviderManagementPermissionService.class);
     private final AigcProviderCredentialConfigRepository credentialConfigRepository =
             mock(AigcProviderCredentialConfigRepository.class);
     private final AigcProviderCredentialCodec credentialCodec =
@@ -71,6 +73,7 @@ class AigcServiceImplAssetTest {
             providerRouter,
             aigcProperties,
             auditLogService,
+            permissionService,
             credentialConfigService,
             paramConfigService,
             routeConfigService,
@@ -205,6 +208,7 @@ class AigcServiceImplAssetTest {
         assertEquals("Mock Image Provider", response.getProviderName());
         assertEquals("database", response.getRouteConfigSource());
         assertEquals(true, response.getRoutable());
+        verify(permissionService).assertCanManageProvider("active-provider", ContentType.IMAGE, "OTHER");
         verify(routeConfigRepository).save(org.mockito.ArgumentMatchers.argThat(config ->
                 config.getContentType() == ContentType.IMAGE
                         && "Mock Image Provider".equals(config.getActiveProvider())

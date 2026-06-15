@@ -30,7 +30,7 @@ import {
   showSuccess,
   type HttpErrorContext
 } from './error'
-import { applyRequestContextHeaders } from './context'
+import { applyRequestContextHeaders, REQUEST_HEADERS } from './context'
 import {
   extractResponseMessage,
   isSuccessCode,
@@ -83,9 +83,10 @@ const axiosInstance = axios.create({
 /** 请求拦截器 */
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
-    const { accessToken, language } = useUserStore()
+    const { accessToken, language, getUserInfo } = useUserStore()
     if (accessToken) request.headers.set('Authorization', accessToken)
     applyRequestContextHeaders(request.headers, language)
+    applyUserContextHeaders(request.headers, getUserInfo)
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -99,6 +100,21 @@ axiosInstance.interceptors.request.use(
     return Promise.reject(error)
   }
 )
+
+const applyUserContextHeaders = (
+  headers: InternalAxiosRequestConfig['headers'],
+  userInfo: Partial<Api.Auth.UserInfo>
+) => {
+  if (userInfo.userId) {
+    headers.set(REQUEST_HEADERS.userId, String(userInfo.userId))
+  }
+  if (userInfo.userName) {
+    headers.set(REQUEST_HEADERS.userName, userInfo.userName)
+  }
+  if (userInfo.roles?.length) {
+    headers.set(REQUEST_HEADERS.userRoles, userInfo.roles.join(','))
+  }
+}
 
 /** 响应拦截器 */
 axiosInstance.interceptors.response.use(
