@@ -5,6 +5,8 @@ import type {
   TaskStatusResponse,
   GalleryItem,
   GalleryListResponse,
+  GalleryAuditLogListResponse,
+  GalleryAuditLogSearchParams,
   AssetListResponse,
   GallerySearchParams,
   AssetSearchParams,
@@ -78,6 +80,16 @@ export function fetchGetGalleryList(params: GallerySearchParams) {
   return openApiRequest('getGalleryList', {
     query: params
   }) as Promise<GalleryListResponse>
+}
+
+/**
+ * 获取灵感广场发布和互动审计日志
+ * @param params 查询参数
+ */
+export function fetchGetGalleryAuditLogs(params: GalleryAuditLogSearchParams) {
+  return openApiRequest('getGalleryAuditLogs', {
+    query: params
+  }) as Promise<GalleryAuditLogListResponse>
 }
 
 /**

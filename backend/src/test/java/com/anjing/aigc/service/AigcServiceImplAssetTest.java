@@ -49,6 +49,7 @@ class AigcServiceImplAssetTest {
     private final ProviderRouter providerRouter = mock(ProviderRouter.class);
     private final AigcProperties aigcProperties = new AigcProperties();
     private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
+    private final AigcGalleryAuditLogService galleryAuditLogService = mock(AigcGalleryAuditLogService.class);
     private final AigcProviderCostEstimator costEstimator = new AigcProviderCostEstimator(aigcProperties);
     private final AigcProviderManagementPermissionService permissionService =
             mock(AigcProviderManagementPermissionService.class);
@@ -78,6 +79,7 @@ class AigcServiceImplAssetTest {
             providerRouter,
             aigcProperties,
             auditLogService,
+            galleryAuditLogService,
             costEstimator,
             permissionService,
             credentialConfigService,
@@ -335,11 +337,26 @@ class AigcServiceImplAssetTest {
         AigcAsset asset = asset("asset-published");
         asset.setIsPublished(true);
         when(assetRepository.findVisibleByAssetId("asset-published", null, null)).thenReturn(Optional.of(asset));
+        when(assetRepository.save(asset)).thenReturn(asset);
 
         aigcService.removeFromGallery("asset-published");
 
         assertEquals(false, asset.getIsPublished());
         verify(assetRepository).save(asset);
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_UNPUBLISH, asset);
+    }
+
+    @Test
+    void saveToGalleryPublishesVisibleAssetAndRecordsAudit() {
+        AigcAsset asset = asset("asset-draft");
+        when(assetRepository.findVisibleByAssetId("asset-draft", null, null)).thenReturn(Optional.of(asset));
+        when(assetRepository.save(asset)).thenReturn(asset);
+
+        aigcService.saveToGallery("asset-draft");
+
+        assertEquals(true, asset.getIsPublished());
+        verify(assetRepository).save(asset);
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_PUBLISH, asset);
     }
 
     @Test
@@ -362,6 +379,7 @@ class AigcServiceImplAssetTest {
         assertEquals(3, aigcService.likeGalleryAsset("asset-liked").getLikeCount());
         assertEquals(3, asset.getLikeCount());
         verify(assetRepository).save(asset);
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_LIKE, asset);
     }
 
     @Test
@@ -375,6 +393,7 @@ class AigcServiceImplAssetTest {
         assertEquals(0, aigcService.unlikeGalleryAsset("asset-unliked").getLikeCount());
         assertEquals(0, asset.getLikeCount());
         verify(assetRepository).save(asset);
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_UNLIKE, asset);
     }
 
     @Test
@@ -397,6 +416,7 @@ class AigcServiceImplAssetTest {
         assertEquals(5, aigcService.favoriteGalleryAsset("asset-favorited").getFavoriteCount());
         assertEquals(5, asset.getFavoriteCount());
         verify(assetRepository).save(asset);
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_FAVORITE, asset);
     }
 
     @Test
@@ -410,6 +430,7 @@ class AigcServiceImplAssetTest {
         assertEquals(0, aigcService.unfavoriteGalleryAsset("asset-unfavorited").getFavoriteCount());
         assertEquals(0, asset.getFavoriteCount());
         verify(assetRepository).save(asset);
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_UNFAVORITE, asset);
     }
 
     @Test

@@ -90,6 +90,7 @@ for (const token of [
   'public static class Aigc',
   'public static final String BASE = API_PREFIX + "/aigc"',
   'public static final String GENERATE_FULL = BASE + GENERATE',
+  'public static final String GALLERY_AUDITS_FULL = BASE + GALLERY_AUDITS',
   'public static final String OWNERSHIP_BACKFILL_FULL = BASE + OWNERSHIP_BACKFILL',
   'public static final String ASSET_DETAIL_FULL = BASE + ASSET_DETAIL'
 ]) {
@@ -126,6 +127,25 @@ for (const token of [
   'JpaRepository'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcProviderAuditLogRepository.java', token)
+}
+
+for (const token of [
+  'AigcGalleryAuditLogRepository',
+  'JpaSpecificationExecutor'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcGalleryAuditLogRepository.java', token)
+}
+
+for (const token of [
+  'GlobalRequestContextHolder',
+  'ACTION_PUBLISH',
+  'ACTION_UNPUBLISH',
+  'ACTION_LIKE',
+  'ACTION_FAVORITE',
+  'ACTION_PUBLIC_DOWNLOAD',
+  'getAuditLogs'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcGalleryAuditLogService.java', token)
 }
 
 for (const token of [
@@ -229,6 +249,7 @@ requireAbsentInFiles([
   'backend/src/main/java/com/anjing/aigc/model/response/StorageBackendStatusResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/StorageStatusResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/StorageAuditLogResponse.java',
+  'backend/src/main/java/com/anjing/aigc/model/response/GalleryAuditLogResponse.java',
   'backend/src/main/java/com/anjing/aigc/model/response/ProviderAuditLogResponse.java',
   'frontend/src/api/model/aigcModel.ts',
   'frontend/src/views/aigc/models/index.vue'

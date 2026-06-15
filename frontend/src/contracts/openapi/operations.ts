@@ -83,6 +83,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/auth/me",
     operationId: "getCurrentUser"
   },
+  getGalleryAuditLogs: {
+    method: "GET",
+    path: "/api/aigc/gallery/audits",
+    operationId: "getGalleryAuditLogs"
+  },
   getGalleryList: {
     method: "GET",
     path: "/api/aigc/gallery",
@@ -350,6 +355,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseCurrentUserResponse
     data: NonNullable<Schemas.APIResponseCurrentUserResponse['data']>
+  }
+  getGalleryAuditLogs: {
+    pathParams: undefined
+    query: { action?: string; assetId?: string; current?: number; size?: number; success?: boolean }
+    request: undefined
+    response: Schemas.APIResponsePageResultGalleryAuditLogResponse
+    data: NonNullable<Schemas.APIResponsePageResultGalleryAuditLogResponse['data']>
   }
   getGalleryList: {
     pathParams: undefined

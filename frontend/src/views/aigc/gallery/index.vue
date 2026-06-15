@@ -86,6 +86,61 @@
       </div>
     </div>
 
+    <section class="prompt-gallery__audit">
+      <div class="prompt-gallery__audit-header">
+        <div>
+          <h3>最近广场审计</h3>
+          <p>发布、撤回、点赞、收藏和公开下载的操作记录</p>
+        </div>
+        <div class="prompt-gallery__audit-actions">
+          <el-tag effect="plain">{{ auditTotal }} 条</el-tag>
+          <el-button :icon="Refresh" :loading="auditLoading" @click="loadGalleryAuditLogs">
+            刷新
+          </el-button>
+        </div>
+      </div>
+
+      <el-table
+        v-loading="auditLoading"
+        :data="galleryAuditLogs"
+        size="small"
+        class="prompt-gallery__audit-table"
+        empty-text="暂无广场审计"
+      >
+        <el-table-column label="动作" min-width="120">
+          <template #default="{ row }">
+            <el-tag :type="getGalleryAuditActionTag(row.action)" effect="plain">
+              {{ formatGalleryAuditAction(row.action) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="assetId" label="资产" min-width="160" show-overflow-tooltip />
+        <el-table-column label="类型" width="90">
+          <template #default="{ row }">
+            {{ formatContentType(row.contentType) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="model" label="模型" min-width="140" show-overflow-tooltip />
+        <el-table-column label="结果" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.success ? 'success' : 'danger'" effect="plain">
+              {{ row.success ? '成功' : '失败' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作者" min-width="130" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.operatorName || row.operatorId || row.clientIp || '匿名会话' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="时间" min-width="170">
+          <template #default="{ row }">
+            {{ formatAuditTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
     <!-- 复制成功提示 -->
     <Teleport to="body">
       <Transition name="fade">
@@ -102,12 +157,13 @@
   import PromptCard from './components/PromptCard.vue'
   import {
     fetchFavoriteGalleryAsset,
+    fetchGetGalleryAuditLogs,
     fetchGetGalleryList,
     fetchLikeGalleryAsset,
     fetchUnfavoriteGalleryAsset,
     fetchUnlikeGalleryAsset
   } from '@/api/aigc'
-  import type { ContentType, GalleryItem } from '@/api/model/aigcModel'
+  import type { ContentType, GalleryAuditLogItem, GalleryItem } from '@/api/model/aigcModel'
   import {
     downloadAigcGalleryAsset,
     resolveAigcGalleryPreviewUrl
@@ -125,6 +181,9 @@
   const pageSize = ref(24)
   const likedAssetIds = ref<Set<string>>(new Set())
   const favoritedAssetIds = ref<Set<string>>(new Set())
+  const galleryAuditLogs = ref<GalleryAuditLogItem[]>([])
+  const auditLoading = ref(false)
+  const auditTotal = ref(0)
 
   // 搜索筛选
   const searchKeyword = ref('')
@@ -172,6 +231,16 @@
       value: `${galleryList.value.reduce((sum, item) => sum + (item.favoriteCount || 0), 0)}`
     }
   ])
+
+  const galleryAuditActionLabels: Record<string, string> = {
+    publish: '发布',
+    unpublish: '撤回',
+    like: '点赞',
+    unlike: '取消点赞',
+    favorite: '收藏',
+    unfavorite: '取消收藏',
+    'public-download': '公开下载'
+  }
 
   // ==================== 方法 ====================
 
@@ -313,6 +382,7 @@
     currentPage.value = 1
     dataSource.value = 'api'
     loadData()
+    loadGalleryAuditLogs()
   }
 
   /** 加载更多 */
@@ -341,6 +411,7 @@
         return
       }
       await downloadAigcGalleryAsset(item)
+      await loadGalleryAuditLogs()
     } catch (error) {
       console.error('下载广场作品失败:', error)
       ElMessage.error('下载失败，请稍后重试')
@@ -388,6 +459,7 @@
         likeCount: response.likeCount ?? 0,
         likedByCurrentUser: !item.likedByCurrentUser
       })
+      await loadGalleryAuditLogs()
     } catch (error) {
       console.error('更新点赞失败:', error)
       ElMessage.error('点赞失败，请稍后重试')
@@ -430,6 +502,7 @@
         favoriteCount: response.favoriteCount ?? 0,
         favoritedByCurrentUser: !item.favoritedByCurrentUser
       })
+      await loadGalleryAuditLogs()
     } catch (error) {
       console.error('更新收藏失败:', error)
       ElMessage.error('收藏失败，请稍后重试')
@@ -462,9 +535,58 @@
     })
   }
 
+  const loadGalleryAuditLogs = async () => {
+    try {
+      auditLoading.value = true
+      const response = await fetchGetGalleryAuditLogs({
+        current: 1,
+        size: 8,
+        success: true
+      })
+      galleryAuditLogs.value = response.records || []
+      auditTotal.value = response.total || 0
+    } catch (error) {
+      console.warn('加载广场审计失败:', error)
+      galleryAuditLogs.value = []
+      auditTotal.value = 0
+    } finally {
+      auditLoading.value = false
+    }
+  }
+
+  const formatGalleryAuditAction = (action?: string) => {
+    if (!action) return '-'
+    return galleryAuditActionLabels[action] || action
+  }
+
+  const getGalleryAuditActionTag = (action?: string) => {
+    if (action === 'publish') return 'success'
+    if (action === 'unpublish') return 'warning'
+    if (action === 'like' || action === 'favorite') return 'primary'
+    if (action === 'public-download') return 'info'
+    return 'info'
+  }
+
+  const formatContentType = (contentType?: string) => {
+    const labels: Record<string, string> = {
+      IMAGE: '图片',
+      VIDEO: '视频',
+      AUDIO: '音频'
+    }
+    return contentType ? labels[contentType] || contentType : '-'
+  }
+
+  const formatAuditTime = (value?: string) => {
+    if (!value) return '-'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return value
+    return date.toLocaleString('zh-CN', { hour12: false })
+  }
+
   // ==================== 生命周期 ====================
   onMounted(() => {
     loadData()
+    loadGalleryAuditLogs()
   })
 </script>
 
@@ -573,6 +695,46 @@
 
     &__content {
       min-height: 400px;
+    }
+
+    &__audit {
+      margin-top: 24px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__audit-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__audit-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    &__audit-table {
+      width: 100%;
     }
 
     &__grid {

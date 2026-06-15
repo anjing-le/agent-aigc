@@ -136,6 +136,15 @@ export interface APIResponsePageResultAssetDTO {
   timestamp?: number
 }
 
+export interface APIResponsePageResultGalleryAuditLogResponse {
+  code?: string
+  data?: PageResultGalleryAuditLogResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponsePageResultGalleryDTO {
   code?: string
   data?: PageResultGalleryDTO
@@ -346,6 +355,25 @@ export interface CurrentUserResponse {
    * Login username
    */
   userName: string
+}
+
+export interface GalleryAuditLogResponse {
+  action?: string
+  assetId?: string
+  callerId?: string
+  clientIp?: string
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  createdAt?: string
+  id?: number
+  message?: string
+  model?: string
+  operatorId?: string
+  operatorName?: string
+  promptSnapshot?: string
+  requestId?: string
+  success?: boolean
+  tenantId?: string
+  traceId?: string
 }
 
 export interface GalleryDTO {
@@ -572,6 +600,13 @@ export interface OwnershipBackfillResponse {
 export interface PageResultAssetDTO {
   current?: number
   records?: AssetDTO[]
+  size?: number
+  total?: number
+}
+
+export interface PageResultGalleryAuditLogResponse {
+  current?: number
+  records?: GalleryAuditLogResponse[]
   size?: number
   total?: number
 }
@@ -960,6 +995,7 @@ export interface OpenApiSchemas {
   APIResponseModelListResponse: APIResponseModelListResponse
   APIResponseOwnershipBackfillResponse: APIResponseOwnershipBackfillResponse
   APIResponsePageResultAssetDTO: APIResponsePageResultAssetDTO
+  APIResponsePageResultGalleryAuditLogResponse: APIResponsePageResultGalleryAuditLogResponse
   APIResponsePageResultGalleryDTO: APIResponsePageResultGalleryDTO
   APIResponsePageResultMaterialDTO: APIResponsePageResultMaterialDTO
   APIResponsePageResultProviderAuditLogResponse: APIResponsePageResultProviderAuditLogResponse
@@ -979,6 +1015,7 @@ export interface OpenApiSchemas {
   AudioParams: AudioParams
   AuthTokenResponse: AuthTokenResponse
   CurrentUserResponse: CurrentUserResponse
+  GalleryAuditLogResponse: GalleryAuditLogResponse
   GalleryDTO: GalleryDTO
   GenerateRequest: GenerateRequest
   GenerateResponse: GenerateResponse
@@ -995,6 +1032,7 @@ export interface OpenApiSchemas {
   OwnershipBackfillRequest: OwnershipBackfillRequest
   OwnershipBackfillResponse: OwnershipBackfillResponse
   PageResultAssetDTO: PageResultAssetDTO
+  PageResultGalleryAuditLogResponse: PageResultGalleryAuditLogResponse
   PageResultGalleryDTO: PageResultGalleryDTO
   PageResultMaterialDTO: PageResultMaterialDTO
   PageResultProviderAuditLogResponse: PageResultProviderAuditLogResponse

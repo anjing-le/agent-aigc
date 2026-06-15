@@ -39,6 +39,7 @@ import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
+import com.anjing.aigc.service.AigcGalleryAuditLogService;
 import com.anjing.aigc.service.AigcProviderAuditLogService;
 import com.anjing.aigc.service.AigcProviderCostEstimator;
 import com.anjing.aigc.service.AigcProviderManagementPermissionService;
@@ -90,6 +91,7 @@ public class AigcServiceImpl implements AigcService {
     private final ProviderRouter providerRouter;
     private final AigcProperties aigcProperties;
     private final AigcProviderAuditLogService auditLogService;
+    private final AigcGalleryAuditLogService galleryAuditLogService;
     private final AigcProviderCostEstimator costEstimator;
     private final AigcProviderManagementPermissionService permissionService;
     private final AigcProviderCredentialConfigService credentialConfigService;
@@ -1022,7 +1024,8 @@ public class AigcServiceImpl implements AigcService {
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
         
         asset.setIsPublished(true);
-        assetRepository.save(asset);
+        AigcAsset savedAsset = assetRepository.save(asset);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_PUBLISH, savedAsset);
     }
 
     @Override
@@ -1032,7 +1035,8 @@ public class AigcServiceImpl implements AigcService {
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
 
         asset.setIsPublished(false);
-        assetRepository.save(asset);
+        AigcAsset savedAsset = assetRepository.save(asset);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_UNPUBLISH, savedAsset);
     }
 
     @Override
@@ -1040,7 +1044,9 @@ public class AigcServiceImpl implements AigcService {
     public GalleryDTO likeGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
         asset.setLikeCount(resolveLikeCount(asset) + 1);
-        return toGalleryDTO(assetRepository.save(asset));
+        AigcAsset savedAsset = assetRepository.save(asset);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_LIKE, savedAsset);
+        return toGalleryDTO(savedAsset);
     }
 
     @Override
@@ -1048,7 +1054,9 @@ public class AigcServiceImpl implements AigcService {
     public GalleryDTO unlikeGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
         asset.setLikeCount(Math.max(0, resolveLikeCount(asset) - 1));
-        return toGalleryDTO(assetRepository.save(asset));
+        AigcAsset savedAsset = assetRepository.save(asset);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_UNLIKE, savedAsset);
+        return toGalleryDTO(savedAsset);
     }
 
     @Override
@@ -1056,7 +1064,9 @@ public class AigcServiceImpl implements AigcService {
     public GalleryDTO favoriteGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
         asset.setFavoriteCount(resolveFavoriteCount(asset) + 1);
-        return toGalleryDTO(assetRepository.save(asset));
+        AigcAsset savedAsset = assetRepository.save(asset);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_FAVORITE, savedAsset);
+        return toGalleryDTO(savedAsset);
     }
 
     @Override
@@ -1064,7 +1074,9 @@ public class AigcServiceImpl implements AigcService {
     public GalleryDTO unfavoriteGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
         asset.setFavoriteCount(Math.max(0, resolveFavoriteCount(asset) - 1));
-        return toGalleryDTO(assetRepository.save(asset));
+        AigcAsset savedAsset = assetRepository.save(asset);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_UNFAVORITE, savedAsset);
+        return toGalleryDTO(savedAsset);
     }
 
     @Override

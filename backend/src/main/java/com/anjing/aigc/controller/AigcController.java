@@ -11,6 +11,7 @@ import com.anjing.aigc.model.request.SaveToGalleryRequest;
 import com.anjing.aigc.model.request.OwnershipBackfillRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GalleryAuditLogResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.OwnershipBackfillResponse;
@@ -24,6 +25,7 @@ import com.anjing.aigc.model.response.StorageAuditLogResponse;
 import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.aigc.model.response.TaskStatusResponse;
 import com.anjing.aigc.service.AigcDownloadService;
+import com.anjing.aigc.service.AigcGalleryAuditLogService;
 import com.anjing.aigc.service.AigcMaterialService;
 import com.anjing.aigc.service.AigcOwnershipBackfillService;
 import com.anjing.aigc.service.AigcService;
@@ -72,6 +74,7 @@ public class AigcController {
     private final AigcDownloadService aigcDownloadService;
     private final AigcStorageService aigcStorageService;
     private final AigcStorageAuditLogService aigcStorageAuditLogService;
+    private final AigcGalleryAuditLogService aigcGalleryAuditLogService;
     private final AigcOwnershipBackfillService aigcOwnershipBackfillService;
 
     /**
@@ -222,6 +225,19 @@ public class AigcController {
             @Valid @RequestBody OwnershipBackfillRequest request) {
         OwnershipBackfillResponse response = aigcOwnershipBackfillService.backfill(request);
         return APIResponse.success(response);
+    }
+
+    @GetMapping(ApiConstants.Aigc.GALLERY_AUDITS)
+    @Operation(summary = "获取 AIGC 广场发布和互动审计日志")
+    public APIResponse<PageResult<GalleryAuditLogResponse>> getGalleryAuditLogs(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String assetId,
+            @RequestParam(required = false) Boolean success) {
+        PageResult<GalleryAuditLogResponse> logs = aigcGalleryAuditLogService.getAuditLogs(
+                current, size, action, assetId, success);
+        return APIResponse.success(logs);
     }
 
     @DeleteMapping(ApiConstants.Aigc.MATERIAL_DETAIL)

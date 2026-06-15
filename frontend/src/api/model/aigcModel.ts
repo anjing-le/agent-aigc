@@ -232,6 +232,25 @@ export type AssetSearchParams = OpenApiOperationQuery<'getAssetList'> & {
 /** 灵感广场列表响应 */
 export type GalleryListResponse = PageResult<OpenApiOperationData<'getGalleryList'>, GalleryItem>
 
+/** 灵感广场审计日志项 */
+export type GalleryAuditLogItem = Schemas.GalleryAuditLogResponse
+
+/** 灵感广场审计日志查询参数 */
+export type GalleryAuditLogSearchParams = OpenApiOperationQuery<'getGalleryAuditLogs'> & {
+  /** 操作筛选 */
+  action?: string
+  /** 资产 ID */
+  assetId?: string
+  /** 成功状态筛选 */
+  success?: boolean
+}
+
+/** 灵感广场审计日志列表响应 */
+export type GalleryAuditLogListResponse = PageResult<
+  OpenApiOperationData<'getGalleryAuditLogs'>,
+  GalleryAuditLogItem
+>
+
 /** 资产列表响应 */
 export type AssetListResponse = PageResult<OpenApiOperationData<'getAssetList'>, AssetItem>
 

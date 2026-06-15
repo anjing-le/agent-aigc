@@ -96,6 +96,7 @@
         { "name": "storageAudits", "backendConstant": "STORAGE_AUDITS_FULL", "frontendKey": "storageAudits", "path": "/api/aigc/storage/audits", "methods": ["GET"] },
         { "name": "ownershipBackfill", "backendConstant": "OWNERSHIP_BACKFILL_FULL", "frontendKey": "ownershipBackfill", "path": "/api/aigc/ownership/backfill", "methods": ["POST"] },
         { "name": "gallery", "backendConstant": "GALLERY_FULL", "frontendKey": "gallery", "path": "/api/aigc/gallery", "methods": ["GET"] },
+        { "name": "galleryAudits", "backendConstant": "GALLERY_AUDITS_FULL", "frontendKey": "galleryAudits", "path": "/api/aigc/gallery/audits", "methods": ["GET"] },
         { "name": "gallerySave", "backendConstant": "GALLERY_SAVE_FULL", "frontendKey": "gallerySave", "path": "/api/aigc/gallery/save", "methods": ["POST"] },
         { "name": "galleryPublication", "backendConstant": "GALLERY_PUBLICATION_FULL", "frontendKey": "galleryPublication", "path": "/api/aigc/gallery/{assetId}/publication", "methods": ["DELETE"] },
         { "name": "galleryLike", "backendConstant": "GALLERY_LIKE_FULL", "frontendKey": "galleryLike", "path": "/api/aigc/gallery/{assetId}/like", "methods": ["POST", "DELETE"] },

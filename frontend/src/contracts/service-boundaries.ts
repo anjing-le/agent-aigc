@@ -392,6 +392,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryAudits",
+          "backendConstant": "GALLERY_AUDITS_FULL",
+          "frontendKey": "galleryAudits",
+          "path": "/api/aigc/gallery/audits",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "gallerySave",
           "backendConstant": "GALLERY_SAVE_FULL",
           "frontendKey": "gallerySave",
@@ -544,6 +553,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "gallery": "/api/aigc/gallery",
     "galleryAssetDownload": "/api/aigc/gallery/{assetId}/download",
     "galleryAssetPreview": "/api/aigc/gallery/{assetId}/preview",
+    "galleryAudits": "/api/aigc/gallery/audits",
     "galleryFavorite": "/api/aigc/gallery/{assetId}/favorite",
     "galleryLike": "/api/aigc/gallery/{assetId}/like",
     "galleryPublication": "/api/aigc/gallery/{assetId}/publication",

@@ -79,6 +79,7 @@ export const ApiPaths = {
     storageAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits,
     ownershipBackfill: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.ownershipBackfill,
     gallery: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallery,
+    galleryAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAudits,
     gallerySave: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallerySave,
     galleryPublication: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryPublication, { assetId }),

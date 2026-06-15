@@ -28,6 +28,7 @@ public class AigcDownloadService {
     private final AigcMaterialRepository materialRepository;
     private final AigcStorageService storageService;
     private final AigcOwnershipService ownershipService;
+    private final AigcGalleryAuditLogService galleryAuditLogService;
 
     public ResponseEntity<Resource> downloadAsset(String assetId) {
         AigcAsset asset = assetRepository.findVisibleByAssetId(
@@ -56,7 +57,9 @@ public class AigcDownloadService {
     public ResponseEntity<Resource> downloadPublishedAsset(String assetId) {
         AigcAsset asset = assetRepository.findByAssetIdAndIsPublishedTrue(assetId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
-        return buildStorageResponse(asset.getUrl(), buildAssetFileName(asset), true);
+        ResponseEntity<Resource> response = buildStorageResponse(asset.getUrl(), buildAssetFileName(asset), true);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD, asset);
+        return response;
     }
 
     public ResponseEntity<Resource> downloadMaterial(String materialId) {

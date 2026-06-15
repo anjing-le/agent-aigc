@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class AigcDownloadServiceTest {
@@ -28,11 +29,13 @@ class AigcDownloadServiceTest {
     private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
     private final AigcStorageService storageService = mock(AigcStorageService.class);
     private final AigcOwnershipService ownershipService = new AigcOwnershipService();
+    private final AigcGalleryAuditLogService galleryAuditLogService = mock(AigcGalleryAuditLogService.class);
     private final AigcDownloadService downloadService = new AigcDownloadService(
             assetRepository,
             materialRepository,
             storageService,
-            ownershipService
+            ownershipService,
+            galleryAuditLogService
     );
 
     @Test
@@ -148,6 +151,10 @@ class AigcDownloadServiceTest {
         assertTrue(response.getHeaders()
                 .getFirst(HttpHeaders.CONTENT_DISPOSITION)
                 .startsWith("attachment"));
+        verify(galleryAuditLogService).recordSuccess(
+                AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD,
+                asset
+        );
     }
 
     @Test
