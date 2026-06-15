@@ -14,7 +14,7 @@
 | 前端技术栈 | Vue 3、TypeScript、Vite、Element Plus、路由、HTTP helper、OpenAPI 类型 | `views/aigc` 下的工作台、素材库、资产库、灵感广场、模型配置 |
 | API 契约 | `ApiConstants`、`ApiPaths`、`APIResponse`、`PageResult`、错误码分段 | `/api/aigc/**` 的任务、模型、素材、资产和广场接口 |
 | 服务边界 | `contracts/service-boundaries.json` 作为机器可读边界 | 新增 `aigc` service boundary，并由前后端常量生成和脚本校验 |
-| 请求上下文 | requestId、traceId、locale、timeZone 透传和日志字段 | 异步 AIGC 任务继续保留上下文与错误码，方便追踪生成链路 |
+| 请求上下文 | requestId、traceId、tenantId、userId、locale、timeZone 透传和日志字段 | AIGC 任务、素材、资产和审计从上下文继承归属与追踪字段 |
 | 质量门禁 | `scripts/check-contracts.sh`、`scripts/quality-gate.sh`、OpenAPI runtime probe | 每次业务迭代后继续运行同一套门禁，证明没有破坏底座 |
 
 ## 后端边界
@@ -63,6 +63,8 @@ AIGC 页面只聚焦创作体验：
 6. 运行 `./scripts/check-contracts.sh`，必要时再跑 `./scripts/quality-gate.sh`。
 
 其中 `./scripts/check-aigc-scaffold-boundaries.js` 是 AIGC 专属守卫：它检查后端 AIGC Controller 是否继续使用 `ApiConstants.Aigc`、`APIResponse` 和 `PageResult`，前端 AIGC API 是否继续通过 `openApiRequest` 与 OpenAPI 派生类型调用，页面是否没有直接拼接 `/api/aigc` 或绕过 API 模块。比如 Provider 持久化切换接口 `/api/aigc/models/active-provider`、默认参数模板接口 `/api/aigc/models/provider-params`、管理审计接口 `/api/aigc/models/provider-audits`、存储状态接口 `/api/aigc/storage/status` 和存储审计接口 `/api/aigc/storage/audits` 都必须先进入 service-boundary，再生成前后端常量和 OpenAPI 类型，并分别通过 `AigcProviderRouteConfigService`、`AigcProviderParamConfigService`、`AigcProviderAuditLogService`、`AigcStorageService`、`AigcStorageAuditLogService` 统一处理配置来源、运行时覆盖、审计查询、存储诊断和 storage adapter 切换；素材、资产和 Provider 代码不允许绕过 `AigcStorageService` 直接依赖本地存储实现。对象存储实现通过 `OssAigcStorageService` 的 S3-compatible adapter 接入，默认关闭，不破坏脚手架轻启动；上传/删除重试和清理审计也收口在 storage adapter 边界，由 `AigcStorageAuditLogService` 继承脚手架请求上下文。
+
+AIGC 私有资源归属也从脚手架上下文生长：`AigcOwnershipService` 统一读取 `GlobalRequestContextHolder` 的 userId 和 tenantId，新上传素材、新生成任务、新生成资产写入 owner/tenant；任务、素材、资产和存储审计查询统一走 `findVisible...` 或规格查询过滤。历史空归属数据继续可见，用于兼容本地 demo 和早期迁移，但新增业务入口不再绕过 ownership 边界。
 
 Provider 管理还必须遵守密钥和权限边界：配置页只能展示配置状态、缺失说明、默认参数、来源和存储模式，不能返回或渲染 `apiKey`、`accessKey`、`secretKey`、`accessKeySecret` 等明文字段；日志也只能记录密钥存在性和长度，不能打印前缀或后缀。Provider 凭证写入通过 `/api/aigc/models/provider-credential` 进入 AIGC service-boundary，前端只能调用 `frontend/src/api/aigc.ts`，后端由 `AigcProviderCredentialConfigService` 统一处理“页面保存优先、环境配置兜底”的来源规则，由 `AigcProviderCredentialCodec` 统一处理 AES-GCM 静态加密和旧明文兼容；后续 KMS 替换也只能发生在这个 codec 边界。Provider 路由、凭证和默认参数模板写操作必须先经过 `AigcProviderManagementPermissionService`，从 `GlobalRequestContextHolder` 读取 `userRoles`，默认要求 `R_SUPER` 或 `R_ADMIN`；前端只能在统一 HTTP client 中通过平台 `REQUEST_HEADERS` 透传 userId、userName 和 userRoles，页面不允许手写请求头。Provider 默认参数写入同样通过 service-boundary 和 OpenAPI 类型进入页面，不允许在前端页面手写 URL 或绕过 API 模块。Provider 管理审计继承脚手架 `GlobalRequestContextHolder`，审计 requestId、traceId、tenantId、userId、callerId 和客户端 IP，但凭证审计只记录来源变化、存储模式和配置状态，不记录明文；权限拒绝写入 `permission-denied` 审计。
 

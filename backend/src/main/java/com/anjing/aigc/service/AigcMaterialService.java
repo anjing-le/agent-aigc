@@ -41,18 +41,22 @@ public class AigcMaterialService {
 
     private final AigcStorageService aigcStorageService;
     private final AigcMaterialRepository materialRepository;
+    private final AigcOwnershipService ownershipService;
 
     public PageResult<MaterialDTO> getMaterialList(Integer current, Integer size, String contentType) {
         int pageNumber = current != null && current > 0 ? current - 1 : 0;
         int pageSize = size != null && size > 0 ? Math.min(size, 100) : 20;
         PageRequest pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<AigcMaterial> page;
-        if (contentType == null || contentType.isBlank()) {
-            page = materialRepository.findAll(pageable);
-        } else {
-            page = materialRepository.findByContentTypeStartingWith(contentType.trim().toLowerCase() + "/", pageable);
-        }
+        String contentTypePrefix = contentType == null || contentType.isBlank()
+                ? null
+                : contentType.trim().toLowerCase() + "/";
+        Page<AigcMaterial> page = materialRepository.findVisibleMaterials(
+                ownershipService.currentOwnerId(),
+                ownershipService.currentTenantId(),
+                contentTypePrefix,
+                pageable
+        );
 
         return PageResult.of(
                 page.getContent().stream().map(this::toDTO).toList(),
@@ -64,7 +68,10 @@ public class AigcMaterialService {
 
     @Transactional
     public void deleteMaterial(String materialId) {
-        AigcMaterial material = materialRepository.findByMaterialId(materialId)
+        AigcMaterial material = materialRepository.findVisibleByMaterialId(
+                        materialId,
+                        ownershipService.currentOwnerId(),
+                        ownershipService.currentTenantId())
                 .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
         try {
             aigcStorageService.deleteByUrl(material.getUrl());
@@ -105,6 +112,7 @@ public class AigcMaterialService {
             material.setSize(file.getSize());
             material.setUrl(url);
             material.setCreatedAt(DateUtils.nowLocalDateTime());
+            ownershipService.applyOwnership(material);
             materialRepository.save(material);
 
             return MaterialUploadResponse.builder()

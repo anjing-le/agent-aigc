@@ -44,6 +44,7 @@ import com.anjing.aigc.service.AigcProviderCostEstimator;
 import com.anjing.aigc.service.AigcProviderManagementPermissionService;
 import com.anjing.aigc.service.AigcProviderParamConfigService;
 import com.anjing.aigc.service.AigcReferenceMaterialPolicy;
+import com.anjing.aigc.service.AigcOwnershipService;
 import com.anjing.aigc.service.AigcProviderRouteConfigService;
 import com.anjing.aigc.service.AigcService;
 import com.anjing.aigc.service.AigcTaskExecutor;
@@ -67,6 +68,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -97,6 +99,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcMaterialRepository materialRepository;
     private final AigcReferenceMaterialPolicy referenceMaterialPolicy;
     private final AigcStorageService aigcStorageService;
+    private final AigcOwnershipService ownershipService;
 
     @Override
     @Transactional
@@ -123,6 +126,7 @@ public class AigcServiceImpl implements AigcService {
         task.setProgress(0);
         task.setCreatedAt(DateUtils.nowLocalDateTime());
         task.setUpdatedAt(DateUtils.nowLocalDateTime());
+        ownershipService.applyOwnership(task);
         taskRepository.save(task);
 
         // 3. 异步执行生成任务
@@ -139,7 +143,7 @@ public class AigcServiceImpl implements AigcService {
 
     @Override
     public TaskStatusResponse getTaskStatus(String taskId) {
-        AigcTask task = taskRepository.findByTaskId(taskId)
+        AigcTask task = findVisibleTask(taskId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.TASK_NOT_FOUND));
 
         return toTaskStatusResponse(task);
@@ -148,7 +152,7 @@ public class AigcServiceImpl implements AigcService {
     @Override
     @Transactional
     public GenerateResponse retryTask(String taskId) {
-        AigcTask sourceTask = taskRepository.findByTaskId(taskId)
+        AigcTask sourceTask = findVisibleTask(taskId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.TASK_NOT_FOUND));
 
         GenerateRequest request = new GenerateRequest();
@@ -161,13 +165,21 @@ public class AigcServiceImpl implements AigcService {
 
     @Override
     public PageResult<TaskStatusResponse> getTasksByMaterial(String materialId, Integer current, Integer size) {
-        materialRepository.findByMaterialId(materialId)
+        materialRepository.findVisibleByMaterialId(
+                        materialId,
+                        ownershipService.currentOwnerId(),
+                        ownershipService.currentTenantId())
                 .orElseThrow(() -> new AigcException(AigcErrorCode.MATERIAL_NOT_FOUND));
 
         int pageNumber = current != null && current > 0 ? current - 1 : 0;
         int pageSize = size != null && size > 0 ? Math.min(size, 100) : 20;
         PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<AigcTask> page = taskRepository.findByReferenceMaterialId(toMaterialIdPattern(materialId), pageRequest);
+        Page<AigcTask> page = taskRepository.findVisibleByReferenceMaterialId(
+                toMaterialIdPattern(materialId),
+                ownershipService.currentOwnerId(),
+                ownershipService.currentTenantId(),
+                pageRequest
+        );
 
         return PageResult.of(
                 page.getContent().stream().map(this::toTaskStatusResponse).toList(),
@@ -194,7 +206,7 @@ public class AigcServiceImpl implements AigcService {
 
         // 如果任务完成，获取生成结果
         if (task.getStatus() == TaskStatus.COMPLETED && task.getAssetId() != null) {
-            assetRepository.findByAssetId(task.getAssetId()).ifPresent(asset -> {
+            findVisibleAsset(task.getAssetId()).ifPresent(asset -> {
                 response.setResult(GenerationResult.builder()
                         .assetId(asset.getAssetId())
                         .contentType(asset.getContentType())
@@ -603,6 +615,7 @@ public class AigcServiceImpl implements AigcService {
         task.setStatus(TaskStatus.PROCESSING);
         task.setProgress(10);
         task.setCostStatus(AigcProviderCostEstimator.STATUS_PENDING);
+        ownershipService.applyOwnership(task);
         task.setAgentAnalysis(AgentAnalysis.builder()
                 .intent("provider_smoke_test")
                 .contentType(request.getContentType())
@@ -625,6 +638,8 @@ public class AigcServiceImpl implements AigcService {
         asset.setThumbnailUrl(result.getThumbnailUrl());
         asset.setPrompt(task.getPrompt());
         asset.setModel(result.getModel());
+        asset.setOwnerId(task.getUserId());
+        asset.setTenantId(task.getTenantId());
         asset.setIsPublished(false);
         asset.setCreatedAt(DateUtils.nowLocalDateTime());
         return asset;
@@ -1002,7 +1017,7 @@ public class AigcServiceImpl implements AigcService {
     @Override
     @Transactional
     public void saveToGallery(String assetId) {
-        AigcAsset asset = assetRepository.findByAssetId(assetId)
+        AigcAsset asset = findVisibleAsset(assetId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
         
         asset.setIsPublished(true);
@@ -1013,12 +1028,12 @@ public class AigcServiceImpl implements AigcService {
     public PageResult<AssetDTO> getAssetList(Integer current, Integer size, String contentType) {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
-        Page<AigcAsset> page;
-        if (normalizeFilter(contentType) != null) {
-            page = assetRepository.findByContentType(parseContentType(contentType), pageRequest);
-        } else {
-            page = assetRepository.findAll(pageRequest);
-        }
+        Page<AigcAsset> page = assetRepository.findVisibleAssets(
+                ownershipService.currentOwnerId(),
+                ownershipService.currentTenantId(),
+                parseContentType(contentType),
+                pageRequest
+        );
         
         List<AssetDTO> records = page.getContent().stream()
                 .map(this::toAssetDTO)
@@ -1029,12 +1044,15 @@ public class AigcServiceImpl implements AigcService {
 
     @Override
     public AssetDetailResponse getAssetDetail(String assetId) {
-        AigcAsset asset = assetRepository.findByAssetId(assetId)
+        AigcAsset asset = findVisibleAsset(assetId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
 
         return AssetDetailResponse.builder()
                 .asset(toAssetDTO(asset))
-                .task(taskRepository.findByAssetId(asset.getAssetId())
+                .task(taskRepository.findVisibleByAssetId(
+                                asset.getAssetId(),
+                                ownershipService.currentOwnerId(),
+                                ownershipService.currentTenantId())
                         .map(this::toTaskStatusResponse)
                         .orElse(null))
                 .build();
@@ -1043,7 +1061,7 @@ public class AigcServiceImpl implements AigcService {
     @Override
     @Transactional
     public void deleteAsset(String assetId) {
-        AigcAsset asset = assetRepository.findByAssetId(assetId)
+        AigcAsset asset = findVisibleAsset(assetId)
                 .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
         deleteAssetFiles(asset);
         assetRepository.deleteByAssetId(asset.getAssetId());
@@ -1091,6 +1109,22 @@ public class AigcServiceImpl implements AigcService {
             log.warn("资产文件删除失败，继续删除资产记录: assetId={}, field={}, url={}",
                     assetId, fieldName, url, e);
         }
+    }
+
+    private Optional<AigcAsset> findVisibleAsset(String assetId) {
+        return assetRepository.findVisibleByAssetId(
+                assetId,
+                ownershipService.currentOwnerId(),
+                ownershipService.currentTenantId()
+        );
+    }
+
+    private Optional<AigcTask> findVisibleTask(String taskId) {
+        return taskRepository.findVisibleByTaskId(
+                taskId,
+                ownershipService.currentOwnerId(),
+                ownershipService.currentTenantId()
+        );
     }
 
     private AgentAnalysis resolveAgentAnalysis(AigcTask task) {
@@ -1144,7 +1178,10 @@ public class AigcServiceImpl implements AigcService {
         if (materialIds == null || materialIds.isEmpty()) {
             return List.of();
         }
-        return materialRepository.findByMaterialIdIn(materialIds).stream()
+        return materialRepository.findVisibleByMaterialIdIn(
+                        materialIds,
+                        ownershipService.currentOwnerId(),
+                        ownershipService.currentTenantId()).stream()
                 .map(this::toMaterialDTO)
                 .toList();
     }
@@ -1167,7 +1204,11 @@ public class AigcServiceImpl implements AigcService {
             return List.of();
         }
 
-        List<AigcMaterial> materials = materialRepository.findByMaterialIdIn(expectedIds);
+        List<AigcMaterial> materials = materialRepository.findVisibleByMaterialIdIn(
+                expectedIds,
+                ownershipService.currentOwnerId(),
+                ownershipService.currentTenantId()
+        );
         Set<String> foundIds = materials.stream()
                 .map(AigcMaterial::getMaterialId)
                 .collect(Collectors.toSet());

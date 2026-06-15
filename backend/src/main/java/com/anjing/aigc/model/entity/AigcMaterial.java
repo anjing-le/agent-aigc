@@ -40,6 +40,12 @@ public class AigcMaterial {
     @Column(name = "url", nullable = false, columnDefinition = "TEXT")
     private String url;
 
+    @Column(name = "owner_id", length = 128)
+    private String ownerId;
+
+    @Column(name = "tenant_id", length = 128)
+    private String tenantId;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }

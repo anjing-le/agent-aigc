@@ -71,6 +71,7 @@ class AigcServiceImplAssetTest {
     private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
     private final AigcReferenceMaterialPolicy referenceMaterialPolicy = mock(AigcReferenceMaterialPolicy.class);
     private final AigcStorageService storageService = mock(AigcStorageService.class);
+    private final AigcOwnershipService ownershipService = new AigcOwnershipService();
     private final AigcServiceImpl aigcService = new AigcServiceImpl(
             routingAgent,
             taskExecutor,
@@ -86,7 +87,8 @@ class AigcServiceImplAssetTest {
             assetRepository,
             materialRepository,
             referenceMaterialPolicy,
-            storageService
+            storageService,
+            ownershipService
     );
 
     @Test
@@ -94,7 +96,7 @@ class AigcServiceImplAssetTest {
         AigcAsset asset = asset("asset-1");
         asset.setUrl("http://localhost:10003/files/images/asset-1.png");
         asset.setThumbnailUrl("http://localhost:10003/files/images/asset-1-thumb.png");
-        when(assetRepository.findByAssetId("asset-1")).thenReturn(Optional.of(asset));
+        when(assetRepository.findVisibleByAssetId("asset-1", null, null)).thenReturn(Optional.of(asset));
 
         aigcService.deleteAsset("asset-1");
 
@@ -107,7 +109,7 @@ class AigcServiceImplAssetTest {
     void getAssetDetailReturnsSourceTaskWhenExists() {
         AigcAsset asset = asset("asset-0");
         asset.setUrl("http://localhost:10003/files/images/asset-0.png");
-        when(assetRepository.findByAssetId("asset-0")).thenReturn(Optional.of(asset));
+        when(assetRepository.findVisibleByAssetId("asset-0", null, null)).thenReturn(Optional.of(asset));
 
         AigcTask task = new AigcTask();
         task.setTaskId("task-0");
@@ -130,7 +132,7 @@ class AigcServiceImplAssetTest {
                 .build());
         task.setCreatedAt(LocalDateTime.now());
         task.setUpdatedAt(LocalDateTime.now());
-        when(taskRepository.findByAssetId("asset-0")).thenReturn(Optional.of(task));
+        when(taskRepository.findVisibleByAssetId("asset-0", null, null)).thenReturn(Optional.of(task));
 
         AssetDetailResponse detail = aigcService.getAssetDetail("asset-0");
 
@@ -311,7 +313,7 @@ class AigcServiceImplAssetTest {
     void deleteAssetContinuesWhenLocalFileDeleteFails() throws Exception {
         AigcAsset asset = asset("asset-2");
         asset.setUrl("http://localhost:10003/files/images/asset-2.png");
-        when(assetRepository.findByAssetId("asset-2")).thenReturn(Optional.of(asset));
+        when(assetRepository.findVisibleByAssetId("asset-2", null, null)).thenReturn(Optional.of(asset));
         when(storageService.deleteByUrl(asset.getUrl())).thenThrow(new IOException("delete failed"));
 
         aigcService.deleteAsset("asset-2");
@@ -321,7 +323,7 @@ class AigcServiceImplAssetTest {
 
     @Test
     void deleteAssetRejectsMissingAsset() {
-        when(assetRepository.findByAssetId("missing")).thenReturn(Optional.empty());
+        when(assetRepository.findVisibleByAssetId("missing", null, null)).thenReturn(Optional.empty());
 
         AigcException error = assertThrows(AigcException.class, () -> aigcService.deleteAsset("missing"));
 

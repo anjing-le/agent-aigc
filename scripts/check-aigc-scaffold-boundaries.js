@@ -323,9 +323,74 @@ for (const token of [
   'GlobalRequestContextHolder',
   'ACTION_UPLOAD',
   'ACTION_DELETE_URL',
-  'isCleanupAuditEnabled'
+  'isCleanupAuditEnabled',
+  'ownershipService.currentOwnerId()',
+  'ownershipService.currentTenantId()'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/storage/AigcStorageAuditLogService.java', token)
+}
+
+for (const token of [
+  'AigcOwnershipService',
+  'GlobalRequestContextHolder',
+  'currentOwnerId',
+  'currentTenantId',
+  'applyOwnership',
+  'canAccess'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcOwnershipService.java', token)
+}
+
+for (const token of [
+  'ownerId',
+  'tenantId'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/model/entity/AigcAsset.java', token)
+  requireToken('backend/src/main/java/com/anjing/aigc/model/entity/AigcMaterial.java', token)
+}
+
+for (const token of [
+  'findVisibleAssets',
+  'findVisibleByAssetId'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcAssetRepository.java', token)
+}
+
+for (const token of [
+  'findVisibleMaterials',
+  'findVisibleByMaterialId',
+  'findVisibleByMaterialIdIn'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcMaterialRepository.java', token)
+}
+
+for (const token of [
+  'findVisibleByTaskId',
+  'findVisibleByAssetId',
+  'findVisibleByReferenceMaterialId'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcTaskRepository.java', token)
+}
+
+for (const token of [
+  'AigcOwnershipService',
+  'ownershipService.applyOwnership(material)',
+  'findVisibleMaterials',
+  'findVisibleByMaterialId'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcMaterialService.java', token)
+}
+
+for (const token of [
+  'AigcOwnershipService',
+  'ownershipService.applyOwnership(task)',
+  'findVisibleTask',
+  'findVisibleAsset',
+  'findVisibleAssets',
+  'findVisibleByMaterialIdIn',
+  'findVisibleByReferenceMaterialId'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/impl/AigcServiceImpl.java', token)
 }
 
 for (const token of [

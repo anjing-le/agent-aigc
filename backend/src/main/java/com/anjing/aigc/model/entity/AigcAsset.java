@@ -45,6 +45,14 @@ public class AigcAsset {
     @Column(name = "model", length = 64)
     private String model;
 
+    /** 归属用户 ID，空值兼容历史演示数据 */
+    @Column(name = "owner_id", length = 128)
+    private String ownerId;
+
+    /** 租户 ID，空值兼容历史演示数据 */
+    @Column(name = "tenant_id", length = 128)
+    private String tenantId;
+
     /** 是否已发布到广场 */
     @Column(name = "is_published")
     private Boolean isPublished;
@@ -53,4 +61,3 @@ public class AigcAsset {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
-

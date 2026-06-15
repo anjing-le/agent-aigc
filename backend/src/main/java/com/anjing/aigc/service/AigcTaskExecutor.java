@@ -69,6 +69,8 @@ public class AigcTaskExecutor {
             asset.setThumbnailUrl(result.getThumbnailUrl());
             asset.setPrompt(task.getPrompt());
             asset.setModel(result.getModel() != null ? result.getModel() : task.getModel());
+            asset.setOwnerId(task.getUserId());
+            asset.setTenantId(task.getTenantId());
             asset.setIsPublished(false);
             asset.setCreatedAt(DateUtils.nowLocalDateTime());
             assetRepository.save(asset);

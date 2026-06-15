@@ -39,6 +39,10 @@ public class AigcTask {
     @Column(name = "user_id", length = 64)
     private String userId;
 
+    /** 租户 ID */
+    @Column(name = "tenant_id", length = 128)
+    private String tenantId;
+
     /** 原始提示词 */
     @Column(name = "prompt", columnDefinition = "TEXT")
     private String prompt;

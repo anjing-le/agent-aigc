@@ -43,6 +43,29 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
 
     @Query("""
             select a from AigcAsset a
+            where (:ownerId is null or a.ownerId is null or a.ownerId = :ownerId)
+              and (:tenantId is null or a.tenantId is null or a.tenantId = :tenantId)
+              and (:contentType is null or a.contentType = :contentType)
+            """)
+    Page<AigcAsset> findVisibleAssets(
+            @Param("ownerId") String ownerId,
+            @Param("tenantId") String tenantId,
+            @Param("contentType") ContentType contentType,
+            Pageable pageable);
+
+    @Query("""
+            select a from AigcAsset a
+            where a.assetId = :assetId
+              and (:ownerId is null or a.ownerId is null or a.ownerId = :ownerId)
+              and (:tenantId is null or a.tenantId is null or a.tenantId = :tenantId)
+            """)
+    Optional<AigcAsset> findVisibleByAssetId(
+            @Param("assetId") String assetId,
+            @Param("ownerId") String ownerId,
+            @Param("tenantId") String tenantId);
+
+    @Query("""
+            select a from AigcAsset a
             where a.isPublished = true
               and (:contentType is null or a.contentType = :contentType)
               and (:model is null or lower(a.model) like lower(concat('%', :model, '%')))

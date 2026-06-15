@@ -4,6 +4,7 @@ import com.anjing.aigc.config.AigcProperties;
 import com.anjing.aigc.model.entity.AigcStorageAuditLog;
 import com.anjing.aigc.model.response.StorageAuditLogResponse;
 import com.anjing.aigc.repository.AigcStorageAuditLogRepository;
+import com.anjing.aigc.service.AigcOwnershipService;
 import com.anjing.context.GlobalRequestContextHolder;
 import com.anjing.model.request.GlobalRequestContext;
 import com.anjing.model.response.PageResult;
@@ -32,6 +33,7 @@ public class AigcStorageAuditLogService {
 
     private final AigcProperties aigcProperties;
     private final AigcStorageAuditLogRepository auditLogRepository;
+    private final AigcOwnershipService ownershipService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordSuccess(String action, String backend, String directory, String fileName,
@@ -119,6 +121,20 @@ public class AigcStorageAuditLogService {
             }
             if (success != null) {
                 predicates.add(criteriaBuilder.equal(root.get("success"), success));
+            }
+            String ownerId = ownershipService.currentOwnerId();
+            if (ownerId != null) {
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.isNull(root.get("operatorId")),
+                        criteriaBuilder.equal(root.get("operatorId"), ownerId)
+                ));
+            }
+            String tenantId = ownershipService.currentTenantId();
+            if (tenantId != null) {
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.isNull(root.get("tenantId")),
+                        criteriaBuilder.equal(root.get("tenantId"), tenantId)
+                ));
             }
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         };

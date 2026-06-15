@@ -24,7 +24,9 @@ class AigcMaterialServiceTest {
 
     private final AigcStorageService storageService = mock(AigcStorageService.class);
     private final AigcMaterialRepository materialRepository = mock(AigcMaterialRepository.class);
-    private final AigcMaterialService materialService = new AigcMaterialService(storageService, materialRepository);
+    private final AigcOwnershipService ownershipService = new AigcOwnershipService();
+    private final AigcMaterialService materialService =
+            new AigcMaterialService(storageService, materialRepository, ownershipService);
 
     @Test
     void uploadMaterialStoresSupportedImage() throws Exception {
@@ -79,7 +81,7 @@ class AigcMaterialServiceTest {
         material.setMaterialId("mat-1");
         material.setFileName("material-demo.png");
         material.setUrl("http://localhost:10003/files/materials/material-demo.png");
-        when(materialRepository.findByMaterialId("mat-1")).thenReturn(Optional.of(material));
+        when(materialRepository.findVisibleByMaterialId("mat-1", null, null)).thenReturn(Optional.of(material));
 
         materialService.deleteMaterial("mat-1");
 
@@ -89,7 +91,7 @@ class AigcMaterialServiceTest {
 
     @Test
     void deleteMaterialRejectsMissingRecord() {
-        when(materialRepository.findByMaterialId("missing")).thenReturn(Optional.empty());
+        when(materialRepository.findVisibleByMaterialId("missing", null, null)).thenReturn(Optional.empty());
 
         AigcException error = assertThrows(AigcException.class, () -> materialService.deleteMaterial("missing"));
 

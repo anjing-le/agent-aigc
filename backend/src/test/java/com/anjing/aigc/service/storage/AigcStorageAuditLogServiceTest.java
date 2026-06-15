@@ -3,6 +3,7 @@ package com.anjing.aigc.service.storage;
 import com.anjing.aigc.config.AigcProperties;
 import com.anjing.aigc.model.entity.AigcStorageAuditLog;
 import com.anjing.aigc.repository.AigcStorageAuditLogRepository;
+import com.anjing.aigc.service.AigcOwnershipService;
 import com.anjing.context.GlobalRequestContextHolder;
 import com.anjing.model.request.GlobalRequestContext;
 import com.anjing.model.response.PageResult;
@@ -23,7 +24,9 @@ class AigcStorageAuditLogServiceTest {
 
     private final AigcProperties properties = new AigcProperties();
     private final AigcStorageAuditLogRepository repository = mock(AigcStorageAuditLogRepository.class);
-    private final AigcStorageAuditLogService service = new AigcStorageAuditLogService(properties, repository);
+    private final AigcOwnershipService ownershipService = new AigcOwnershipService();
+    private final AigcStorageAuditLogService service =
+            new AigcStorageAuditLogService(properties, repository, ownershipService);
 
     @AfterEach
     void tearDown() {
