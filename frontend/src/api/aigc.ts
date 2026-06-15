@@ -209,6 +209,16 @@ export function fetchSaveToGallery(assetId: string) {
 }
 
 /**
+ * 从灵感广场撤回作品
+ * @param assetId 资产ID
+ */
+export function fetchRemoveFromGallery(assetId: string) {
+  return openApiRequest('removeFromGallery', {
+    pathParams: { assetId }
+  }) as unknown as Promise<void>
+}
+
+/**
  * 删除资产
  * @param assetId 资产ID
  */

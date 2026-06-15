@@ -80,6 +80,8 @@ export const ApiPaths = {
     ownershipBackfill: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.ownershipBackfill,
     gallery: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallery,
     gallerySave: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallerySave,
+    galleryPublication: (assetId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryPublication, { assetId }),
     galleryAssetPreview: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAssetPreview, { assetId }),
     assets: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assets,

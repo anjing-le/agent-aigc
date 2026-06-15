@@ -81,6 +81,10 @@
                     <el-icon><Share /></el-icon>
                     分享
                   </el-dropdown-item>
+                  <el-dropdown-item v-else command="unshare">
+                    <el-icon><Close /></el-icon>
+                    撤回
+                  </el-dropdown-item>
                   <el-dropdown-item command="delete" divided>
                     <el-icon><Delete /></el-icon>
                     删除
@@ -104,11 +108,12 @@
     Download,
     CopyDocument,
     Share,
+    Close,
     Delete
   } from '@element-plus/icons-vue'
   import { ElMessageBox, ElMessage } from 'element-plus'
   import type { AssetItem, ContentType } from '@/api/model/aigcModel'
-  import { fetchSaveToGallery, fetchDeleteAsset } from '@/api/aigc'
+  import { fetchSaveToGallery, fetchRemoveFromGallery, fetchDeleteAsset } from '@/api/aigc'
   import { formatDate } from '@/utils/time'
   import { downloadAigcAsset, resolveAigcAssetPreviewUrl } from '@/utils/aigcAsset'
 
@@ -189,6 +194,9 @@
       case 'share':
         await handleShare(item)
         break
+      case 'unshare':
+        await handleUnshare(item)
+        break
       case 'delete':
         await handleDelete(item)
         break
@@ -214,6 +222,23 @@
     } catch (error) {
       console.error('分享失败:', error)
       ElMessage.error('分享失败')
+    }
+  }
+
+  const handleUnshare = async (item: AssetItem) => {
+    try {
+      await ElMessageBox.confirm('撤回后作品将不再出现在灵感广场，确认撤回吗？', '撤回发布', {
+        type: 'warning'
+      })
+
+      await fetchRemoveFromGallery(item.id)
+      item.isPublished = false
+      ElMessage.success('已从灵感广场撤回')
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('撤回失败:', error)
+        ElMessage.error('撤回失败')
+      }
     }
   }
 

@@ -168,6 +168,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/auth/refresh",
     operationId: "refreshToken"
   },
+  removeFromGallery: {
+    method: "DELETE",
+    path: "/api/aigc/gallery/{assetId}/publication",
+    operationId: "removeFromGallery"
+  },
   retryTask: {
     method: "POST",
     path: "/api/aigc/task/{taskId}/retry",
@@ -439,6 +444,13 @@ export interface OpenApiOperationTypes {
     request: Schemas.RefreshTokenRequest
     response: Schemas.APIResponseAuthTokenResponse
     data: NonNullable<Schemas.APIResponseAuthTokenResponse['data']>
+  }
+  removeFromGallery: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseVoid
+    data: NonNullable<Schemas.APIResponseVoid['data']>
   }
   retryTask: {
     pathParams: { taskId: string }

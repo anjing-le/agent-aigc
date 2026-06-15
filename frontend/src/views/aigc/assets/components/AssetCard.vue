@@ -49,6 +49,16 @@
       >
         发布
       </el-button>
+      <el-button
+        v-else
+        size="small"
+        :icon="Close"
+        type="warning"
+        plain
+        @click="$emit('unpublish')"
+      >
+        撤回
+      </el-button>
       <el-button size="small" :icon="Delete" type="danger" plain @click="$emit('delete')">
         删除
       </el-button>
@@ -65,6 +75,7 @@
     View,
     Download,
     Share,
+    Close,
     Delete
   } from '@element-plus/icons-vue'
   import type { AssetItem, ContentType } from '@/api/model/aigcModel'
@@ -79,6 +90,7 @@
     preview: []
     download: []
     publish: []
+    unpublish: []
     delete: []
   }
 

@@ -142,6 +142,13 @@ public interface AigcService {
     void saveToGallery(String assetId);
 
     /**
+     * 从灵感广场撤回作品
+     *
+     * @param assetId 资产ID
+     */
+    void removeFromGallery(String assetId);
+
+    /**
      * 获取我的资产列表
      *
      * @param current 当前页

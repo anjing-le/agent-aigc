@@ -294,6 +294,13 @@ public class AigcController {
         return APIResponse.success(null);
     }
 
+    @DeleteMapping(ApiConstants.Aigc.GALLERY_PUBLICATION)
+    @Operation(summary = "从灵感广场撤回作品")
+    public APIResponse<Void> removeFromGallery(@PathVariable String assetId) {
+        aigcService.removeFromGallery(assetId);
+        return APIResponse.success(null);
+    }
+
     /**
      * 获取我的资产列表
      *

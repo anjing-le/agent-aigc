@@ -608,12 +608,15 @@ for (const token of [
 requireToken('frontend/src/utils/aigcAsset.ts', 'thumbnailUrl || item.previewUrl || item.url')
 
 for (const token of [
+  'GALLERY_PUBLICATION_FULL',
   'GALLERY_ASSET_PREVIEW_FULL'
 ]) {
   requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
 }
 
 for (const token of [
+  'GALLERY_PUBLICATION',
+  'removeFromGallery',
   'GALLERY_ASSET_PREVIEW',
   'previewGalleryAsset',
   'previewPublishedAsset'
@@ -716,6 +719,8 @@ for (const token of [
   'modelProviderCredential: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderCredential',
   'modelProviderParams: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderParams',
   'modelProviderAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderAudits',
+  'galleryPublication: (assetId: string | number)',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryPublication',
   'assetDetail: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
 ]) {
@@ -728,6 +733,7 @@ for (const token of [
   "openApiRequest('getTaskStatus'",
   "openApiRequest('getGalleryList'",
   "openApiRequest('getAssetList'",
+  "openApiRequest('removeFromGallery'",
   "openApiRequest('updateActiveProvider'",
   "openApiRequest('updateProviderCredential'",
   "openApiRequest('updateProviderParams'",
@@ -735,6 +741,22 @@ for (const token of [
   "openApiRequest('uploadMaterial'"
 ]) {
   requireToken('frontend/src/api/aigc.ts', token)
+}
+
+for (const token of [
+  'fetchRemoveFromGallery',
+  'handleUnpublish',
+  'syncAssetPublishState'
+]) {
+  requireToken('frontend/src/views/aigc/assets/index.vue', token)
+}
+
+for (const token of [
+  'fetchRemoveFromGallery',
+  'handleUnshare',
+  'command="unshare"'
+]) {
+  requireToken('frontend/src/views/aigc/studio/components/HistoryPanel.vue', token)
 }
 
 for (const token of [

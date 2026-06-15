@@ -155,6 +155,7 @@
           @preview="handlePreview(item)"
           @download="handleDownload(item)"
           @publish="handlePublish(item)"
+          @unpublish="handleUnpublish(item)"
           @delete="handleDelete(item)"
         />
       </div>
@@ -214,6 +215,16 @@
               >
                 发布
               </el-button>
+              <el-button
+                v-else
+                size="small"
+                type="warning"
+                plain
+                :icon="Close"
+                @click="handleUnpublish(row)"
+              >
+                撤回
+              </el-button>
               <el-button size="small" type="danger" plain :icon="Delete" @click="handleDelete(row)">
                 删除
               </el-button>
@@ -271,6 +282,14 @@
               @click="handlePublish(previewItem)"
             >
               发布到广场
+            </el-button>
+            <el-button
+              v-else
+              type="warning"
+              :icon="Close"
+              @click="handleUnpublish(previewItem)"
+            >
+              从广场撤回
             </el-button>
           </div>
         </div>
@@ -358,6 +377,7 @@
 
 <script setup lang="ts">
   import {
+    Close,
     Delete,
     Download,
     Grid,
@@ -378,6 +398,7 @@
     fetchDeleteAsset,
     fetchGetStorageAuditLogs,
     fetchGetStorageStatus,
+    fetchRemoveFromGallery,
     fetchSaveToGallery
   } from '@/api/aigc'
   import type {
@@ -553,14 +574,38 @@
   const handlePublish = async (item: AssetItem) => {
     try {
       await fetchSaveToGallery(item.id)
-      item.isPublished = true
-      if (previewItem.value?.id === item.id) {
-        previewItem.value.isPublished = true
-      }
+      syncAssetPublishState(item.id, true)
       ElMessage.success('已发布到灵感广场')
     } catch (error) {
       console.error('发布失败:', error)
       ElMessage.error('发布失败')
+    }
+  }
+
+  const handleUnpublish = async (item: AssetItem) => {
+    try {
+      await ElMessageBox.confirm('撤回后作品将不再出现在灵感广场，确认撤回吗？', '撤回发布', {
+        type: 'warning'
+      })
+
+      await fetchRemoveFromGallery(item.id)
+      syncAssetPublishState(item.id, false)
+      ElMessage.success('已从灵感广场撤回')
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error('撤回失败:', error)
+        ElMessage.error('撤回失败')
+      }
+    }
+  }
+
+  const syncAssetPublishState = (assetId: string, isPublished: boolean) => {
+    const target = assetList.value.find((asset) => asset.id === assetId)
+    if (target) {
+      target.isPublished = isPublished
+    }
+    if (previewItem.value?.id === assetId) {
+      previewItem.value.isPublished = isPublished
     }
   }
 

@@ -401,6 +401,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryPublication",
+          "backendConstant": "GALLERY_PUBLICATION_FULL",
+          "frontendKey": "galleryPublication",
+          "path": "/api/aigc/gallery/{assetId}/publication",
+          "methods": [
+            "DELETE"
+          ]
+        },
+        {
           "name": "galleryAssetPreview",
           "backendConstant": "GALLERY_ASSET_PREVIEW_FULL",
           "frontendKey": "galleryAssetPreview",
@@ -505,6 +514,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "assets": "/api/aigc/assets",
     "gallery": "/api/aigc/gallery",
     "galleryAssetPreview": "/api/aigc/gallery/{assetId}/preview",
+    "galleryPublication": "/api/aigc/gallery/{assetId}/publication",
     "gallerySave": "/api/aigc/gallery/save",
     "generate": "/api/aigc/generate",
     "materialDetail": "/api/aigc/materials/{materialId}",

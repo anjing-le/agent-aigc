@@ -1026,6 +1026,16 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    @Transactional
+    public void removeFromGallery(String assetId) {
+        AigcAsset asset = findVisibleAsset(assetId)
+                .orElseThrow(() -> new AigcException(AigcErrorCode.ASSET_NOT_FOUND));
+
+        asset.setIsPublished(false);
+        assetRepository.save(asset);
+    }
+
+    @Override
     public PageResult<AssetDTO> getAssetList(Integer current, Integer size, String contentType) {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         

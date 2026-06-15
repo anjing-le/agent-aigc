@@ -29,7 +29,7 @@
 - 前端创作工坊支持任务提交、进度轮询、Agent 决策展示、生成结果预览、历史记录和作品广场入口。
 - 创作工作台支持 `taskId` URL 恢复：创建或重试任务后会同步任务 ID 到路由，刷新页面或复制链接回来可继续读取任务状态、恢复结果并刷新历史。
 - 失败任务支持从工作台一键重试；重试接口继续复用创作主链路和 service-boundary 契约。
-- 资产下载逻辑已收口为前端统一工具，创作结果、历史记录和我的资产页复用同一套下载行为；我的资产页支持发布到灵感广场。
+- 资产下载逻辑已收口为前端统一工具，创作结果、历史记录和我的资产页复用同一套下载行为；我的资产页和工作台历史记录支持发布到灵感广场及撤回发布。
 - 资产详情接口和弹窗已联动来源任务，可回看任务状态、Prompt 和参考素材。
 - 生成任务会持久化 Agent 分析快照，资产详情可回看清洗 Prompt、优化 Prompt、置信度和参数摘要。
 - 任务状态新增 Provider 调用观测摘要，创作台和资产详情可查看实际 Provider、模型、耗时、成本统计状态和估算金额。
@@ -56,6 +56,7 @@
 - AIGC 历史归属回填 V1 已接入：新增 `/api/aigc/ownership/backfill` 治理接口，默认 dry-run 只统计资产、素材和任务中 owner/user/tenant 为空的候选行；模型配置页新增数据治理区块，可先检查候选数量，再由管理角色显式 `confirmBackfill=true` 把历史空归属数据回填到当前脚手架请求上下文的 userId/tenantId，执行成功会进入管理审计。
 - AIGC 私有文件访问 V1 已接入：新增 `/api/aigc/assets/{assetId}/download`、`/api/aigc/materials/{materialId}/download`、`/api/aigc/assets/{assetId}/preview` 和 `/api/aigc/materials/{materialId}/preview` 授权入口，访问前复用 owner/tenant 可见性查询；本地文件由后端在受管目录内校验后返回，OSS 文件在授权后按 public-read 或 signed URL 配置重定向，前端下载动作携带脚手架 request context 和用户上下文头，资产/素材核心页面预览不再直接渲染裸 `/files/**` URL；本地 `/files/**` 静态兼容映射已拆成 `AIGC_LOCAL_STATIC_SERVING_ENABLED` 独立开关，dev/demo 可开启，生产部署建议关闭，并在存储状态页可见。
 - AIGC 广场公开预览 V1 已接入：新增 `/api/aigc/gallery/{assetId}/preview`，只允许 `isPublished=true` 的作品公开预览；Gallery DTO 返回 `previewUrl/publicAccessMode=published-preview`，前端灵感广场卡片使用公开预览入口或静态后备外链，不再依赖原始存储 URL。
+- AIGC 广场发布治理 V1 已接入：新增 `/api/aigc/gallery/{assetId}/publication` 撤回边界，发布和撤回都复用资产 owner/tenant 可见性校验；资产中心卡片/表格/预览弹窗和工作台历史记录可同步更新发布状态。
 - AIGC 存储状态诊断 V1 已接入：新增 `/api/aigc/storage/status`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；资产页展示 activeMode、本地目录可读写、清理能力、URL 前缀和 OSS 配置状态，响应不暴露任何密钥字段。
 - Google 图片 Provider 已加入 429/5xx 短重试、统一 Provider 调用错误码和本地保存失败兜底。
 - 删除资产时会清理本地生成文件和缩略图；清理失败只记录 warning，不阻断资产记录删除。
@@ -84,7 +85,7 @@
 
 ## 推荐下一步
 
-1. 做广场产品化：公开下载策略、分享策略、点赞/收藏和发布撤回。
+1. 做广场产品化：公开下载策略、分享策略、点赞/收藏和发布记录审计。
 2. 做 Provider 管理：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
 3. 做真实调用报表：按 Provider、模型、内容类型聚合成功率、耗时和估算成本。
 4. 做用户维度：资产、素材、广场发布、收藏和点赞的用户隔离。

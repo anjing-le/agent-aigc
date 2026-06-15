@@ -330,6 +330,27 @@ class AigcServiceImplAssetTest {
         assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
     }
 
+    @Test
+    void removeFromGalleryUnpublishesVisibleAsset() {
+        AigcAsset asset = asset("asset-published");
+        asset.setIsPublished(true);
+        when(assetRepository.findVisibleByAssetId("asset-published", null, null)).thenReturn(Optional.of(asset));
+
+        aigcService.removeFromGallery("asset-published");
+
+        assertEquals(false, asset.getIsPublished());
+        verify(assetRepository).save(asset);
+    }
+
+    @Test
+    void removeFromGalleryRejectsMissingAsset() {
+        when(assetRepository.findVisibleByAssetId("missing", null, null)).thenReturn(Optional.empty());
+
+        AigcException error = assertThrows(AigcException.class, () -> aigcService.removeFromGallery("missing"));
+
+        assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
+    }
+
     private AigcAsset asset(String assetId) {
         AigcAsset asset = new AigcAsset();
         asset.setAssetId(assetId);
