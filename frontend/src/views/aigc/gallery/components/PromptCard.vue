@@ -46,6 +46,17 @@
             {{ item.likeCount || 0 }}
           </el-button>
 
+          <el-button
+            size="small"
+            :icon="Collection"
+            :type="item.favoritedByCurrentUser ? 'success' : undefined"
+            plain
+            class="prompt-card__favorite-btn"
+            @click.stop="handleFavorite"
+          >
+            {{ item.favoriteCount || 0 }}
+          </el-button>
+
           <!-- 复制按钮 -->
           <el-button
             type="primary"
@@ -63,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-  import { Picture, User, DocumentCopy, Star } from '@element-plus/icons-vue'
+  import { Picture, User, DocumentCopy, Star, Collection } from '@element-plus/icons-vue'
   import type { GalleryItem, ContentType } from '@/api/model/aigcModel'
   import { resolveAigcGalleryPreviewUrl } from '@/utils/aigcAsset'
 
@@ -75,6 +86,7 @@
     copy: [item: GalleryItem]
     use: [item: GalleryItem]
     like: [item: GalleryItem]
+    favorite: [item: GalleryItem]
   }
 
   const props = defineProps<Props>()
@@ -118,6 +130,10 @@
 
   const handleLike = () => {
     emit('like', props.item)
+  }
+
+  const handleFavorite = () => {
+    emit('favorite', props.item)
   }
 </script>
 

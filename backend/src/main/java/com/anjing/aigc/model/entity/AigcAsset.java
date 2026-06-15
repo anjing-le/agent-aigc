@@ -61,6 +61,10 @@ public class AigcAsset {
     @Column(name = "like_count")
     private Integer likeCount;
 
+    /** 灵感广场收藏数 */
+    @Column(name = "favorite_count")
+    private Integer favoriteCount;
+
     /** 创建时间 */
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -69,6 +73,9 @@ public class AigcAsset {
     protected void onCreate() {
         if (likeCount == null) {
             likeCount = 0;
+        }
+        if (favoriteCount == null) {
+            favoriteCount = 0;
         }
     }
 }

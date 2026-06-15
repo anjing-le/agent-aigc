@@ -48,6 +48,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/materials/{materialId}/download",
     operationId: "downloadMaterial"
   },
+  favoriteGalleryAsset: {
+    method: "POST",
+    path: "/api/aigc/gallery/{assetId}/favorite",
+    operationId: "favoriteGalleryAsset"
+  },
   features: {
     method: "GET",
     path: "/api/test/features",
@@ -203,6 +208,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/test/exception/system",
     operationId: "testSystemException"
   },
+  unfavoriteGalleryAsset: {
+    method: "DELETE",
+    path: "/api/aigc/gallery/{assetId}/favorite",
+    operationId: "unfavoriteGalleryAsset"
+  },
   unlikeGalleryAsset: {
     method: "DELETE",
     path: "/api/aigc/gallery/{assetId}/like",
@@ -286,6 +296,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: File
     data: unknown
+  }
+  favoriteGalleryAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseGalleryDTO
+    data: NonNullable<Schemas.APIResponseGalleryDTO['data']>
   }
   features: {
     pathParams: undefined
@@ -503,6 +520,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseVoid
     data: NonNullable<Schemas.APIResponseVoid['data']>
+  }
+  unfavoriteGalleryAsset: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseGalleryDTO
+    data: NonNullable<Schemas.APIResponseGalleryDTO['data']>
   }
   unlikeGalleryAsset: {
     pathParams: { assetId: string }

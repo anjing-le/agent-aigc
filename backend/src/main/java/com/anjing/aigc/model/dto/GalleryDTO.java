@@ -57,4 +57,10 @@ public class GalleryDTO {
 
     /** 当前用户/会话是否已点赞。V1 前端会话内维护，后端默认 false。 */
     private Boolean likedByCurrentUser;
+
+    /** 收藏数 */
+    private Integer favoriteCount;
+
+    /** 当前用户/会话是否已收藏。V1 前端会话内维护，后端默认 false。 */
+    private Boolean favoritedByCurrentUser;
 }

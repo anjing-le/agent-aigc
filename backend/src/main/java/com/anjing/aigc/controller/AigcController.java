@@ -315,6 +315,20 @@ public class AigcController {
         return APIResponse.success(response);
     }
 
+    @PostMapping(ApiConstants.Aigc.GALLERY_FAVORITE)
+    @Operation(summary = "收藏灵感广场作品")
+    public APIResponse<GalleryDTO> favoriteGalleryAsset(@PathVariable String assetId) {
+        GalleryDTO response = aigcService.favoriteGalleryAsset(assetId);
+        return APIResponse.success(response);
+    }
+
+    @DeleteMapping(ApiConstants.Aigc.GALLERY_FAVORITE)
+    @Operation(summary = "取消收藏灵感广场作品")
+    public APIResponse<GalleryDTO> unfavoriteGalleryAsset(@PathVariable String assetId) {
+        GalleryDTO response = aigcService.unfavoriteGalleryAsset(assetId);
+        return APIResponse.success(response);
+    }
+
     /**
      * 获取我的资产列表
      *

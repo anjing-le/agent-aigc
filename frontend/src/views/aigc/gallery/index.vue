@@ -74,6 +74,7 @@
           @copy="handleCopy(item)"
           @use="handleUse(item)"
           @like="handleLike(item)"
+          @favorite="handleFavorite(item)"
         />
       </div>
 
@@ -97,7 +98,13 @@
   import { useDebounceFn, useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import PromptCard from './components/PromptCard.vue'
-  import { fetchGetGalleryList, fetchLikeGalleryAsset, fetchUnlikeGalleryAsset } from '@/api/aigc'
+  import {
+    fetchFavoriteGalleryAsset,
+    fetchGetGalleryList,
+    fetchLikeGalleryAsset,
+    fetchUnfavoriteGalleryAsset,
+    fetchUnlikeGalleryAsset
+  } from '@/api/aigc'
   import type { ContentType, GalleryItem } from '@/api/model/aigcModel'
 
   defineOptions({ name: 'AIGCGallery' })
@@ -111,6 +118,7 @@
   const currentPage = ref(1)
   const pageSize = ref(24)
   const likedAssetIds = ref<Set<string>>(new Set())
+  const favoritedAssetIds = ref<Set<string>>(new Set())
 
   // 搜索筛选
   const searchKeyword = ref('')
@@ -152,6 +160,10 @@
     {
       label: '累计点赞',
       value: `${galleryList.value.reduce((sum, item) => sum + (item.likeCount || 0), 0)}`
+    },
+    {
+      label: '累计收藏',
+      value: `${galleryList.value.reduce((sum, item) => sum + (item.favoriteCount || 0), 0)}`
     }
   ])
 
@@ -191,7 +203,9 @@
       const records = (res?.records || []).map((item: any) => ({
         ...item,
         likeCount: item.likeCount ?? 0,
-        likedByCurrentUser: likedAssetIds.value.has(item.id)
+        likedByCurrentUser: likedAssetIds.value.has(item.id),
+        favoriteCount: item.favoriteCount ?? 0,
+        favoritedByCurrentUser: favoritedAssetIds.value.has(item.id)
       }))
 
       // 后端无已发布作品时，自动切换到静态数据后备
@@ -242,6 +256,8 @@
         contentType: (item.contentType || 'IMAGE').toUpperCase(),
         likeCount: Math.floor(Math.random() * 100) + 10,
         likedByCurrentUser: likedAssetIds.value.has(item.id),
+        favoriteCount: Math.floor(Math.random() * 20),
+        favoritedByCurrentUser: favoritedAssetIds.value.has(item.id),
         url: item.thumbnailUrl || '',
         isPublished: true
       }))
@@ -349,6 +365,48 @@
       likedAssetIds.value.delete(assetId)
     }
     likedAssetIds.value = new Set(likedAssetIds.value)
+  }
+
+  const handleFavorite = async (item: GalleryItem) => {
+    if (dataSource.value === 'static') {
+      updateGalleryFavoriteState(item.id, {
+        favoriteCount: Math.max(
+          0,
+          (item.favoriteCount || 0) + (item.favoritedByCurrentUser ? -1 : 1)
+        ),
+        favoritedByCurrentUser: !item.favoritedByCurrentUser
+      })
+      return
+    }
+
+    try {
+      const response = item.favoritedByCurrentUser
+        ? await fetchUnfavoriteGalleryAsset(item.id)
+        : await fetchFavoriteGalleryAsset(item.id)
+
+      updateGalleryFavoriteState(item.id, {
+        favoriteCount: response.favoriteCount ?? 0,
+        favoritedByCurrentUser: !item.favoritedByCurrentUser
+      })
+    } catch (error) {
+      console.error('更新收藏失败:', error)
+      ElMessage.error('收藏失败，请稍后重试')
+    }
+  }
+
+  const updateGalleryFavoriteState = (
+    assetId: string,
+    patch: Pick<GalleryItem, 'favoriteCount' | 'favoritedByCurrentUser'>
+  ) => {
+    galleryList.value = galleryList.value.map((item) =>
+      item.id === assetId ? { ...item, ...patch } : item
+    )
+    if (patch.favoritedByCurrentUser) {
+      favoritedAssetIds.value.add(assetId)
+    } else {
+      favoritedAssetIds.value.delete(assetId)
+    }
+    favoritedAssetIds.value = new Set(favoritedAssetIds.value)
   }
 
   /** 使用提示词（跳转到创作工作台） */

@@ -386,6 +386,41 @@ class AigcServiceImplAssetTest {
         assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
     }
 
+    @Test
+    void favoriteGalleryAssetIncrementsPublishedAssetFavoriteCount() {
+        AigcAsset asset = asset("asset-favorited");
+        asset.setIsPublished(true);
+        asset.setFavoriteCount(4);
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-favorited")).thenReturn(Optional.of(asset));
+        when(assetRepository.save(asset)).thenReturn(asset);
+
+        assertEquals(5, aigcService.favoriteGalleryAsset("asset-favorited").getFavoriteCount());
+        assertEquals(5, asset.getFavoriteCount());
+        verify(assetRepository).save(asset);
+    }
+
+    @Test
+    void unfavoriteGalleryAssetDoesNotGoBelowZero() {
+        AigcAsset asset = asset("asset-unfavorited");
+        asset.setIsPublished(true);
+        asset.setFavoriteCount(0);
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-unfavorited")).thenReturn(Optional.of(asset));
+        when(assetRepository.save(asset)).thenReturn(asset);
+
+        assertEquals(0, aigcService.unfavoriteGalleryAsset("asset-unfavorited").getFavoriteCount());
+        assertEquals(0, asset.getFavoriteCount());
+        verify(assetRepository).save(asset);
+    }
+
+    @Test
+    void favoriteGalleryAssetRequiresPublishedAsset() {
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("draft")).thenReturn(Optional.empty());
+
+        AigcException error = assertThrows(AigcException.class, () -> aigcService.favoriteGalleryAsset("draft"));
+
+        assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
+    }
+
     private AigcAsset asset(String assetId) {
         AigcAsset asset = new AigcAsset();
         asset.setAssetId(assetId);
@@ -394,6 +429,7 @@ class AigcServiceImplAssetTest {
         asset.setModel("mock-image-preview");
         asset.setIsPublished(false);
         asset.setLikeCount(0);
+        asset.setFavoriteCount(0);
         return asset;
     }
 

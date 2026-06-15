@@ -352,6 +352,8 @@ export interface GalleryDTO {
   authorName?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   createdAt?: string
+  favoriteCount?: number
+  favoritedByCurrentUser?: boolean
   id?: string
   isPublished?: boolean
   likeCount?: number

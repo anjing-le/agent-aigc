@@ -1,11 +1,14 @@
 package com.anjing.aigc.service.storage;
 
 import com.anjing.aigc.config.AigcProperties;
+import com.anjing.aigc.model.response.AigcStorageDownloadResource;
 import com.anjing.aigc.model.response.StorageStatusResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -190,5 +193,41 @@ class AigcStorageServiceTest {
                 localUrl,
                 null
         );
+    }
+
+    @Test
+    void resolveDownloadSupportsUrlEncodedDataUrl() throws Exception {
+        AigcStorageService storageService = new AigcStorageService(
+                new AigcProperties(),
+                mock(LocalAigcStorageService.class),
+                mock(OssAigcStorageService.class),
+                mock(AigcStorageAuditLogService.class)
+        );
+        String dataUrl = "data:image/svg+xml;charset=UTF-8,%3Csvg%3Eok%3C%2Fsvg%3E";
+
+        AigcStorageDownloadResource response = storageService.resolveDownload(dataUrl, "mock.svg");
+
+        assertEquals("image/svg+xml", response.getContentType());
+        assertEquals("mock.svg", response.getFileName());
+        assertEquals("<svg>ok</svg>", new String(response.getResource().getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+        assertEquals(13L, response.getContentLength());
+    }
+
+    @Test
+    void resolveDownloadSupportsBase64DataUrl() throws Exception {
+        AigcStorageService storageService = new AigcStorageService(
+                new AigcProperties(),
+                mock(LocalAigcStorageService.class),
+                mock(OssAigcStorageService.class),
+                mock(AigcStorageAuditLogService.class)
+        );
+        String encoded = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3});
+        String dataUrl = "data:application/octet-stream;base64," + encoded;
+
+        AigcStorageDownloadResource response = storageService.resolveDownload(dataUrl, "mock.bin");
+
+        assertEquals("application/octet-stream", response.getContentType());
+        assertEquals(3L, response.getContentLength());
+        assertEquals(3, response.getResource().getInputStream().readAllBytes().length);
     }
 }

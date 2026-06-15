@@ -99,6 +99,7 @@
         { "name": "gallerySave", "backendConstant": "GALLERY_SAVE_FULL", "frontendKey": "gallerySave", "path": "/api/aigc/gallery/save", "methods": ["POST"] },
         { "name": "galleryPublication", "backendConstant": "GALLERY_PUBLICATION_FULL", "frontendKey": "galleryPublication", "path": "/api/aigc/gallery/{assetId}/publication", "methods": ["DELETE"] },
         { "name": "galleryLike", "backendConstant": "GALLERY_LIKE_FULL", "frontendKey": "galleryLike", "path": "/api/aigc/gallery/{assetId}/like", "methods": ["POST", "DELETE"] },
+        { "name": "galleryFavorite", "backendConstant": "GALLERY_FAVORITE_FULL", "frontendKey": "galleryFavorite", "path": "/api/aigc/gallery/{assetId}/favorite", "methods": ["POST", "DELETE"] },
         { "name": "galleryAssetPreview", "backendConstant": "GALLERY_ASSET_PREVIEW_FULL", "frontendKey": "galleryAssetPreview", "path": "/api/aigc/gallery/{assetId}/preview", "methods": ["GET"] },
         { "name": "assets", "backendConstant": "ASSETS_FULL", "frontendKey": "assets", "path": "/api/aigc/assets", "methods": ["GET"] },
         { "name": "assetDetail", "backendConstant": "ASSET_DETAIL_FULL", "frontendKey": "assetDetail", "path": "/api/aigc/assets/{assetId}", "methods": ["GET", "DELETE"] },

@@ -610,6 +610,7 @@ requireToken('frontend/src/utils/aigcAsset.ts', 'thumbnailUrl || item.previewUrl
 for (const token of [
   'GALLERY_PUBLICATION_FULL',
   'GALLERY_LIKE_FULL',
+  'GALLERY_FAVORITE_FULL',
   'GALLERY_ASSET_PREVIEW_FULL'
 ]) {
   requireToken('backend/src/main/java/com/anjing/model/constants/ApiConstants.java', token)
@@ -621,6 +622,9 @@ for (const token of [
   'GALLERY_LIKE',
   'likeGalleryAsset',
   'unlikeGalleryAsset',
+  'GALLERY_FAVORITE',
+  'favoriteGalleryAsset',
+  'unfavoriteGalleryAsset',
   'GALLERY_ASSET_PREVIEW',
   'previewGalleryAsset',
   'previewPublishedAsset'
@@ -727,6 +731,8 @@ for (const token of [
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryPublication',
   'galleryLike: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryLike',
+  'galleryFavorite: (assetId: string | number)',
+  'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorite',
   'assetDetail: (assetId: string | number)',
   'SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assetDetail'
 ]) {
@@ -741,6 +747,8 @@ for (const token of [
   "openApiRequest('getAssetList'",
   "openApiRequest('likeGalleryAsset'",
   "openApiRequest('unlikeGalleryAsset'",
+  "openApiRequest('favoriteGalleryAsset'",
+  "openApiRequest('unfavoriteGalleryAsset'",
   "openApiRequest('removeFromGallery'",
   "openApiRequest('updateActiveProvider'",
   "openApiRequest('updateProviderCredential'",
@@ -754,17 +762,25 @@ for (const token of [
 for (const token of [
   'fetchLikeGalleryAsset',
   'fetchUnlikeGalleryAsset',
+  'fetchFavoriteGalleryAsset',
+  'fetchUnfavoriteGalleryAsset',
   'handleLike',
+  'handleFavorite',
   'likedAssetIds',
-  'updateGalleryLikeState'
+  'favoritedAssetIds',
+  'updateGalleryLikeState',
+  'updateGalleryFavoriteState'
 ]) {
   requireToken('frontend/src/views/aigc/gallery/index.vue', token)
 }
 
 for (const token of [
   'Star',
+  'Collection',
   'handleLike',
-  'likedByCurrentUser'
+  'handleFavorite',
+  'likedByCurrentUser',
+  'favoritedByCurrentUser'
 ]) {
   requireToken('frontend/src/views/aigc/gallery/components/PromptCard.vue', token)
 }

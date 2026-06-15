@@ -6,13 +6,17 @@ import com.anjing.aigc.model.response.StorageBackendStatusResponse;
 import com.anjing.aigc.model.response.StorageStatusResponse;
 import com.anjing.util.DateUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Locale;
 
 @Service
@@ -123,6 +127,10 @@ public class AigcStorageService {
     }
 
     public AigcStorageDownloadResource resolveDownload(String url, String fileName) throws IOException {
+        if (isDataUrl(url)) {
+            return resolveDataUrlDownload(url, fileName);
+        }
+
         Resource localResource = localAigcStorageService.getResourceByUrl(url);
         if (localResource != null && localResource.exists()) {
             return AigcStorageDownloadResource.builder()
@@ -145,6 +153,38 @@ public class AigcStorageService {
         }
 
         throw new IOException("文件不存在或不在受管存储边界");
+    }
+
+    private AigcStorageDownloadResource resolveDataUrlDownload(String url, String fileName) throws IOException {
+        int commaIndex = url.indexOf(',');
+        if (commaIndex <= "data:".length()) {
+            throw new IOException("无效 data URL");
+        }
+        String metadata = url.substring("data:".length(), commaIndex);
+        String payload = url.substring(commaIndex + 1);
+        String contentType = resolveDataUrlContentType(metadata);
+        byte[] bytes;
+        try {
+            bytes = metadata.toLowerCase(Locale.ROOT).contains(";base64")
+                    ? Base64.getDecoder().decode(payload)
+                    : URLDecoder.decode(payload, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            throw new IOException("无效 data URL 内容", e);
+        }
+        return AigcStorageDownloadResource.builder()
+                .resource(new ByteArrayResource(bytes))
+                .fileName(resolveDownloadFileName(fileName, url))
+                .contentType(contentType)
+                .contentLength((long) bytes.length)
+                .build();
+    }
+
+    private String resolveDataUrlContentType(String metadata) {
+        if (!hasText(metadata)) {
+            return "text/plain";
+        }
+        String contentType = metadata.split(";", 2)[0].trim();
+        return hasText(contentType) ? contentType : "text/plain";
     }
 
     public StorageStatusResponse getStorageStatus() {
@@ -277,6 +317,10 @@ public class AigcStorageService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank() && !value.startsWith("<");
+    }
+
+    private boolean isDataUrl(String url) {
+        return url != null && url.startsWith("data:");
     }
 
     private String resolveDownloadFileName(String fileName, String url) {

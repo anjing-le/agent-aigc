@@ -207,6 +207,10 @@ export type GalleryItem = Omit<
   likeCount: number
   /** 当前前端会话是否已点赞 */
   likedByCurrentUser?: boolean
+  /** 收藏数 */
+  favoriteCount?: number
+  /** 当前前端会话是否已收藏 */
+  favoritedByCurrentUser?: boolean
 }
 
 /** 灵感广场搜索参数 */

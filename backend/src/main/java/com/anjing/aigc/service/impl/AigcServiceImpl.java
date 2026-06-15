@@ -1052,6 +1052,22 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    @Transactional
+    public GalleryDTO favoriteGalleryAsset(String assetId) {
+        AigcAsset asset = findPublishedAsset(assetId);
+        asset.setFavoriteCount(resolveFavoriteCount(asset) + 1);
+        return toGalleryDTO(assetRepository.save(asset));
+    }
+
+    @Override
+    @Transactional
+    public GalleryDTO unfavoriteGalleryAsset(String assetId) {
+        AigcAsset asset = findPublishedAsset(assetId);
+        asset.setFavoriteCount(Math.max(0, resolveFavoriteCount(asset) - 1));
+        return toGalleryDTO(assetRepository.save(asset));
+    }
+
+    @Override
     public PageResult<AssetDTO> getAssetList(Integer current, Integer size, String contentType) {
         PageRequest pageRequest = PageRequest.of(current - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
@@ -1313,11 +1329,17 @@ public class AigcServiceImpl implements AigcService {
                 .authorName(null) // TODO: 关联用户
                 .likeCount(resolveLikeCount(asset))
                 .likedByCurrentUser(false)
+                .favoriteCount(resolveFavoriteCount(asset))
+                .favoritedByCurrentUser(false)
                 .build();
     }
 
     private int resolveLikeCount(AigcAsset asset) {
         return asset.getLikeCount() == null ? 0 : asset.getLikeCount();
+    }
+
+    private int resolveFavoriteCount(AigcAsset asset) {
+        return asset.getFavoriteCount() == null ? 0 : asset.getFavoriteCount();
     }
 
     private String buildGalleryPreviewUrl(AigcAsset asset) {

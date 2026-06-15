@@ -240,6 +240,26 @@ export function fetchUnlikeGalleryAsset(assetId: string) {
 }
 
 /**
+ * 收藏灵感广场作品
+ * @param assetId 资产ID
+ */
+export function fetchFavoriteGalleryAsset(assetId: string) {
+  return openApiRequest('favoriteGalleryAsset', {
+    pathParams: { assetId }
+  }) as Promise<GalleryItem>
+}
+
+/**
+ * 取消收藏灵感广场作品
+ * @param assetId 资产ID
+ */
+export function fetchUnfavoriteGalleryAsset(assetId: string) {
+  return openApiRequest('unfavoriteGalleryAsset', {
+    pathParams: { assetId }
+  }) as Promise<GalleryItem>
+}
+
+/**
  * 删除资产
  * @param assetId 资产ID
  */

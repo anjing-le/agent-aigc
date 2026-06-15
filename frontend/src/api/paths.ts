@@ -84,6 +84,8 @@ export const ApiPaths = {
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryPublication, { assetId }),
     galleryLike: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryLike, { assetId }),
+    galleryFavorite: (assetId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorite, { assetId }),
     galleryAssetPreview: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAssetPreview, { assetId }),
     assets: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.assets,

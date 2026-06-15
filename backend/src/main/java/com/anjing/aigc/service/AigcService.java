@@ -165,6 +165,22 @@ public interface AigcService {
     GalleryDTO unlikeGalleryAsset(String assetId);
 
     /**
+     * 收藏灵感广场作品
+     *
+     * @param assetId 资产ID
+     * @return 更新后的广场作品
+     */
+    GalleryDTO favoriteGalleryAsset(String assetId);
+
+    /**
+     * 取消收藏灵感广场作品
+     *
+     * @param assetId 资产ID
+     * @return 更新后的广场作品
+     */
+    GalleryDTO unfavoriteGalleryAsset(String assetId);
+
+    /**
      * 获取我的资产列表
      *
      * @param current 当前页
