@@ -43,6 +43,12 @@ export const staticRoutes: AppRouteRecordRaw[] = [
     meta: { title: 'AIGC 公开分享', isHideTab: true }
   },
   {
+    path: '/share/creators/:authorId',
+    name: 'AIGCGalleryAuthor',
+    component: () => import('@views/aigc/gallery/author.vue'),
+    meta: { title: 'AIGC 创作者主页', isHideTab: true }
+  },
+  {
     path: '/403',
     name: 'Exception403',
     component: () => import('@views/exception/403/index.vue'),

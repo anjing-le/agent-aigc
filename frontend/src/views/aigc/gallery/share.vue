@@ -30,7 +30,15 @@
 
         <div class="gallery-share__meta">
           <span>{{ asset?.model || '未知模型' }}</span>
-          <span>{{ asset?.authorName || asset?.author || '匿名创作者' }}</span>
+          <button
+            v-if="asset?.authorId"
+            type="button"
+            class="gallery-share__author-link"
+            @click="openAuthorProfile"
+          >
+            {{ asset?.authorName || asset?.author || '匿名创作者' }}
+          </button>
+          <span v-else>{{ asset?.authorName || asset?.author || '匿名创作者' }}</span>
           <span>{{ asset?.likeCount || 0 }} 赞</span>
           <span>{{ asset?.favoriteCount || 0 }} 收藏</span>
         </div>
@@ -41,6 +49,9 @@
           <el-button type="primary" :icon="MagicStick" @click="handleReuse">复用 Prompt</el-button>
           <el-button :icon="Download" :disabled="!asset" @click="handleDownload">下载作品</el-button>
           <el-button :icon="Link" @click="handleCopyLink">复制链接</el-button>
+          <el-button v-if="asset?.authorId" :icon="User" @click="openAuthorProfile">
+            作者主页
+          </el-button>
           <el-button text @click="router.push('/aigc/gallery')">打开广场</el-button>
         </div>
       </div>
@@ -82,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-  import { DocumentCopy, Download, Link, MagicStick, Picture } from '@element-plus/icons-vue'
+  import { DocumentCopy, Download, Link, MagicStick, Picture, User } from '@element-plus/icons-vue'
   import { useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import { fetchGetGalleryShare } from '@/api/aigc'
@@ -169,6 +180,11 @@
     await copyText(asset.value.prompt, 'Prompt 已复制')
   }
 
+  const openAuthorProfile = () => {
+    if (!asset.value?.authorId) return
+    router.push(`/share/creators/${encodeURIComponent(asset.value.authorId)}`)
+  }
+
   const copyText = async (text: string, successMessage: string) => {
     try {
       await copy(text)
@@ -253,6 +269,15 @@
     align-items: center;
     color: #5f6f89;
     font-size: 13px;
+  }
+
+  .gallery-share__author-link {
+    padding: 0;
+    color: #2f6fed;
+    font: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
   }
 
   .gallery-share__detail h1 {

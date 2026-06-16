@@ -49,6 +49,9 @@ public class GalleryDTO {
     /** 创建时间 */
     private LocalDateTime createdAt;
 
+    /** 作者公开标识 */
+    private String authorId;
+
     /** 作者名称 */
     private String authorName;
 

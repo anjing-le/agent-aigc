@@ -20,6 +20,7 @@ import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
@@ -88,6 +89,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class AigcServiceImpl implements AigcService {
+
+    private static final String ANONYMOUS_AUTHOR_ID = "anonymous";
+    private static final String ANONYMOUS_AUTHOR_NAME = "匿名创作者";
 
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
@@ -1055,6 +1059,41 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public GalleryAuthorProfileResponse getGalleryAuthorProfile(
+            String authorId, Integer current, Integer size, String contentType) {
+        String normalizedAuthorId = normalizeAuthorId(authorId);
+        boolean anonymousOwner = ANONYMOUS_AUTHOR_ID.equals(normalizedAuthorId);
+        ContentType parsedContentType = parseContentType(contentType);
+        int safeCurrent = current != null && current > 0 ? current : 1;
+        int safeSize = size != null && size > 0 ? Math.min(size, 100) : 20;
+        PageRequest pageRequest = PageRequest.of(
+                safeCurrent - 1,
+                safeSize,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<AigcAsset> page = assetRepository.searchPublishedByOwner(
+                normalizedAuthorId,
+                anonymousOwner,
+                parsedContentType,
+                pageRequest
+        );
+        List<GalleryDTO> records = page.getContent().stream()
+                .map(this::toGalleryDTO)
+                .collect(Collectors.toList());
+
+        return GalleryAuthorProfileResponse.builder()
+                .authorId(normalizedAuthorId)
+                .authorName(resolveAuthorName(normalizedAuthorId))
+                .publishedCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, null))
+                .imageCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.IMAGE))
+                .videoCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.VIDEO))
+                .audioCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.AUDIO))
+                .assets(PageResult.of(records, page.getTotalElements(), safeCurrent, safeSize))
+                .build();
+    }
+
+    @Override
     @Transactional
     public void saveToGallery(String assetId) {
         AigcAsset asset = findVisibleAsset(assetId)
@@ -1387,7 +1426,8 @@ public class AigcServiceImpl implements AigcService {
                 .model(asset.getModel())
                 .isPublished(asset.getIsPublished())
                 .createdAt(asset.getCreatedAt())
-                .authorName(null) // TODO: 关联用户
+                .authorId(resolveAuthorId(asset))
+                .authorName(resolveAuthorName(asset))
                 .likeCount(resolveLikeCount(asset))
                 .likedByCurrentUser(galleryReactionService.hasReaction(
                         AigcGalleryReactionService.REACTION_LIKE, asset.getAssetId()))
@@ -1413,6 +1453,23 @@ public class AigcServiceImpl implements AigcService {
     private String buildGalleryDownloadUrl(AigcAsset asset) {
         return ApiConstants.Aigc.GALLERY_ASSET_DOWNLOAD_FULL
                 .replace("{assetId}", asset.getAssetId());
+    }
+
+    private String normalizeAuthorId(String authorId) {
+        String normalized = normalizeFilter(authorId);
+        return normalized == null ? ANONYMOUS_AUTHOR_ID : normalized;
+    }
+
+    private String resolveAuthorId(AigcAsset asset) {
+        return normalizeAuthorId(asset.getOwnerId());
+    }
+
+    private String resolveAuthorName(AigcAsset asset) {
+        return resolveAuthorName(resolveAuthorId(asset));
+    }
+
+    private String resolveAuthorName(String authorId) {
+        return ANONYMOUS_AUTHOR_ID.equals(authorId) ? ANONYMOUS_AUTHOR_NAME : authorId;
     }
 
     /**

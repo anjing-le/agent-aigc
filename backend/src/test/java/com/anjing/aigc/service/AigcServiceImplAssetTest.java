@@ -12,6 +12,7 @@ import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -31,6 +32,9 @@ import com.anjing.aigc.service.impl.AigcServiceImpl;
 import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -378,11 +382,14 @@ class AigcServiceImplAssetTest {
         asset.setIsPublished(true);
         asset.setLikeCount(7);
         asset.setFavoriteCount(3);
+        asset.setOwnerId("creator-1");
         when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-share")).thenReturn(Optional.of(asset));
 
         GalleryShareResponse response = aigcService.getGalleryShare("asset-share");
 
         assertEquals("asset-share", response.getAsset().getId());
+        assertEquals("creator-1", response.getAsset().getAuthorId());
+        assertEquals("creator-1", response.getAsset().getAuthorName());
         assertEquals("/share/gallery/asset-share", response.getSharePath());
         assertEquals("/api/aigc/gallery/asset-share/preview", response.getPreviewUrl());
         assertEquals("/api/aigc/gallery/asset-share/download", response.getDownloadUrl());
@@ -397,6 +404,47 @@ class AigcServiceImplAssetTest {
         AigcException error = assertThrows(AigcException.class, () -> aigcService.getGalleryShare("draft"));
 
         assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
+    }
+
+    @Test
+    void getGalleryAuthorProfileReturnsPublishedAssetsAndStats() {
+        AigcAsset asset = asset("asset-author");
+        asset.setIsPublished(true);
+        asset.setOwnerId("creator-1");
+        PageRequest pageRequest = PageRequest.of(0, 12, Sort.by(Sort.Direction.DESC, "createdAt"));
+        when(assetRepository.searchPublishedByOwner("creator-1", false, ContentType.IMAGE, pageRequest))
+                .thenReturn(new PageImpl<>(List.of(asset), pageRequest, 1));
+        when(assetRepository.countPublishedByOwner("creator-1", false, null)).thenReturn(4L);
+        when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.IMAGE)).thenReturn(2L);
+        when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.VIDEO)).thenReturn(1L);
+        when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.AUDIO)).thenReturn(1L);
+
+        GalleryAuthorProfileResponse response = aigcService.getGalleryAuthorProfile(
+                "creator-1", 1, 12, "IMAGE");
+
+        assertEquals("creator-1", response.getAuthorId());
+        assertEquals("creator-1", response.getAuthorName());
+        assertEquals(4L, response.getPublishedCount());
+        assertEquals(2L, response.getImageCount());
+        assertEquals(1L, response.getVideoCount());
+        assertEquals(1L, response.getAudioCount());
+        assertEquals(1, response.getAssets().getRecords().size());
+        assertEquals("asset-author", response.getAssets().getRecords().get(0).getId());
+        assertEquals("creator-1", response.getAssets().getRecords().get(0).getAuthorId());
+    }
+
+    @Test
+    void getGalleryAuthorProfileMapsBlankAuthorToAnonymous() {
+        PageRequest pageRequest = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+        when(assetRepository.searchPublishedByOwner("anonymous", true, null, pageRequest))
+                .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
+
+        GalleryAuthorProfileResponse response = aigcService.getGalleryAuthorProfile(
+                " ", 0, 0, null);
+
+        assertEquals("anonymous", response.getAuthorId());
+        assertEquals("匿名创作者", response.getAuthorName());
+        assertEquals(0, response.getAssets().getRecords().size());
     }
 
     @Test

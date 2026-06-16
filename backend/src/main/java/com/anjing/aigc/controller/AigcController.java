@@ -12,6 +12,7 @@ import com.anjing.aigc.model.request.OwnershipBackfillRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuditLogResponse;
+import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -305,6 +306,18 @@ public class AigcController {
     @Operation(summary = "获取公开分享页所需的已发布 AIGC 广场作品")
     public APIResponse<GalleryShareResponse> getGalleryShare(@PathVariable String assetId) {
         GalleryShareResponse response = aigcService.getGalleryShare(assetId);
+        return APIResponse.success(response);
+    }
+
+    @GetMapping(ApiConstants.Aigc.GALLERY_AUTHOR_PROFILE)
+    @Operation(summary = "获取灵感广场公开作者主页")
+    public APIResponse<GalleryAuthorProfileResponse> getGalleryAuthorProfile(
+            @PathVariable String authorId,
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size,
+            @RequestParam(required = false) String contentType) {
+        GalleryAuthorProfileResponse response = aigcService.getGalleryAuthorProfile(
+                authorId, current, size, contentType);
         return APIResponse.success(response);
     }
 

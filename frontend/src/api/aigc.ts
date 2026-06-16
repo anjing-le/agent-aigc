@@ -4,6 +4,7 @@ import type {
   GenerateResponse,
   TaskStatusResponse,
   GalleryItem,
+  GalleryAuthorProfileResponse,
   GalleryListResponse,
   GalleryShareResponse,
   GalleryAuditLogListResponse,
@@ -111,6 +112,21 @@ export function fetchGetGalleryShare(assetId: string) {
   return openApiRequest('getGalleryShare', {
     pathParams: { assetId }
   }) as Promise<GalleryShareResponse>
+}
+
+/**
+ * 获取灵感广场公开作者主页
+ * @param authorId 作者公开标识
+ * @param params 分页和筛选参数
+ */
+export function fetchGetGalleryAuthorProfile(
+  authorId: string,
+  params: Pick<GallerySearchParams, 'current' | 'size' | 'contentType'>
+) {
+  return openApiRequest('getGalleryAuthorProfile', {
+    pathParams: { authorId },
+    query: params
+  }) as Promise<GalleryAuthorProfileResponse>
 }
 
 /**

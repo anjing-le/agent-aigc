@@ -64,6 +64,15 @@ export interface APIResponseCurrentUserResponse {
   timestamp?: number
 }
 
+export interface APIResponseGalleryAuthorProfileResponse {
+  code?: string
+  data?: GalleryAuthorProfileResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGalleryDTO {
   code?: string
   data?: GalleryDTO
@@ -385,7 +394,18 @@ export interface GalleryAuditLogResponse {
   traceId?: string
 }
 
+export interface GalleryAuthorProfileResponse {
+  assets?: PageResultGalleryDTO
+  audioCount?: number
+  authorId?: string
+  authorName?: string
+  imageCount?: number
+  publishedCount?: number
+  videoCount?: number
+}
+
 export interface GalleryDTO {
+  authorId?: string
   authorName?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   createdAt?: string
@@ -1003,6 +1023,7 @@ export interface OpenApiSchemas {
   APIResponseAssetDetailResponse: APIResponseAssetDetailResponse
   APIResponseAuthTokenResponse: APIResponseAuthTokenResponse
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
+  APIResponseGalleryAuthorProfileResponse: APIResponseGalleryAuthorProfileResponse
   APIResponseGalleryDTO: APIResponseGalleryDTO
   APIResponseGalleryShareResponse: APIResponseGalleryShareResponse
   APIResponseGenerateResponse: APIResponseGenerateResponse
@@ -1033,6 +1054,7 @@ export interface OpenApiSchemas {
   AuthTokenResponse: AuthTokenResponse
   CurrentUserResponse: CurrentUserResponse
   GalleryAuditLogResponse: GalleryAuditLogResponse
+  GalleryAuthorProfileResponse: GalleryAuthorProfileResponse
   GalleryDTO: GalleryDTO
   GalleryShareResponse: GalleryShareResponse
   GenerateRequest: GenerateRequest

@@ -101,4 +101,33 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
             @Param("model") String model,
             @Param("keyword") String keyword,
             Pageable pageable);
+
+    @Query("""
+            select a from AigcAsset a
+            where a.isPublished = true
+              and (
+                    (:anonymousOwner = true and (a.ownerId is null or a.ownerId = ''))
+                    or (:anonymousOwner = false and a.ownerId = :ownerId)
+                  )
+              and (:contentType is null or a.contentType = :contentType)
+            """)
+    Page<AigcAsset> searchPublishedByOwner(
+            @Param("ownerId") String ownerId,
+            @Param("anonymousOwner") boolean anonymousOwner,
+            @Param("contentType") ContentType contentType,
+            Pageable pageable);
+
+    @Query("""
+            select count(a) from AigcAsset a
+            where a.isPublished = true
+              and (
+                    (:anonymousOwner = true and (a.ownerId is null or a.ownerId = ''))
+                    or (:anonymousOwner = false and a.ownerId = :ownerId)
+                  )
+              and (:contentType is null or a.contentType = :contentType)
+            """)
+    long countPublishedByOwner(
+            @Param("ownerId") String ownerId,
+            @Param("anonymousOwner") boolean anonymousOwner,
+            @Param("contentType") ContentType contentType);
 }

@@ -9,6 +9,7 @@ import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -151,6 +152,18 @@ public interface AigcService {
      * @return 分享页响应
      */
     GalleryShareResponse getGalleryShare(String assetId);
+
+    /**
+     * 获取公开作者主页。
+     *
+     * @param authorId 公开作者标识
+     * @param current 当前页
+     * @param size 每页大小
+     * @param contentType 内容类型
+     * @return 作者主页响应
+     */
+    GalleryAuthorProfileResponse getGalleryAuthorProfile(
+            String authorId, Integer current, Integer size, String contentType);
 
     /**
      * 保存作品到灵感广场

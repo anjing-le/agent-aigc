@@ -195,6 +195,8 @@ export type GalleryItem = Omit<
   isPublished: boolean
   /** 创建时间 */
   createdAt: string
+  /** 作者公开标识 */
+  authorId?: string
   /** 标题 */
   title?: string
   /** 作者名称 */
@@ -242,6 +244,27 @@ export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>,
   previewUrl?: string
   /** 公开下载 URL */
   downloadUrl?: string
+}
+
+/** 灵感广场公开作者主页响应 */
+export type GalleryAuthorProfileResponse = Omit<
+  OpenApiOperationData<'getGalleryAuthorProfile'>,
+  'assets'
+> & {
+  /** 公开作者标识 */
+  authorId?: string
+  /** 公开作者名称 */
+  authorName?: string
+  /** 公开作品总数 */
+  publishedCount?: number
+  /** 公开图片数 */
+  imageCount?: number
+  /** 公开视频数 */
+  videoCount?: number
+  /** 公开音频数 */
+  audioCount?: number
+  /** 公开作品分页 */
+  assets?: GalleryListResponse
 }
 
 /** 灵感广场审计日志项 */

@@ -93,6 +93,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/gallery/audits",
     operationId: "getGalleryAuditLogs"
   },
+  getGalleryAuthorProfile: {
+    method: "GET",
+    path: "/api/aigc/gallery/authors/{authorId}",
+    operationId: "getGalleryAuthorProfile"
+  },
   getGalleryList: {
     method: "GET",
     path: "/api/aigc/gallery",
@@ -379,6 +384,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponsePageResultGalleryAuditLogResponse
     data: NonNullable<Schemas.APIResponsePageResultGalleryAuditLogResponse['data']>
+  }
+  getGalleryAuthorProfile: {
+    pathParams: { authorId: string }
+    query: { contentType?: string; current?: number; size?: number }
+    request: undefined
+    response: Schemas.APIResponseGalleryAuthorProfileResponse
+    data: NonNullable<Schemas.APIResponseGalleryAuthorProfileResponse['data']>
   }
   getGalleryList: {
     pathParams: undefined
