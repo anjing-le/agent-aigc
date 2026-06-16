@@ -5,6 +5,7 @@ import type {
   TaskStatusResponse,
   GalleryItem,
   GalleryListResponse,
+  GalleryShareResponse,
   GalleryAuditLogListResponse,
   GalleryAuditLogSearchParams,
   AssetListResponse,
@@ -100,6 +101,16 @@ export function fetchGetFavoriteGalleryList(params: Pick<GallerySearchParams, 'c
   return openApiRequest('getFavoriteGalleryList', {
     query: params
   }) as Promise<GalleryListResponse>
+}
+
+/**
+ * 获取公开分享页作品详情
+ * @param assetId 资产ID
+ */
+export function fetchGetGalleryShare(assetId: string) {
+  return openApiRequest('getGalleryShare', {
+    pathParams: { assetId }
+  }) as Promise<GalleryShareResponse>
 }
 
 /**

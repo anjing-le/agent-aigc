@@ -276,6 +276,7 @@ public class ApiConstants {
         public static final String GALLERY_PUBLICATION = "/gallery/{assetId}/publication";
         public static final String GALLERY_LIKE = "/gallery/{assetId}/like";
         public static final String GALLERY_FAVORITE = "/gallery/{assetId}/favorite";
+        public static final String GALLERY_SHARE = "/gallery/{assetId}/share";
         public static final String GALLERY_ASSET_PREVIEW = "/gallery/{assetId}/preview";
         public static final String GALLERY_ASSET_DOWNLOAD = "/gallery/{assetId}/download";
         public static final String ASSETS = "/assets";
@@ -309,6 +310,7 @@ public class ApiConstants {
         public static final String GALLERY_PUBLICATION_FULL = BASE + GALLERY_PUBLICATION;
         public static final String GALLERY_LIKE_FULL = BASE + GALLERY_LIKE;
         public static final String GALLERY_FAVORITE_FULL = BASE + GALLERY_FAVORITE;
+        public static final String GALLERY_SHARE_FULL = BASE + GALLERY_SHARE;
         public static final String GALLERY_ASSET_PREVIEW_FULL = BASE + GALLERY_ASSET_PREVIEW;
         public static final String GALLERY_ASSET_DOWNLOAD_FULL = BASE + GALLERY_ASSET_DOWNLOAD;
         public static final String ASSETS_FULL = BASE + ASSETS;

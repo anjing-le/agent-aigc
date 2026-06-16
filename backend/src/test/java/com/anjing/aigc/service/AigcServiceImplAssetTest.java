@@ -12,6 +12,7 @@ import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
@@ -367,6 +368,33 @@ class AigcServiceImplAssetTest {
         when(assetRepository.findVisibleByAssetId("missing", null, null)).thenReturn(Optional.empty());
 
         AigcException error = assertThrows(AigcException.class, () -> aigcService.removeFromGallery("missing"));
+
+        assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
+    }
+
+    @Test
+    void getGalleryShareReturnsPublishedAssetLinks() {
+        AigcAsset asset = asset("asset-share");
+        asset.setIsPublished(true);
+        asset.setLikeCount(7);
+        asset.setFavoriteCount(3);
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-share")).thenReturn(Optional.of(asset));
+
+        GalleryShareResponse response = aigcService.getGalleryShare("asset-share");
+
+        assertEquals("asset-share", response.getAsset().getId());
+        assertEquals("/share/gallery/asset-share", response.getSharePath());
+        assertEquals("/api/aigc/gallery/asset-share/preview", response.getPreviewUrl());
+        assertEquals("/api/aigc/gallery/asset-share/download", response.getDownloadUrl());
+        assertEquals(7, response.getAsset().getLikeCount());
+        assertEquals(3, response.getAsset().getFavoriteCount());
+    }
+
+    @Test
+    void getGalleryShareRequiresPublishedAsset() {
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("draft")).thenReturn(Optional.empty());
+
+        AigcException error = assertThrows(AigcException.class, () -> aigcService.getGalleryShare("draft"));
 
         assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
     }

@@ -20,6 +20,7 @@ import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -1041,6 +1042,19 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public GalleryShareResponse getGalleryShare(String assetId) {
+        AigcAsset asset = findPublishedAsset(assetId);
+        String previewUrl = buildGalleryPreviewUrl(asset);
+        String downloadUrl = buildGalleryDownloadUrl(asset);
+        return GalleryShareResponse.builder()
+                .asset(toGalleryDTO(asset))
+                .sharePath("/share/gallery/" + asset.getAssetId())
+                .previewUrl(previewUrl)
+                .downloadUrl(downloadUrl)
+                .build();
+    }
+
+    @Override
     @Transactional
     public void saveToGallery(String assetId) {
         AigcAsset asset = findVisibleAsset(assetId)
@@ -1393,6 +1407,11 @@ public class AigcServiceImpl implements AigcService {
 
     private String buildGalleryPreviewUrl(AigcAsset asset) {
         return ApiConstants.Aigc.GALLERY_ASSET_PREVIEW_FULL
+                .replace("{assetId}", asset.getAssetId());
+    }
+
+    private String buildGalleryDownloadUrl(AigcAsset asset) {
+        return ApiConstants.Aigc.GALLERY_ASSET_DOWNLOAD_FULL
                 .replace("{assetId}", asset.getAssetId());
     }
 

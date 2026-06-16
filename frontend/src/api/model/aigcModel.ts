@@ -232,6 +232,18 @@ export type AssetSearchParams = OpenApiOperationQuery<'getAssetList'> & {
 /** 灵感广场列表响应 */
 export type GalleryListResponse = PageResult<OpenApiOperationData<'getGalleryList'>, GalleryItem>
 
+/** 灵感广场公开分享页响应 */
+export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>, 'asset'> & {
+  /** 已发布作品 */
+  asset?: GalleryItem
+  /** 前端公开分享路径 */
+  sharePath?: string
+  /** 公开预览 URL */
+  previewUrl?: string
+  /** 公开下载 URL */
+  downloadUrl?: string
+}
+
 /** 灵感广场审计日志项 */
 export type GalleryAuditLogItem = Schemas.GalleryAuditLogResponse
 

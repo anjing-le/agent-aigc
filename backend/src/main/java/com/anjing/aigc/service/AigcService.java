@@ -9,6 +9,7 @@ import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
+import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderAuditLogResponse;
@@ -142,6 +143,14 @@ public interface AigcService {
      * @return 分页列表
      */
     PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size);
+
+    /**
+     * 获取公开分享页所需的已发布作品信息。
+     *
+     * @param assetId 资产ID
+     * @return 分享页响应
+     */
+    GalleryShareResponse getGalleryShare(String assetId);
 
     /**
      * 保存作品到灵感广场

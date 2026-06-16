@@ -456,6 +456,9 @@
   }
 
   const resolvePublicGalleryUrl = (item: GalleryItem) => {
+    if (dataSource.value !== 'static' && item.id) {
+      return `${window.location.origin}/#/share/gallery/${encodeURIComponent(item.id)}`
+    }
     const previewUrl = resolveAigcGalleryPreviewUrl(item)
     if (/^(https?:|data:|blob:)/i.test(previewUrl)) {
       return previewUrl

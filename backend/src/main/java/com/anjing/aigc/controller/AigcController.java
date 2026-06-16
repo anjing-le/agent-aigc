@@ -12,6 +12,7 @@ import com.anjing.aigc.model.request.OwnershipBackfillRequest;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuditLogResponse;
+import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.OwnershipBackfillResponse;
@@ -298,6 +299,13 @@ public class AigcController {
             @RequestParam(defaultValue = "20") Integer size) {
         PageResult<GalleryDTO> gallery = aigcService.getMyFavoriteGalleryList(current, size);
         return APIResponse.success(gallery);
+    }
+
+    @GetMapping(ApiConstants.Aigc.GALLERY_SHARE)
+    @Operation(summary = "获取公开分享页所需的已发布 AIGC 广场作品")
+    public APIResponse<GalleryShareResponse> getGalleryShare(@PathVariable String assetId) {
+        GalleryShareResponse response = aigcService.getGalleryShare(assetId);
+        return APIResponse.success(response);
     }
 
     @GetMapping(ApiConstants.Aigc.GALLERY_ASSET_PREVIEW)

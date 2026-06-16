@@ -92,6 +92,7 @@ for (const token of [
   'public static final String GENERATE_FULL = BASE + GENERATE',
   'public static final String GALLERY_AUDITS_FULL = BASE + GALLERY_AUDITS',
   'public static final String GALLERY_FAVORITES_FULL = BASE + GALLERY_FAVORITES',
+  'public static final String GALLERY_SHARE_FULL = BASE + GALLERY_SHARE',
   'public static final String OWNERSHIP_BACKFILL_FULL = BASE + OWNERSHIP_BACKFILL',
   'public static final String ASSET_DETAIL_FULL = BASE + ASSET_DETAIL'
 ]) {

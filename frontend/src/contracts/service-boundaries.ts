@@ -448,6 +448,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryShare",
+          "backendConstant": "GALLERY_SHARE_FULL",
+          "frontendKey": "galleryShare",
+          "path": "/api/aigc/gallery/{assetId}/share",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "galleryAssetPreview",
           "backendConstant": "GALLERY_ASSET_PREVIEW_FULL",
           "frontendKey": "galleryAssetPreview",
@@ -568,6 +577,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "galleryLike": "/api/aigc/gallery/{assetId}/like",
     "galleryPublication": "/api/aigc/gallery/{assetId}/publication",
     "gallerySave": "/api/aigc/gallery/save",
+    "galleryShare": "/api/aigc/gallery/{assetId}/share",
     "generate": "/api/aigc/generate",
     "materialDetail": "/api/aigc/materials/{materialId}",
     "materialDownload": "/api/aigc/materials/{materialId}/download",

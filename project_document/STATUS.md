@@ -62,6 +62,7 @@
 - AIGC 广场互动关系 V1 已接入：新增 `aigc_gallery_reaction` 关系表，点赞和收藏按脚手架请求上下文中的 userId/tenantId 或匿名会话 actor 去重；同一用户/会话重复点赞或收藏不会重复计数，DTO 返回 `likedByCurrentUser/favoritedByCurrentUser` 当前态。
 - AIGC 我的收藏 V1 已接入：新增 `/api/aigc/gallery/favorites`，按当前用户/会话返回已收藏且仍公开发布的广场作品；前端灵感广场新增“我的收藏”开关，可在后端作品和当前收藏视图之间切换。
 - AIGC 广场公开下载/分享 V1 已接入：新增 `/api/aigc/gallery/{assetId}/download`，只允许已发布作品以 attachment 下载；前端广场卡片支持下载作品和复制公开预览链接，mock data URL 作品也可通过公开预览端点正常展示。
+- AIGC 广场公开分享页 V1 已接入：新增 `/api/aigc/gallery/{assetId}/share`，只返回已发布作品的分享页数据、预览 URL 和下载 URL；前端新增 `/share/gallery/:assetId` 静态公开路由，可未登录查看作品、复制链接/Prompt、下载作品并复用 Prompt 回到创作工作台。
 - AIGC 广场审计 V1 已接入：新增 `/api/aigc/gallery/audits`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；发布、撤回、点赞、取消点赞、收藏、取消收藏和公开下载会写入 `aigc_gallery_audit_log`，审计继承脚手架 requestId、traceId、tenantId、operator、callerId 和 clientIp，广场页展示最近互动审计。
 - AIGC 存储状态诊断 V1 已接入：新增 `/api/aigc/storage/status`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；资产页展示 activeMode、本地目录可读写、清理能力、URL 前缀和 OSS 配置状态，响应不暴露任何密钥字段。
 - Google 图片 Provider 已加入 429/5xx 短重试、统一 Provider 调用错误码和本地保存失败兜底。
@@ -84,14 +85,14 @@
 ## 风险与缺口
 
 - 视频/音频 mock 当前是可视化占位，不是真实媒体文件。
-- 素材库和资产库已具备统一 storage adapter、OSS SDK 上传/删除、本地文件清理、存储状态诊断、OSS 短重试、清理审计、审计查询视图、用户/租户可见性隔离、历史归属回填、授权下载、授权预览、广场公开预览、公开下载/分享、用户级互动关系、我的收藏、互动审计和静态 `/files/**` 兼容开关；公开分享落地页和个人主页仍待产品化。
+- 素材库和资产库已具备统一 storage adapter、OSS SDK 上传/删除、本地文件清理、存储状态诊断、OSS 短重试、清理审计、审计查询视图、用户/租户可见性隔离、历史归属回填、授权下载、授权预览、广场公开预览、公开下载/分享、公开分享页、用户级互动关系、我的收藏、互动审计和静态 `/files/**` 兼容开关；个人主页仍待产品化。
 - Provider 配置已有运行前探测检查项、显式 smoke test、页面持久化切换、配置来源展示、只写式加密凭证保存、默认参数模板编辑、角色边界、管理审计和密钥脱敏边界；生产级 KMS 托管和批量测试策略仍需要后续管理能力承接。
-- 历史记录和作品广场已有基础点赞/收藏计数、用户/会话级去重和我的收藏列表，但缺少个人公开主页、公开分享落地页和更细粒度的互动报表。
+- 历史记录和作品广场已有基础点赞/收藏计数、用户/会话级去重、我的收藏列表和公开分享页，但缺少个人公开主页和更细粒度的互动报表。
 - 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口、基础 Provider 调用观测和配置化成本估算；真实用量计费和聚合报表仍需继续产品化。
 
 ## 推荐下一步
 
-1. 做广场产品化：公开分享页、个人公开主页和互动报表。
+1. 做广场产品化：个人公开主页、互动报表和公开分享页 SEO/海报化增强。
 2. 做 Provider 管理：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
 3. 做真实调用报表：按 Provider、模型、内容类型聚合成功率、耗时和估算成本。
 4. 做用户维度：资产、素材、广场发布、收藏和点赞的用户隔离。

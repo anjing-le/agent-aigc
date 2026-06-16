@@ -98,6 +98,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/gallery",
     operationId: "getGalleryList"
   },
+  getGalleryShare: {
+    method: "GET",
+    path: "/api/aigc/gallery/{assetId}/share",
+    operationId: "getGalleryShare"
+  },
   getItem: {
     method: "GET",
     path: "/api/test/items/{id}",
@@ -381,6 +386,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponsePageResultGalleryDTO
     data: NonNullable<Schemas.APIResponsePageResultGalleryDTO['data']>
+  }
+  getGalleryShare: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseGalleryShareResponse
+    data: NonNullable<Schemas.APIResponseGalleryShareResponse['data']>
   }
   getItem: {
     pathParams: { id: number }

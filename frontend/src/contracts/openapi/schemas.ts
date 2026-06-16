@@ -73,6 +73,15 @@ export interface APIResponseGalleryDTO {
   timestamp?: number
 }
 
+export interface APIResponseGalleryShareResponse {
+  code?: string
+  data?: GalleryShareResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGenerateResponse {
   code?: string
   data?: GenerateResponse
@@ -392,6 +401,13 @@ export interface GalleryDTO {
   publicAccessMode?: string
   thumbnailUrl?: string
   url?: string
+}
+
+export interface GalleryShareResponse {
+  asset?: GalleryDTO
+  downloadUrl?: string
+  previewUrl?: string
+  sharePath?: string
 }
 
 export interface GenerateRequest {
@@ -988,6 +1004,7 @@ export interface OpenApiSchemas {
   APIResponseAuthTokenResponse: APIResponseAuthTokenResponse
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
   APIResponseGalleryDTO: APIResponseGalleryDTO
+  APIResponseGalleryShareResponse: APIResponseGalleryShareResponse
   APIResponseGenerateResponse: APIResponseGenerateResponse
   APIResponseMapStringObject: APIResponseMapStringObject
   APIResponseMaterialUploadResponse: APIResponseMaterialUploadResponse
@@ -1017,6 +1034,7 @@ export interface OpenApiSchemas {
   CurrentUserResponse: CurrentUserResponse
   GalleryAuditLogResponse: GalleryAuditLogResponse
   GalleryDTO: GalleryDTO
+  GalleryShareResponse: GalleryShareResponse
   GenerateRequest: GenerateRequest
   GenerateResponse: GenerateResponse
   GenerationResult: GenerationResult

@@ -37,6 +37,12 @@ export const staticRoutes: AppRouteRecordRaw[] = [
     meta: { title: 'menus.forgetPassword.title', isHideTab: true }
   },
   {
+    path: '/share/gallery/:assetId',
+    name: 'AIGCGalleryShare',
+    component: () => import('@views/aigc/gallery/share.vue'),
+    meta: { title: 'AIGC 公开分享', isHideTab: true }
+  },
+  {
     path: '/403',
     name: 'Exception403',
     component: () => import('@views/exception/403/index.vue'),
