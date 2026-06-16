@@ -91,6 +91,7 @@ for (const token of [
   'public static final String BASE = API_PREFIX + "/aigc"',
   'public static final String GENERATE_FULL = BASE + GENERATE',
   'public static final String GALLERY_AUDITS_FULL = BASE + GALLERY_AUDITS',
+  'public static final String GALLERY_FAVORITES_FULL = BASE + GALLERY_FAVORITES',
   'public static final String OWNERSHIP_BACKFILL_FULL = BASE + OWNERSHIP_BACKFILL',
   'public static final String ASSET_DETAIL_FULL = BASE + ASSET_DETAIL'
 ]) {
@@ -134,6 +135,26 @@ for (const token of [
   'JpaSpecificationExecutor'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcGalleryAuditLogRepository.java', token)
+}
+
+for (const token of [
+  'AigcGalleryReactionRepository',
+  'findByAssetIdAndReactionTypeAndActorIdAndTenantKey',
+  'countByAssetIdAndReactionType',
+  'JpaRepository'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/repository/AigcGalleryReactionRepository.java', token)
+}
+
+for (const token of [
+  'GlobalRequestContextHolder',
+  'REACTION_LIKE',
+  'REACTION_FAVORITE',
+  'addReaction',
+  'removeReaction',
+  'getMyFavoriteReactions'
+]) {
+  requireToken('backend/src/main/java/com/anjing/aigc/service/AigcGalleryReactionService.java', token)
 }
 
 for (const token of [

@@ -39,6 +39,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +51,7 @@ class AigcServiceImplAssetTest {
     private final AigcProperties aigcProperties = new AigcProperties();
     private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
     private final AigcGalleryAuditLogService galleryAuditLogService = mock(AigcGalleryAuditLogService.class);
+    private final AigcGalleryReactionService galleryReactionService = mock(AigcGalleryReactionService.class);
     private final AigcProviderCostEstimator costEstimator = new AigcProviderCostEstimator(aigcProperties);
     private final AigcProviderManagementPermissionService permissionService =
             mock(AigcProviderManagementPermissionService.class);
@@ -80,6 +82,7 @@ class AigcServiceImplAssetTest {
             aigcProperties,
             auditLogService,
             galleryAuditLogService,
+            galleryReactionService,
             costEstimator,
             permissionService,
             credentialConfigService,
@@ -374,6 +377,10 @@ class AigcServiceImplAssetTest {
         asset.setIsPublished(true);
         asset.setLikeCount(2);
         when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-liked")).thenReturn(Optional.of(asset));
+        when(galleryReactionService.addReaction(AigcGalleryReactionService.REACTION_LIKE, "asset-liked"))
+                .thenReturn(true);
+        when(galleryReactionService.hasReaction(AigcGalleryReactionService.REACTION_LIKE, "asset-liked"))
+                .thenReturn(true);
         when(assetRepository.save(asset)).thenReturn(asset);
 
         assertEquals(3, aigcService.likeGalleryAsset("asset-liked").getLikeCount());
@@ -383,11 +390,30 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void likeGalleryAssetDoesNotIncrementDuplicateReaction() {
+        AigcAsset asset = asset("asset-liked-once");
+        asset.setIsPublished(true);
+        asset.setLikeCount(2);
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-liked-once")).thenReturn(Optional.of(asset));
+        when(galleryReactionService.addReaction(AigcGalleryReactionService.REACTION_LIKE, "asset-liked-once"))
+                .thenReturn(false);
+        when(galleryReactionService.hasReaction(AigcGalleryReactionService.REACTION_LIKE, "asset-liked-once"))
+                .thenReturn(true);
+
+        assertEquals(2, aigcService.likeGalleryAsset("asset-liked-once").getLikeCount());
+        assertEquals(2, asset.getLikeCount());
+        verify(assetRepository, never()).save(asset);
+        verify(galleryAuditLogService, never()).recordSuccess(AigcGalleryAuditLogService.ACTION_LIKE, asset);
+    }
+
+    @Test
     void unlikeGalleryAssetDoesNotGoBelowZero() {
         AigcAsset asset = asset("asset-unliked");
         asset.setIsPublished(true);
         asset.setLikeCount(0);
         when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-unliked")).thenReturn(Optional.of(asset));
+        when(galleryReactionService.removeReaction(AigcGalleryReactionService.REACTION_LIKE, "asset-unliked"))
+                .thenReturn(true);
         when(assetRepository.save(asset)).thenReturn(asset);
 
         assertEquals(0, aigcService.unlikeGalleryAsset("asset-unliked").getLikeCount());
@@ -411,6 +437,10 @@ class AigcServiceImplAssetTest {
         asset.setIsPublished(true);
         asset.setFavoriteCount(4);
         when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-favorited")).thenReturn(Optional.of(asset));
+        when(galleryReactionService.addReaction(AigcGalleryReactionService.REACTION_FAVORITE, "asset-favorited"))
+                .thenReturn(true);
+        when(galleryReactionService.hasReaction(AigcGalleryReactionService.REACTION_FAVORITE, "asset-favorited"))
+                .thenReturn(true);
         when(assetRepository.save(asset)).thenReturn(asset);
 
         assertEquals(5, aigcService.favoriteGalleryAsset("asset-favorited").getFavoriteCount());
@@ -425,6 +455,8 @@ class AigcServiceImplAssetTest {
         asset.setIsPublished(true);
         asset.setFavoriteCount(0);
         when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-unfavorited")).thenReturn(Optional.of(asset));
+        when(galleryReactionService.removeReaction(AigcGalleryReactionService.REACTION_FAVORITE, "asset-unfavorited"))
+                .thenReturn(true);
         when(assetRepository.save(asset)).thenReturn(asset);
 
         assertEquals(0, aigcService.unfavoriteGalleryAsset("asset-unfavorited").getFavoriteCount());

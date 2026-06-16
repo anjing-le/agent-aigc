@@ -7,6 +7,7 @@ import com.anjing.aigc.model.dto.GalleryDTO;
 import com.anjing.aigc.model.dto.MaterialDTO;
 import com.anjing.aigc.model.dto.ModelInfo;
 import com.anjing.aigc.model.entity.AigcAsset;
+import com.anjing.aigc.model.entity.AigcGalleryReaction;
 import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
@@ -40,6 +41,7 @@ import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcGalleryAuditLogService;
+import com.anjing.aigc.service.AigcGalleryReactionService;
 import com.anjing.aigc.service.AigcProviderAuditLogService;
 import com.anjing.aigc.service.AigcProviderCostEstimator;
 import com.anjing.aigc.service.AigcProviderManagementPermissionService;
@@ -92,6 +94,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcProperties aigcProperties;
     private final AigcProviderAuditLogService auditLogService;
     private final AigcGalleryAuditLogService galleryAuditLogService;
+    private final AigcGalleryReactionService galleryReactionService;
     private final AigcProviderCostEstimator costEstimator;
     private final AigcProviderManagementPermissionService permissionService;
     private final AigcProviderCredentialConfigService credentialConfigService;
@@ -1018,6 +1021,26 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size) {
+        PageRequest pageRequest = PageRequest.of(
+                current != null && current > 0 ? current - 1 : 0,
+                size != null && size > 0 ? Math.min(size, 100) : 20,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<AigcGalleryReaction> page = galleryReactionService.getMyFavoriteReactions(pageRequest);
+        List<GalleryDTO> records = page.getContent().stream()
+                .map(AigcGalleryReaction::getAssetId)
+                .map(assetRepository::findByAssetIdAndIsPublishedTrue)
+                .flatMap(Optional::stream)
+                .map(this::toGalleryDTO)
+                .collect(Collectors.toList());
+
+        return PageResult.of(records, page.getTotalElements(), current != null && current > 0 ? current : 1,
+                pageRequest.getPageSize());
+    }
+
+    @Override
     @Transactional
     public void saveToGallery(String assetId) {
         AigcAsset asset = findVisibleAsset(assetId)
@@ -1043,40 +1066,52 @@ public class AigcServiceImpl implements AigcService {
     @Transactional
     public GalleryDTO likeGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
-        asset.setLikeCount(resolveLikeCount(asset) + 1);
-        AigcAsset savedAsset = assetRepository.save(asset);
-        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_LIKE, savedAsset);
-        return toGalleryDTO(savedAsset);
+        if (galleryReactionService.addReaction(AigcGalleryReactionService.REACTION_LIKE, asset.getAssetId())) {
+            asset.setLikeCount(resolveLikeCount(asset) + 1);
+            AigcAsset savedAsset = assetRepository.save(asset);
+            galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_LIKE, savedAsset);
+            return toGalleryDTO(savedAsset);
+        }
+        return toGalleryDTO(asset);
     }
 
     @Override
     @Transactional
     public GalleryDTO unlikeGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
-        asset.setLikeCount(Math.max(0, resolveLikeCount(asset) - 1));
-        AigcAsset savedAsset = assetRepository.save(asset);
-        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_UNLIKE, savedAsset);
-        return toGalleryDTO(savedAsset);
+        if (galleryReactionService.removeReaction(AigcGalleryReactionService.REACTION_LIKE, asset.getAssetId())) {
+            asset.setLikeCount(Math.max(0, resolveLikeCount(asset) - 1));
+            AigcAsset savedAsset = assetRepository.save(asset);
+            galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_UNLIKE, savedAsset);
+            return toGalleryDTO(savedAsset);
+        }
+        return toGalleryDTO(asset);
     }
 
     @Override
     @Transactional
     public GalleryDTO favoriteGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
-        asset.setFavoriteCount(resolveFavoriteCount(asset) + 1);
-        AigcAsset savedAsset = assetRepository.save(asset);
-        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_FAVORITE, savedAsset);
-        return toGalleryDTO(savedAsset);
+        if (galleryReactionService.addReaction(AigcGalleryReactionService.REACTION_FAVORITE, asset.getAssetId())) {
+            asset.setFavoriteCount(resolveFavoriteCount(asset) + 1);
+            AigcAsset savedAsset = assetRepository.save(asset);
+            galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_FAVORITE, savedAsset);
+            return toGalleryDTO(savedAsset);
+        }
+        return toGalleryDTO(asset);
     }
 
     @Override
     @Transactional
     public GalleryDTO unfavoriteGalleryAsset(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
-        asset.setFavoriteCount(Math.max(0, resolveFavoriteCount(asset) - 1));
-        AigcAsset savedAsset = assetRepository.save(asset);
-        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_UNFAVORITE, savedAsset);
-        return toGalleryDTO(savedAsset);
+        if (galleryReactionService.removeReaction(AigcGalleryReactionService.REACTION_FAVORITE, asset.getAssetId())) {
+            asset.setFavoriteCount(Math.max(0, resolveFavoriteCount(asset) - 1));
+            AigcAsset savedAsset = assetRepository.save(asset);
+            galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_UNFAVORITE, savedAsset);
+            return toGalleryDTO(savedAsset);
+        }
+        return toGalleryDTO(asset);
     }
 
     @Override
@@ -1340,9 +1375,11 @@ public class AigcServiceImpl implements AigcService {
                 .createdAt(asset.getCreatedAt())
                 .authorName(null) // TODO: 关联用户
                 .likeCount(resolveLikeCount(asset))
-                .likedByCurrentUser(false)
+                .likedByCurrentUser(galleryReactionService.hasReaction(
+                        AigcGalleryReactionService.REACTION_LIKE, asset.getAssetId()))
                 .favoriteCount(resolveFavoriteCount(asset))
-                .favoritedByCurrentUser(false)
+                .favoritedByCurrentUser(galleryReactionService.hasReaction(
+                        AigcGalleryReactionService.REACTION_FAVORITE, asset.getAssetId()))
                 .build();
     }
 

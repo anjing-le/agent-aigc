@@ -401,6 +401,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryFavorites",
+          "backendConstant": "GALLERY_FAVORITES_FULL",
+          "frontendKey": "galleryFavorites",
+          "path": "/api/aigc/gallery/favorites",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "gallerySave",
           "backendConstant": "GALLERY_SAVE_FULL",
           "frontendKey": "gallerySave",
@@ -555,6 +564,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "galleryAssetPreview": "/api/aigc/gallery/{assetId}/preview",
     "galleryAudits": "/api/aigc/gallery/audits",
     "galleryFavorite": "/api/aigc/gallery/{assetId}/favorite",
+    "galleryFavorites": "/api/aigc/gallery/favorites",
     "galleryLike": "/api/aigc/gallery/{assetId}/like",
     "galleryPublication": "/api/aigc/gallery/{assetId}/publication",
     "gallerySave": "/api/aigc/gallery/save",

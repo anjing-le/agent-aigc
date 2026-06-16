@@ -83,6 +83,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/auth/me",
     operationId: "getCurrentUser"
   },
+  getFavoriteGalleryList: {
+    method: "GET",
+    path: "/api/aigc/gallery/favorites",
+    operationId: "getFavoriteGalleryList"
+  },
   getGalleryAuditLogs: {
     method: "GET",
     path: "/api/aigc/gallery/audits",
@@ -355,6 +360,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseCurrentUserResponse
     data: NonNullable<Schemas.APIResponseCurrentUserResponse['data']>
+  }
+  getFavoriteGalleryList: {
+    pathParams: undefined
+    query: { current?: number; size?: number }
+    request: undefined
+    response: Schemas.APIResponsePageResultGalleryDTO
+    data: NonNullable<Schemas.APIResponsePageResultGalleryDTO['data']>
   }
   getGalleryAuditLogs: {
     pathParams: undefined

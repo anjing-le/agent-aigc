@@ -135,6 +135,15 @@ public interface AigcService {
     PageResult<GalleryDTO> getGalleryList(Integer current, Integer size, String contentType, String model, String keyword);
 
     /**
+     * 获取当前用户/会话收藏的灵感广场作品。
+     *
+     * @param current 当前页
+     * @param size 每页大小
+     * @return 分页列表
+     */
+    PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size);
+
+    /**
      * 保存作品到灵感广场
      *
      * @param assetId 资产ID

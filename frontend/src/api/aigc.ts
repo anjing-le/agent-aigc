@@ -93,6 +93,16 @@ export function fetchGetGalleryAuditLogs(params: GalleryAuditLogSearchParams) {
 }
 
 /**
+ * 获取当前用户/会话收藏的灵感广场作品
+ * @param params 分页参数
+ */
+export function fetchGetFavoriteGalleryList(params: Pick<GallerySearchParams, 'current' | 'size'>) {
+  return openApiRequest('getFavoriteGalleryList', {
+    query: params
+  }) as Promise<GalleryListResponse>
+}
+
+/**
  * 获取我的资产列表
  * @param params 搜索参数
  */

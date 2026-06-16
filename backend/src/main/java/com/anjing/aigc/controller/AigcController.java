@@ -291,6 +291,15 @@ public class AigcController {
         return APIResponse.success(gallery);
     }
 
+    @GetMapping(ApiConstants.Aigc.GALLERY_FAVORITES)
+    @Operation(summary = "获取当前用户收藏的灵感广场作品")
+    public APIResponse<PageResult<GalleryDTO>> getFavoriteGalleryList(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "20") Integer size) {
+        PageResult<GalleryDTO> gallery = aigcService.getMyFavoriteGalleryList(current, size);
+        return APIResponse.success(gallery);
+    }
+
     @GetMapping(ApiConstants.Aigc.GALLERY_ASSET_PREVIEW)
     @Operation(summary = "公开预览已发布 AIGC 广场作品")
     public ResponseEntity<Resource> previewGalleryAsset(@PathVariable String assetId) {

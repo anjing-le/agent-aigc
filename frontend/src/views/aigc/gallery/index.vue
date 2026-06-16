@@ -56,6 +56,9 @@
       </div>
 
       <div class="prompt-gallery__filter-right">
+        <el-checkbox v-model="showOnlyFavorites" @change="handleFavoriteFilterChange">
+          我的收藏
+        </el-checkbox>
         <el-button type="primary" :icon="MagicStick" @click="$router.push('/aigc/studio')">
           去创作
         </el-button>
@@ -158,6 +161,7 @@
   import {
     fetchFavoriteGalleryAsset,
     fetchGetGalleryAuditLogs,
+    fetchGetFavoriteGalleryList,
     fetchGetGalleryList,
     fetchLikeGalleryAsset,
     fetchUnfavoriteGalleryAsset,
@@ -189,6 +193,7 @@
   const searchKeyword = ref('')
   const activeTag = ref('all')
   const activeContentType = ref<ContentType | ''>('')
+  const showOnlyFavorites = ref(false)
 
   // 复制提示
   const showCopyTip = ref(false)
@@ -267,24 +272,35 @@
   /** 从后端 API 加载数据 */
   const loadFromApi = async (append = false) => {
     try {
-      const res = await fetchGetGalleryList({
-        current: currentPage.value,
-        size: pageSize.value,
-        keyword: searchKeyword.value || undefined,
-        category: activeTag.value === 'all' ? undefined : activeTag.value,
-        contentType: activeContentType.value || undefined
-      })
+      const res = showOnlyFavorites.value
+        ? await fetchGetFavoriteGalleryList({
+            current: currentPage.value,
+            size: pageSize.value
+          })
+        : await fetchGetGalleryList({
+            current: currentPage.value,
+            size: pageSize.value,
+            keyword: searchKeyword.value || undefined,
+            category: activeTag.value === 'all' ? undefined : activeTag.value,
+            contentType: activeContentType.value || undefined
+          })
 
       const records = (res?.records || []).map((item: any) => ({
         ...item,
         likeCount: item.likeCount ?? 0,
-        likedByCurrentUser: likedAssetIds.value.has(item.id),
+        likedByCurrentUser: item.likedByCurrentUser ?? likedAssetIds.value.has(item.id),
         favoriteCount: item.favoriteCount ?? 0,
-        favoritedByCurrentUser: favoritedAssetIds.value.has(item.id)
+        favoritedByCurrentUser: item.favoritedByCurrentUser ?? favoritedAssetIds.value.has(item.id)
       }))
 
       // 后端无已发布作品时，自动切换到静态数据后备
-      if (!append && records.length === 0 && currentPage.value === 1 && !searchKeyword.value) {
+      if (
+        !showOnlyFavorites.value &&
+        !append &&
+        records.length === 0 &&
+        currentPage.value === 1 &&
+        !searchKeyword.value
+      ) {
         console.info('后端暂无已发布作品，使用静态提示词数据')
         dataSource.value = 'static'
         await loadFromStatic(false)
@@ -373,6 +389,12 @@
   }, 300)
 
   const handleFilterChange = () => {
+    currentPage.value = 1
+    dataSource.value = 'api'
+    loadData()
+  }
+
+  const handleFavoriteFilterChange = () => {
     currentPage.value = 1
     dataSource.value = 'api'
     loadData()
@@ -503,6 +525,9 @@
         favoritedByCurrentUser: !item.favoritedByCurrentUser
       })
       await loadGalleryAuditLogs()
+      if (showOnlyFavorites.value) {
+        await loadData()
+      }
     } catch (error) {
       console.error('更新收藏失败:', error)
       ElMessage.error('收藏失败，请稍后重试')
@@ -682,6 +707,9 @@
     }
 
     &__filter-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       flex-shrink: 0;
     }
 
