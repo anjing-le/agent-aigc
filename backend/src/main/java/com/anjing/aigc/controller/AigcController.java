@@ -20,6 +20,7 @@ import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.OwnershipBackfillResponse;
 import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
+import com.anjing.aigc.model.response.ProviderExecutionReportResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
@@ -183,6 +184,15 @@ public class AigcController {
         PageResult<ProviderAuditLogResponse> logs = aigcService.getProviderAuditLogs(
                 current, size, contentType, action);
         return APIResponse.success(logs);
+    }
+
+    @GetMapping(ApiConstants.Aigc.MODEL_PROVIDER_EXECUTION_REPORT)
+    @Operation(summary = "获取 AIGC Provider 执行报表")
+    public APIResponse<ProviderExecutionReportResponse> getProviderExecutionReport(
+            @RequestParam(defaultValue = "30") Integer days,
+            @RequestParam(required = false) String contentType) {
+        ProviderExecutionReportResponse report = aigcService.getProviderExecutionReport(days, contentType);
+        return APIResponse.success(report);
     }
 
     @PostMapping(ApiConstants.Aigc.MATERIAL_UPLOAD)

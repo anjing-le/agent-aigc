@@ -302,6 +302,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "modelProviderExecutionReport",
+          "backendConstant": "MODEL_PROVIDER_EXECUTION_REPORT_FULL",
+          "frontendKey": "modelProviderExecutionReport",
+          "path": "/api/aigc/models/provider-execution-report",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "materials",
           "backendConstant": "MATERIALS_FULL",
           "frontendKey": "materials",
@@ -629,6 +638,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "modelProbe": "/api/aigc/models/probe",
     "modelProviderAudits": "/api/aigc/models/provider-audits",
     "modelProviderCredential": "/api/aigc/models/provider-credential",
+    "modelProviderExecutionReport": "/api/aigc/models/provider-execution-report",
     "modelProviderParams": "/api/aigc/models/provider-params",
     "modelProviderSmokeTest": "/api/aigc/models/provider-smoke-test",
     "models": "/api/aigc/models",

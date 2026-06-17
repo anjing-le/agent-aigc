@@ -528,6 +528,12 @@ export type ProviderSmokeTestRequest = Omit<
 /** Provider smoke test 响应 */
 export type ProviderSmokeTestResponse = OpenApiOperationData<'smokeTestProvider'>
 
+/** Provider 执行报表指标 */
+export type ProviderExecutionMetric = Schemas.ProviderExecutionMetricResponse
+
+/** Provider 执行报表响应 */
+export type ProviderExecutionReportResponse = OpenApiOperationData<'getProviderExecutionReport'>
+
 /** Provider 管理审计日志项 */
 export type ProviderAuditLogItem = Schemas.ProviderAuditLogResponse
 

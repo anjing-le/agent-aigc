@@ -30,6 +30,8 @@ import com.anjing.aigc.model.response.ProviderExecutionSummary;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
 import com.anjing.aigc.model.response.ProviderCostEstimate;
 import com.anjing.aigc.model.response.ProviderDiagnosticCheck;
+import com.anjing.aigc.model.response.ProviderExecutionMetricResponse;
+import com.anjing.aigc.model.response.ProviderExecutionReportResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
@@ -71,12 +73,16 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -612,6 +618,170 @@ public class AigcServiceImpl implements AigcService {
     public PageResult<ProviderAuditLogResponse> getProviderAuditLogs(
             Integer current, Integer size, String contentType, String action) {
         return auditLogService.getAuditLogs(current, size, parseContentType(contentType), action);
+    }
+
+    @Override
+    public ProviderExecutionReportResponse getProviderExecutionReport(Integer days, String contentType) {
+        int safeDays = days != null && days > 0 ? Math.min(days, 180) : 30;
+        ContentType parsedContentType = parseContentType(contentType);
+        LocalDateTime createdAfter = DateUtils.nowLocalDateTime().minusDays(safeDays);
+        List<AigcTask> tasks = taskRepository.findVisibleForExecutionReport(
+                createdAfter,
+                parsedContentType,
+                ownershipService.currentOwnerId(),
+                ownershipService.currentTenantId()
+        );
+
+        ProviderExecutionMetricResponse summary = toExecutionMetric("summary", "全部任务", tasks);
+        return ProviderExecutionReportResponse.builder()
+                .days(safeDays)
+                .contentType(parsedContentType)
+                .totalTasks(summary.getTotalTasks())
+                .completedTasks(summary.getCompletedTasks())
+                .failedTasks(summary.getFailedTasks())
+                .pendingTasks(summary.getPendingTasks())
+                .successRate(summary.getSuccessRate())
+                .averageDurationMs(summary.getAverageDurationMs())
+                .estimatedCostAmount(summary.getEstimatedCostAmount())
+                .estimatedCostCurrency(summary.getEstimatedCostCurrency())
+                .costStatusSummary(summary.getCostStatusSummary())
+                .providerMetrics(groupExecutionMetrics(tasks, "provider", this::providerMetricKey))
+                .modelMetrics(groupExecutionMetrics(tasks, "model", task -> displayValue(task.getModel(), "unknown-model")))
+                .contentTypeMetrics(groupExecutionMetrics(
+                        tasks,
+                        "contentType",
+                        task -> task.getContentType() == null ? "unknown" : task.getContentType().name()))
+                .generatedAt(DateUtils.nowIso())
+                .build();
+    }
+
+    private List<ProviderExecutionMetricResponse> groupExecutionMetrics(
+            List<AigcTask> tasks,
+            String dimension,
+            Function<AigcTask, String> keyResolver) {
+        return tasks.stream()
+                .collect(Collectors.groupingBy(
+                        task -> displayValue(keyResolver.apply(task), "unknown"),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ))
+                .entrySet()
+                .stream()
+                .map(entry -> toExecutionMetric(dimension, entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(ProviderExecutionMetricResponse::getTotalTasks).reversed())
+                .toList();
+    }
+
+    private ProviderExecutionMetricResponse toExecutionMetric(
+            String dimension,
+            String label,
+            List<AigcTask> tasks) {
+        long totalTasks = tasks.size();
+        long completedTasks = tasks.stream().filter(this::isCompletedTask).count();
+        long failedTasks = tasks.stream().filter(this::isFailedTask).count();
+        long pendingTasks = Math.max(0, totalTasks - completedTasks - failedTasks);
+        AigcTask sample = tasks.isEmpty() ? null : tasks.get(0);
+
+        return ProviderExecutionMetricResponse.builder()
+                .dimension(dimension)
+                .label(label)
+                .contentType(resolveSingleContentType(tasks))
+                .providerName(sample == null ? null : sample.getProviderName())
+                .providerType(sample == null ? null : sample.getProviderType())
+                .model(sample == null ? null : sample.getModel())
+                .totalTasks(totalTasks)
+                .completedTasks(completedTasks)
+                .failedTasks(failedTasks)
+                .pendingTasks(pendingTasks)
+                .successRate(toSuccessRate(completedTasks, totalTasks))
+                .averageDurationMs(toAverageDurationMs(tasks))
+                .estimatedCostAmount(sumEstimatedCost(tasks))
+                .estimatedCostCurrency(resolveEstimatedCostCurrency(tasks))
+                .costStatusSummary(toCostStatusSummary(tasks))
+                .build();
+    }
+
+    private String providerMetricKey(AigcTask task) {
+        String providerName = normalizeFilter(task.getProviderName());
+        if (providerName != null) {
+            return providerName;
+        }
+        return displayValue(task.getProviderType(), "unknown-provider");
+    }
+
+    private boolean isCompletedTask(AigcTask task) {
+        return task.getStatus() == TaskStatus.COMPLETED;
+    }
+
+    private boolean isFailedTask(AigcTask task) {
+        return task.getStatus() == TaskStatus.FAILED;
+    }
+
+    private Double toSuccessRate(long completedTasks, long totalTasks) {
+        if (totalTasks <= 0) {
+            return 0.0;
+        }
+        return BigDecimal.valueOf(completedTasks)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(totalTasks), 2, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
+    private Long toAverageDurationMs(List<AigcTask> tasks) {
+        return Math.round(tasks.stream()
+                .map(AigcTask::getDurationMs)
+                .filter(duration -> duration != null && duration > 0)
+                .mapToLong(Long::longValue)
+                .average()
+                .orElse(0));
+    }
+
+    private BigDecimal sumEstimatedCost(List<AigcTask> tasks) {
+        List<BigDecimal> amounts = tasks.stream()
+                .map(AigcTask::getEstimatedCostAmount)
+                .filter(amount -> amount != null)
+                .toList();
+        if (amounts.isEmpty()) {
+            return null;
+        }
+        return amounts.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String resolveEstimatedCostCurrency(List<AigcTask> tasks) {
+        Set<String> currencies = tasks.stream()
+                .map(AigcTask::getEstimatedCostCurrency)
+                .map(this::normalizeFilter)
+                .filter(currency -> currency != null)
+                .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+        if (currencies.isEmpty()) {
+            return null;
+        }
+        if (currencies.size() == 1) {
+            return currencies.iterator().next();
+        }
+        return "MIXED";
+    }
+
+    private String toCostStatusSummary(List<AigcTask> tasks) {
+        Map<String, Long> statusCounts = tasks.stream()
+                .map(AigcTask::getCostStatus)
+                .map(status -> displayValue(status, "UNTRACKED"))
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, Collectors.counting()));
+        if (statusCounts.isEmpty()) {
+            return "-";
+        }
+        return statusCounts.entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + ": " + entry.getValue())
+                .collect(Collectors.joining(", "));
+    }
+
+    private ContentType resolveSingleContentType(List<AigcTask> tasks) {
+        Set<ContentType> contentTypes = tasks.stream()
+                .map(AigcTask::getContentType)
+                .filter(type -> type != null)
+                .collect(Collectors.toSet());
+        return contentTypes.size() == 1 ? contentTypes.iterator().next() : null;
     }
 
     private AigcTask createSmokeTestTask(ProviderSmokeTestRequest request, ContentProvider provider) {

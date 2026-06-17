@@ -226,6 +226,15 @@ export interface APIResponseProviderCredentialUpdateResponse {
   timestamp?: number
 }
 
+export interface APIResponseProviderExecutionReportResponse {
+  code?: string
+  data?: ProviderExecutionReportResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseProviderParamUpdateResponse {
   code?: string
   data?: ProviderParamUpdateResponse
@@ -855,6 +864,138 @@ export interface ProviderDiagnosticCheck {
   status?: string
 }
 
+/**
+ * AIGC Provider execution metric
+ */
+export interface ProviderExecutionMetricResponse {
+  /**
+   * Average task duration in milliseconds
+   */
+  averageDurationMs?: number
+  /**
+   * Completed task count
+   */
+  completedTasks?: number
+  /**
+   * Content type when the metric belongs to one type
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Cost status summary
+   */
+  costStatusSummary?: string
+  /**
+   * Metric dimension, such as provider, model, or contentType
+   */
+  dimension?: string
+  /**
+   * Estimated total cost amount
+   */
+  estimatedCostAmount?: number
+  /**
+   * Estimated cost currency
+   */
+  estimatedCostCurrency?: string
+  /**
+   * Failed task count
+   */
+  failedTasks?: number
+  /**
+   * Display label
+   */
+  label?: string
+  /**
+   * Model name
+   */
+  model?: string
+  /**
+   * Pending or running task count
+   */
+  pendingTasks?: number
+  /**
+   * Provider display name
+   */
+  providerName?: string
+  /**
+   * Provider type
+   */
+  providerType?: string
+  /**
+   * Success rate percentage, 0-100
+   */
+  successRate?: number
+  /**
+   * Total task count
+   */
+  totalTasks?: number
+}
+
+/**
+ * AIGC Provider execution report
+ */
+export interface ProviderExecutionReportResponse {
+  /**
+   * Average task duration in milliseconds
+   */
+  averageDurationMs?: number
+  /**
+   * Completed task count
+   */
+  completedTasks?: number
+  /**
+   * Optional content type filter
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Content type grouped metrics
+   */
+  contentTypeMetrics?: ProviderExecutionMetricResponse[]
+  /**
+   * Cost status summary
+   */
+  costStatusSummary?: string
+  /**
+   * Report time window in days
+   */
+  days?: number
+  /**
+   * Estimated total cost amount
+   */
+  estimatedCostAmount?: number
+  /**
+   * Estimated cost currency
+   */
+  estimatedCostCurrency?: string
+  /**
+   * Failed task count
+   */
+  failedTasks?: number
+  /**
+   * Report generation time
+   */
+  generatedAt?: string
+  /**
+   * Model grouped metrics
+   */
+  modelMetrics?: ProviderExecutionMetricResponse[]
+  /**
+   * Pending or running task count
+   */
+  pendingTasks?: number
+  /**
+   * Provider grouped metrics
+   */
+  providerMetrics?: ProviderExecutionMetricResponse[]
+  /**
+   * Success rate percentage, 0-100
+   */
+  successRate?: number
+  /**
+   * Total task count
+   */
+  totalTasks?: number
+}
+
 export interface ProviderExecutionSummary {
   costDescription?: string
   costStatus?: string
@@ -1153,6 +1294,7 @@ export interface OpenApiSchemas {
   APIResponsePageResultStorageAuditLogResponse: APIResponsePageResultStorageAuditLogResponse
   APIResponsePageResultTaskStatusResponse: APIResponsePageResultTaskStatusResponse
   APIResponseProviderCredentialUpdateResponse: APIResponseProviderCredentialUpdateResponse
+  APIResponseProviderExecutionReportResponse: APIResponseProviderExecutionReportResponse
   APIResponseProviderParamUpdateResponse: APIResponseProviderParamUpdateResponse
   APIResponseProviderProbeResponse: APIResponseProviderProbeResponse
   APIResponseProviderRouteUpdateResponse: APIResponseProviderRouteUpdateResponse
@@ -1203,6 +1345,8 @@ export interface OpenApiSchemas {
   ProviderCredentialUpdateRequest: ProviderCredentialUpdateRequest
   ProviderCredentialUpdateResponse: ProviderCredentialUpdateResponse
   ProviderDiagnosticCheck: ProviderDiagnosticCheck
+  ProviderExecutionMetricResponse: ProviderExecutionMetricResponse
+  ProviderExecutionReportResponse: ProviderExecutionReportResponse
   ProviderExecutionSummary: ProviderExecutionSummary
   ProviderParamUpdateRequest: ProviderParamUpdateRequest
   ProviderParamUpdateResponse: ProviderParamUpdateResponse

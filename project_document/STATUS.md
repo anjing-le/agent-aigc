@@ -68,6 +68,7 @@
 - AIGC 广场审计 V1 已接入：新增 `/api/aigc/gallery/audits`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；发布、撤回、点赞、取消点赞、收藏、取消收藏和公开下载会写入 `aigc_gallery_audit_log`，审计继承脚手架 requestId、traceId、tenantId、operator、callerId 和 clientIp，广场页展示最近互动审计。
 - AIGC 广场互动报表 V1 已接入：新增 `/api/aigc/gallery/reports/interactions`，按当前脚手架 user/tenant 上下文聚合可见审计数据，返回动作分布、内容类型分布、每日趋势、核心互动计数、高互动作品、创作者对比和作品互动结构对比；前端新增 `/aigc/gallery-report` 后台报表页，支持趋势查看、作者/作品对比、CSV 导出，并从灵感广场提供入口。
 - AIGC 广场公开分享转化漏斗 V1 已接入：分享页访问会写入 `share-view` 审计，分享页点击“复用 Prompt”会写入 `prompt-reuse` 审计；互动报表新增分享访问数、Prompt 复用数、公开下载/Prompt 复用转化率、每日分享/复用趋势和 CSV 导出字段，形成“分享访问 -> 公开下载 / Prompt 复用”的轻量运营闭环。
+- AIGC Provider 调用报表 V1 已接入：新增 `/api/aigc/models/provider-execution-report`，按当前脚手架 user/tenant 上下文统计任务总数、完成/失败/运行中、成功率、平均耗时、估算成本和成本状态，并按 Provider、模型、内容类型聚合；模型配置页展示调用报表，继续通过 ApiConstants、service-boundary、OpenAPI 生成类型和 `openApiRequest` 贯通。
 - AIGC 存储状态诊断 V1 已接入：新增 `/api/aigc/storage/status`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；资产页展示 activeMode、本地目录可读写、清理能力、URL 前缀和 OSS 配置状态，响应不暴露任何密钥字段。
 - Google 图片 Provider 已加入 429/5xx 短重试、统一 Provider 调用错误码和本地保存失败兜底。
 - 删除资产时会清理本地生成文件和缩略图；清理失败只记录 warning，不阻断资产记录删除。
@@ -92,15 +93,14 @@
 - 素材库和资产库已具备统一 storage adapter、OSS SDK 上传/删除、本地文件清理、存储状态诊断、OSS 短重试、清理审计、审计查询视图、用户/租户可见性隔离、历史归属回填、授权下载、授权预览、广场公开预览、公开下载/分享、公开分享页 SEO/海报化、个人公开主页、用户级互动关系、我的收藏、互动审计、互动报表、每日趋势、分享转化漏斗、CSV 导出和静态 `/files/**` 兼容开关；后续可继续补更细的专题合集和榜单。
 - Provider 配置已有运行前探测检查项、显式 smoke test、页面持久化切换、配置来源展示、只写式加密凭证保存、默认参数模板编辑、角色边界、管理审计和密钥脱敏边界；生产级 KMS 托管和批量测试策略仍需要后续管理能力承接。
 - 历史记录和作品广场已有基础点赞/收藏计数、用户/会话级去重、我的收藏列表、公开分享页、分享页 SEO/海报化、个人公开主页、互动报表、每日趋势、分享转化漏斗和 CSV 导出；作者排行和作品合集仍可后续产品化。
-- 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口、基础 Provider 调用观测和配置化成本估算；真实用量计费和聚合报表仍需继续产品化。
+- 真实模型调用已有参数错误码、Provider 可用性/调用错误码、图片 Provider 短重试、任务重试入口、基础 Provider 调用观测、配置化成本估算和 Provider 调用报表；真实用量计费仍需继续产品化。
 
 ## 推荐下一步
 
 1. 做截图素材采集：按 `docs/evidence/2026-06-17/README.md` 的清单采集实际 PNG 或录屏。
 2. 做广场产品化补充：作者主页 SEO 完整度、作品合集和榜单。
-3. 做真实调用报表：按 Provider、模型、内容类型聚合成功率、耗时和估算成本。
-4. 做 Provider 管理增强：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
-5. 做真实 Provider 演示证据：在安全环境下补一次 Google 图片 Provider smoke test 记录。
+3. 做 Provider 管理增强：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
+4. 做真实 Provider 演示证据：在安全环境下补一次 Google 图片 Provider smoke test 记录。
 
 ## 工程契约门禁
 

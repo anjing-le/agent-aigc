@@ -29,6 +29,7 @@ import type {
   ProviderParamUpdateResponse,
   ProviderAuditLogListResponse,
   ProviderAuditLogSearchParams,
+  ProviderExecutionReportResponse,
   ProviderRouteUpdateRequest,
   ProviderRouteUpdateResponse,
   ProviderSmokeTestRequest,
@@ -227,6 +228,15 @@ export function fetchGetProviderAuditLogs(params: ProviderAuditLogSearchParams) 
   return openApiRequest('getProviderAuditLogs', {
     query: params
   }) as Promise<ProviderAuditLogListResponse>
+}
+
+export function fetchGetProviderExecutionReport(params: {
+  days?: number
+  contentType?: string
+}) {
+  return openApiRequest('getProviderExecutionReport', {
+    query: params
+  }) as Promise<ProviderExecutionReportResponse>
 }
 
 export function fetchSmokeTestProvider(data: ProviderSmokeTestRequest) {

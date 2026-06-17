@@ -65,6 +65,7 @@ export const ApiPaths = {
     modelProviderParams: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderParams,
     modelProviderSmokeTest: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderSmokeTest,
     modelProviderAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderAudits,
+    modelProviderExecutionReport: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.modelProviderExecutionReport,
     materials: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materials,
     materialDetail: (materialId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.materialDetail, { materialId }),

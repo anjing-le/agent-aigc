@@ -260,6 +260,7 @@ public class ApiConstants {
         public static final String MODEL_PROVIDER_PARAMS = "/models/provider-params";
         public static final String MODEL_PROVIDER_SMOKE_TEST = "/models/provider-smoke-test";
         public static final String MODEL_PROVIDER_AUDITS = "/models/provider-audits";
+        public static final String MODEL_PROVIDER_EXECUTION_REPORT = "/models/provider-execution-report";
         public static final String MATERIALS = "/materials";
         public static final String MATERIAL_DETAIL = "/materials/{materialId}";
         public static final String MATERIAL_TASKS = "/materials/{materialId}/tasks";
@@ -298,6 +299,7 @@ public class ApiConstants {
         public static final String MODEL_PROVIDER_PARAMS_FULL = BASE + MODEL_PROVIDER_PARAMS;
         public static final String MODEL_PROVIDER_SMOKE_TEST_FULL = BASE + MODEL_PROVIDER_SMOKE_TEST;
         public static final String MODEL_PROVIDER_AUDITS_FULL = BASE + MODEL_PROVIDER_AUDITS;
+        public static final String MODEL_PROVIDER_EXECUTION_REPORT_FULL = BASE + MODEL_PROVIDER_EXECUTION_REPORT;
         public static final String MATERIALS_FULL = BASE + MATERIALS;
         public static final String MATERIAL_DETAIL_FULL = BASE + MATERIAL_DETAIL;
         public static final String MATERIAL_TASKS_FULL = BASE + MATERIAL_TASKS;

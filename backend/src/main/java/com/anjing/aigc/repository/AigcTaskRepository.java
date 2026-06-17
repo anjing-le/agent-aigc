@@ -1,5 +1,6 @@
 package com.anjing.aigc.repository;
 
+import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.entity.AigcTask;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -74,6 +77,20 @@ public interface AigcTaskRepository extends JpaRepository<AigcTask, Long> {
             @Param("ownerId") String ownerId,
             @Param("tenantId") String tenantId,
             Pageable pageable);
+
+    @Query("""
+            select t from AigcTask t
+            where t.createdAt >= :createdAfter
+              and (:contentType is null or t.contentType = :contentType)
+              and (:ownerId is null or t.userId is null or t.userId = :ownerId)
+              and (:tenantId is null or t.tenantId is null or t.tenantId = :tenantId)
+            order by t.createdAt desc
+            """)
+    List<AigcTask> findVisibleForExecutionReport(
+            @Param("createdAfter") LocalDateTime createdAfter,
+            @Param("contentType") ContentType contentType,
+            @Param("ownerId") String ownerId,
+            @Param("tenantId") String tenantId);
 
     @Query("""
             select count(t) from AigcTask t

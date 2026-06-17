@@ -5,7 +5,11 @@
         <h2 class="aigc-models__title">模型配置</h2>
         <p class="aigc-models__subtitle">Provider 状态来自后端配置和已注册 Bean</p>
       </div>
-      <el-button :icon="Refresh" :loading="loading || auditLoading" @click="loadModelConsole">
+      <el-button
+        :icon="Refresh"
+        :loading="loading || auditLoading || executionReportLoading"
+        @click="loadModelConsole"
+      >
         刷新
       </el-button>
     </div>
@@ -206,6 +210,104 @@
       </section>
     </div>
 
+    <section class="aigc-models__execution">
+      <div class="aigc-models__execution-header">
+        <div>
+          <h3 class="aigc-models__execution-title">调用报表</h3>
+          <p class="aigc-models__execution-desc">Provider、模型和内容类型的任务执行表现</p>
+        </div>
+        <div class="aigc-models__execution-actions">
+          <el-radio-group v-model="executionReportContentType" size="small" @change="loadExecutionReport">
+            <el-radio-button label="">全部</el-radio-button>
+            <el-radio-button label="IMAGE">图片</el-radio-button>
+            <el-radio-button label="VIDEO">视频</el-radio-button>
+            <el-radio-button label="AUDIO">音频</el-radio-button>
+          </el-radio-group>
+          <el-select
+            v-model="executionReportDays"
+            size="small"
+            class="aigc-models__execution-days"
+            @change="loadExecutionReport"
+          >
+            <el-option label="7 天" :value="7" />
+            <el-option label="30 天" :value="30" />
+            <el-option label="90 天" :value="90" />
+          </el-select>
+          <el-button
+            size="small"
+            :icon="DataAnalysis"
+            :loading="executionReportLoading"
+            @click="loadExecutionReport"
+          >
+            刷新报表
+          </el-button>
+        </div>
+      </div>
+      <div class="aigc-models__execution-stats">
+        <div v-for="item in executionReportStats" :key="item.label">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
+      <div class="aigc-models__execution-meta">
+        <el-tag size="small" effect="plain">{{ formatReportWindow }}</el-tag>
+        <span>{{ formatProbeTime(executionReport?.generatedAt) || '等待生成' }}</span>
+        <span>{{ executionReport?.costStatusSummary || '-' }}</span>
+      </div>
+      <div class="aigc-models__execution-tables">
+        <section>
+          <div class="aigc-models__execution-table-title">Provider 表现</div>
+          <el-table
+            v-loading="executionReportLoading"
+            :data="providerExecutionMetrics"
+            size="small"
+            empty-text="暂无 Provider 调用记录"
+          >
+            <el-table-column label="Provider" min-width="150" show-overflow-tooltip>
+              <template #default="{ row }">{{ formatExecutionMetricLabel(row) }}</template>
+            </el-table-column>
+            <el-table-column label="任务" width="78">
+              <template #default="{ row }">{{ formatExecutionCount(row.totalTasks) }}</template>
+            </el-table-column>
+            <el-table-column label="成功率" width="86">
+              <template #default="{ row }">{{ formatExecutionPercent(row.successRate) }}</template>
+            </el-table-column>
+            <el-table-column label="耗时" width="88">
+              <template #default="{ row }">{{ formatDuration(row.averageDurationMs) }}</template>
+            </el-table-column>
+            <el-table-column label="成本" min-width="118" show-overflow-tooltip>
+              <template #default="{ row }">{{ formatExecutionCost(row) }}</template>
+            </el-table-column>
+          </el-table>
+        </section>
+        <section>
+          <div class="aigc-models__execution-table-title">模型表现</div>
+          <el-table
+            v-loading="executionReportLoading"
+            :data="modelExecutionMetrics"
+            size="small"
+            empty-text="暂无模型调用记录"
+          >
+            <el-table-column label="模型" min-width="150" show-overflow-tooltip>
+              <template #default="{ row }">{{ formatExecutionMetricLabel(row) }}</template>
+            </el-table-column>
+            <el-table-column label="类型" width="72">
+              <template #default="{ row }">{{ formatContentType(row.contentType) }}</template>
+            </el-table-column>
+            <el-table-column label="任务" width="78">
+              <template #default="{ row }">{{ formatExecutionCount(row.totalTasks) }}</template>
+            </el-table-column>
+            <el-table-column label="成功率" width="86">
+              <template #default="{ row }">{{ formatExecutionPercent(row.successRate) }}</template>
+            </el-table-column>
+            <el-table-column label="耗时" width="88">
+              <template #default="{ row }">{{ formatDuration(row.averageDurationMs) }}</template>
+            </el-table-column>
+          </el-table>
+        </section>
+      </div>
+    </section>
+
     <section class="aigc-models__governance">
       <div class="aigc-models__governance-header">
         <div>
@@ -396,6 +498,7 @@
   import {
     fetchBackfillOwnership,
     fetchGetProviderAuditLogs,
+    fetchGetProviderExecutionReport,
     fetchGetModelList,
     fetchProbeProvider,
     fetchSmokeTestProvider,
@@ -410,6 +513,8 @@
     ModelListResponse,
     OwnershipBackfillResponse,
     ProviderAuditLogItem,
+    ProviderExecutionMetric,
+    ProviderExecutionReportResponse,
     ProviderProbeResponse,
     ProviderSmokeTestResponse
   } from '@/api/model/aigcModel'
@@ -427,12 +532,16 @@
 
   const loading = ref(false)
   const auditLoading = ref(false)
+  const executionReportLoading = ref(false)
   const models = ref<ModelListResponse>({
     imageModels: [],
     videoModels: [],
     audioModels: []
   })
   const auditLogs = ref<ProviderAuditLogItem[]>([])
+  const executionReport = ref<ProviderExecutionReportResponse | null>(null)
+  const executionReportDays = ref(30)
+  const executionReportContentType = ref<ContentType | ''>('')
   const probingKey = ref('')
   const switchingKey = ref('')
   const savingCredential = ref(false)
@@ -494,6 +603,31 @@
       models: models.value.audioModels
     }
   ])
+
+  const providerExecutionMetrics = computed<ProviderExecutionMetric[]>(
+    () => executionReport.value?.providerMetrics || []
+  )
+
+  const modelExecutionMetrics = computed<ProviderExecutionMetric[]>(
+    () => executionReport.value?.modelMetrics || []
+  )
+
+  const executionReportStats = computed(() => [
+    { label: '总任务', value: formatExecutionCount(executionReport.value?.totalTasks) },
+    { label: '完成', value: formatExecutionCount(executionReport.value?.completedTasks) },
+    { label: '失败', value: formatExecutionCount(executionReport.value?.failedTasks) },
+    { label: '运行中', value: formatExecutionCount(executionReport.value?.pendingTasks) },
+    { label: '成功率', value: formatExecutionPercent(executionReport.value?.successRate) },
+    { label: '平均耗时', value: formatDuration(executionReport.value?.averageDurationMs) },
+    { label: '估算成本', value: formatExecutionCost(executionReport.value) }
+  ])
+
+  const formatReportWindow = computed(() => {
+    const type = executionReportContentType.value
+      ? formatContentType(executionReportContentType.value)
+      : '全部类型'
+    return `${type} · ${executionReportDays.value} 天`
+  })
 
   const formatDefaultParams = (model: ModelInfo) => {
     const params = model.defaultParams || {}
@@ -609,6 +743,28 @@
   const formatGovernanceCount = (value?: number) => {
     if (value === undefined || value === null) return '-'
     return Number(value).toLocaleString()
+  }
+
+  const formatExecutionCount = (value?: number | null) => {
+    if (value === undefined || value === null) return '-'
+    return Number(value).toLocaleString()
+  }
+
+  const formatExecutionPercent = (value?: number | null) => {
+    if (value === undefined || value === null) return '-'
+    return `${Number(value).toFixed(1)}%`
+  }
+
+  const formatExecutionCost = (
+    item?: Pick<ProviderExecutionMetric, 'estimatedCostAmount' | 'estimatedCostCurrency'> | null
+  ) => {
+    if (item?.estimatedCostAmount === undefined || item.estimatedCostAmount === null) return '-'
+    const currency = item.estimatedCostCurrency || 'USD'
+    return `${currency} ${Number(item.estimatedCostAmount).toFixed(6)}`
+  }
+
+  const formatExecutionMetricLabel = (row: ProviderExecutionMetric) => {
+    return row.label || row.providerName || row.model || row.providerType || '-'
   }
 
   const formatOwnershipUpdated = (result?: OwnershipBackfillResponse | null) => {
@@ -945,8 +1101,23 @@
     }
   }
 
+  const loadExecutionReport = async () => {
+    try {
+      executionReportLoading.value = true
+      executionReport.value = await fetchGetProviderExecutionReport({
+        days: executionReportDays.value,
+        contentType: executionReportContentType.value || undefined
+      })
+    } catch (error) {
+      console.error('加载 Provider 调用报表失败:', error)
+      executionReport.value = null
+    } finally {
+      executionReportLoading.value = false
+    }
+  }
+
   const loadModelConsole = async () => {
-    await Promise.all([loadModels(), loadAuditLogs()])
+    await Promise.all([loadModels(), loadAuditLogs(), loadExecutionReport()])
   }
 
   onMounted(() => {
@@ -1001,6 +1172,107 @@
       border: 1px solid var(--el-border-color-light);
       border-radius: 8px;
       background: var(--el-bg-color);
+    }
+
+    &__execution {
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+      background: var(--el-bg-color);
+    }
+
+    &__execution-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    &__execution-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    &__execution-desc {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      line-height: 1.5;
+    }
+
+    &__execution-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    &__execution-days {
+      width: 96px;
+    }
+
+    &__execution-stats {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+
+      div {
+        min-width: 0;
+        padding: 12px;
+        border: 1px solid var(--el-border-color-lighter);
+        border-radius: 8px;
+        background: var(--el-fill-color-blank);
+      }
+
+      span {
+        display: block;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+
+      strong {
+        display: block;
+        min-width: 0;
+        margin-top: 6px;
+        overflow: hidden;
+        color: var(--el-text-color-primary);
+        font-size: 18px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    &__execution-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    &__execution-tables {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+
+      section {
+        min-width: 0;
+      }
+    }
+
+    &__execution-table-title {
+      margin-bottom: 8px;
+      color: var(--el-text-color-primary);
+      font-size: 13px;
+      font-weight: 600;
     }
 
     &__governance-header {
@@ -1322,6 +1594,14 @@
         grid-template-columns: 1fr;
       }
 
+      &__execution-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      &__execution-tables {
+        grid-template-columns: 1fr;
+      }
+
       &__governance-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -1330,8 +1610,18 @@
     @media (max-width: 720px) {
       &__header,
       &__audit-header,
+      &__execution-header,
       &__governance-header {
         flex-direction: column;
+      }
+
+      &__execution-actions {
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      &__execution-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       &__governance-actions {

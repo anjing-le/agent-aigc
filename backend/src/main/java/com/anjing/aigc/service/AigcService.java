@@ -15,6 +15,7 @@ import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderAuditLogResponse;
 import com.anjing.aigc.model.response.ProviderCredentialUpdateResponse;
+import com.anjing.aigc.model.response.ProviderExecutionReportResponse;
 import com.anjing.aigc.model.response.ProviderParamUpdateResponse;
 import com.anjing.aigc.model.response.ProviderProbeResponse;
 import com.anjing.aigc.model.response.ProviderRouteUpdateResponse;
@@ -123,6 +124,15 @@ public interface AigcService {
      */
     PageResult<ProviderAuditLogResponse> getProviderAuditLogs(
             Integer current, Integer size, String contentType, String action);
+
+    /**
+     * 获取 Provider 执行报表。
+     *
+     * @param days 时间窗口
+     * @param contentType 内容类型
+     * @return 执行报表
+     */
+    ProviderExecutionReportResponse getProviderExecutionReport(Integer days, String contentType);
 
     /**
      * 获取灵感广场作品列表
