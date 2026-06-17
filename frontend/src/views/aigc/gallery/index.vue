@@ -68,6 +68,46 @@
       </div>
     </div>
 
+    <section v-if="rankedGalleryItems.length" class="prompt-gallery__ranking">
+      <div class="prompt-gallery__ranking-header">
+        <div>
+          <h3>热门榜单</h3>
+          <p>按当前筛选结果的点赞和收藏热度排序，方便快速复用高反馈 Prompt</p>
+        </div>
+        <el-tag effect="plain">Top {{ rankedGalleryItems.length }}</el-tag>
+      </div>
+
+      <div class="prompt-gallery__ranking-list">
+        <article
+          v-for="entry in rankedGalleryItems"
+          :key="entry.item.id"
+          class="prompt-gallery__ranking-item"
+        >
+          <span class="prompt-gallery__ranking-index">#{{ entry.rank }}</span>
+          <div class="prompt-gallery__ranking-copy">
+            <strong>{{ entry.item.title || truncateText(entry.item.prompt, 42) }}</strong>
+            <span>{{ truncateText(entry.item.prompt, 72) }}</span>
+          </div>
+          <div class="prompt-gallery__ranking-meta">
+            <el-tag size="small" effect="plain">
+              {{ formatContentType(entry.item.contentType) }}
+            </el-tag>
+            <span>{{ entry.score }} 热度</span>
+            <span>{{ entry.item.likeCount || 0 }} 赞</span>
+            <span>{{ entry.item.favoriteCount || 0 }} 收藏</span>
+          </div>
+          <div class="prompt-gallery__ranking-actions">
+            <el-button size="small" :icon="MagicStick" @click="handleUse(entry.item)">
+              复用
+            </el-button>
+            <el-button size="small" :icon="Link" @click="openPublicGalleryPage(entry.item)">
+              分享页
+            </el-button>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <!-- 提示词卡片列表 -->
     <div v-loading="loading" class="prompt-gallery__content">
       <el-empty v-if="!loading && galleryList.length === 0" description="暂无提示词" />
@@ -157,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-  import { DataAnalysis, MagicStick, Refresh, Search } from '@element-plus/icons-vue'
+  import { DataAnalysis, Link, MagicStick, Refresh, Search } from '@element-plus/icons-vue'
   import { useDebounceFn, useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import PromptCard from './components/PromptCard.vue'
@@ -217,6 +257,14 @@
   // 是否有更多数据
   const hasMore = computed(() => galleryList.value.length < total.value)
 
+  const getRankingScore = (item: GalleryItem) =>
+    Number(item.likeCount || 0) + Number(item.favoriteCount || 0) * 2
+
+  const truncateText = (value?: string, maxLength = 48) => {
+    const text = value?.trim() || '-'
+    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text
+  }
+
   const galleryStats = computed(() => [
     {
       label: '当前展示',
@@ -240,6 +288,21 @@
     }
   ])
 
+  const rankedGalleryItems = computed(() =>
+    galleryList.value
+      .map((item, index) => ({
+        item,
+        score: getRankingScore(item),
+        originalIndex: index
+      }))
+      .sort((a, b) => b.score - a.score || a.originalIndex - b.originalIndex)
+      .slice(0, 5)
+      .map((entry, index) => ({
+        ...entry,
+        rank: index + 1
+      }))
+  )
+
   const galleryAuditActionLabels: Record<string, string> = {
     publish: '发布',
     unpublish: '撤回',
@@ -247,7 +310,9 @@
     unlike: '取消点赞',
     favorite: '收藏',
     unfavorite: '取消收藏',
-    'public-download': '公开下载'
+    'public-download': '公开下载',
+    'share-view': '分享访问',
+    'prompt-reuse': 'Prompt 复用'
   }
 
   // ==================== 方法 ====================
@@ -469,6 +534,10 @@
     return `${window.location.origin}${previewUrl}`
   }
 
+  const openPublicGalleryPage = (item: GalleryItem) => {
+    window.open(resolvePublicGalleryUrl(item), '_blank', 'noopener,noreferrer')
+  }
+
   const handleLike = async (item: GalleryItem) => {
     if (dataSource.value === 'static') {
       updateGalleryLikeState(item.id, {
@@ -594,7 +663,9 @@
     if (action === 'publish') return 'success'
     if (action === 'unpublish') return 'warning'
     if (action === 'like' || action === 'favorite') return 'primary'
-    if (action === 'public-download') return 'info'
+    if (action === 'public-download' || action === 'share-view' || action === 'prompt-reuse') {
+      return 'info'
+    }
     return 'info'
   }
 
@@ -690,6 +761,100 @@
         line-height: 1;
         color: var(--el-text-color-primary);
       }
+    }
+
+    &__ranking {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__ranking-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__ranking-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    &__ranking-item {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) minmax(220px, auto) auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 72px;
+      padding: 12px;
+      background: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 8px;
+    }
+
+    &__ranking-index {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--el-color-primary);
+    }
+
+    &__ranking-copy {
+      min-width: 0;
+
+      strong,
+      span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      strong {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      span {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__ranking-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-width: 0;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__ranking-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     &__filter {
@@ -794,6 +959,19 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      &__ranking-item {
+        grid-template-columns: 44px minmax(0, 1fr);
+      }
+
+      &__ranking-meta,
+      &__ranking-actions {
+        grid-column: 2;
+      }
+
+      &__ranking-actions {
+        justify-content: flex-start;
+      }
+
       &__filter {
         align-items: flex-start;
         flex-direction: column;
@@ -817,6 +995,23 @@
 
       &__stats {
         grid-template-columns: 1fr;
+      }
+
+      &__ranking-item {
+        grid-template-columns: 1fr;
+      }
+
+      &__ranking-header {
+        flex-direction: column;
+      }
+
+      &__ranking-meta,
+      &__ranking-actions {
+        grid-column: auto;
+      }
+
+      &__ranking-actions .el-button {
+        flex: 1 1 110px;
       }
     }
   }
