@@ -4,9 +4,11 @@ import com.anjing.aigc.model.entity.AigcAsset;
 import com.anjing.aigc.model.entity.AigcGalleryAuditLog;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.response.GalleryActionMetricResponse;
+import com.anjing.aigc.model.response.GalleryAssetComparisonResponse;
 import com.anjing.aigc.model.response.GalleryAssetMetricResponse;
 import com.anjing.aigc.model.response.GalleryAuditLogResponse;
 import com.anjing.aigc.model.response.GalleryContentTypeMetricResponse;
+import com.anjing.aigc.model.response.GalleryCreatorMetricResponse;
 import com.anjing.aigc.model.response.GalleryDailyMetricResponse;
 import com.anjing.aigc.model.response.GalleryInteractionReportResponse;
 import com.anjing.aigc.repository.AigcGalleryAuditLogRepository;
@@ -52,6 +54,9 @@ public class AigcGalleryAuditLogService {
     private static final int DEFAULT_REPORT_DAYS = 30;
     private static final int MAX_REPORT_DAYS = 365;
     private static final int TOP_ASSET_LIMIT = 10;
+    private static final int TOP_CREATOR_LIMIT = 10;
+    private static final String ANONYMOUS_AUTHOR_ID = "anonymous";
+    private static final String ANONYMOUS_AUTHOR_NAME = "匿名创作者";
 
     private final AigcGalleryAuditLogRepository auditLogRepository;
     private final AigcOwnershipService ownershipService;
@@ -119,6 +124,23 @@ public class AigcGalleryAuditLogService {
                 .stream()
                 .map(this::toAssetMetric)
                 .toList();
+        List<GalleryCreatorMetricResponse> creatorMetrics = auditLogRepository
+                .summarizeCreators(
+                        ownerId,
+                        tenantId,
+                        parsedContentType,
+                        startAt,
+                        ACTION_LIKE,
+                        ACTION_FAVORITE,
+                        ACTION_PUBLIC_DOWNLOAD,
+                        PageRequest.of(0, TOP_CREATOR_LIMIT)
+                )
+                .stream()
+                .map(this::toCreatorMetric)
+                .toList();
+        List<GalleryAssetComparisonResponse> assetComparisons = topAssets.stream()
+                .map(asset -> toAssetComparison(asset, totalEvents))
+                .toList();
         List<GalleryDailyMetricResponse> dailyMetrics = buildDailyMetrics(
                 auditLogRepository.findVisibleForReport(ownerId, tenantId, parsedContentType, startAt),
                 startDate,
@@ -142,6 +164,8 @@ public class AigcGalleryAuditLogService {
                 .actionMetrics(actionMetrics)
                 .contentTypeMetrics(contentTypeMetrics)
                 .topAssets(topAssets)
+                .creatorMetrics(creatorMetrics)
+                .assetComparisons(assetComparisons)
                 .dailyMetrics(dailyMetrics)
                 .build();
     }
@@ -248,6 +272,13 @@ public class AigcGalleryAuditLogService {
         return value == null ? 0L : value;
     }
 
+    private Double percentage(long numerator, long denominator) {
+        if (denominator <= 0L || numerator <= 0L) {
+            return 0D;
+        }
+        return Math.round((numerator * 10000D) / denominator) / 100D;
+    }
+
     private List<GalleryDailyMetricResponse> buildDailyMetrics(
             List<AigcGalleryAuditLog> logs, LocalDate startDate, LocalDate endDate) {
         Map<LocalDate, GalleryDailyMetricResponse> metricsByDate = new LinkedHashMap<>();
@@ -347,5 +378,50 @@ public class AigcGalleryAuditLogService {
                 .favoriteCount(coalesce(projection.getFavoriteCount()))
                 .downloadCount(coalesce(projection.getDownloadCount()))
                 .build();
+    }
+
+    private GalleryCreatorMetricResponse toCreatorMetric(
+            AigcGalleryAuditLogRepository.CreatorMetricProjection projection) {
+        String authorId = normalizeAuthorId(projection.getAuthorId());
+        return GalleryCreatorMetricResponse.builder()
+                .authorId(authorId)
+                .authorName(resolveAuthorName(authorId))
+                .assetCount(coalesce(projection.getAssetCount()))
+                .totalEvents(coalesce(projection.getTotalEvents()))
+                .successfulEvents(coalesce(projection.getSuccessfulEvents()))
+                .likeCount(coalesce(projection.getLikeCount()))
+                .favoriteCount(coalesce(projection.getFavoriteCount()))
+                .downloadCount(coalesce(projection.getDownloadCount()))
+                .build();
+    }
+
+    private GalleryAssetComparisonResponse toAssetComparison(
+            GalleryAssetMetricResponse assetMetric, long reportTotalEvents) {
+        long likeCount = coalesce(assetMetric.getLikeCount());
+        long favoriteCount = coalesce(assetMetric.getFavoriteCount());
+        long downloadCount = coalesce(assetMetric.getDownloadCount());
+        long engagementEvents = likeCount + favoriteCount + downloadCount;
+        return GalleryAssetComparisonResponse.builder()
+                .assetId(assetMetric.getAssetId())
+                .contentType(assetMetric.getContentType())
+                .model(assetMetric.getModel())
+                .totalEvents(coalesce(assetMetric.getTotalEvents()))
+                .engagementEvents(engagementEvents)
+                .likeCount(likeCount)
+                .favoriteCount(favoriteCount)
+                .downloadCount(downloadCount)
+                .eventShareRate(percentage(coalesce(assetMetric.getTotalEvents()), reportTotalEvents))
+                .favoriteRate(percentage(favoriteCount, engagementEvents))
+                .downloadRate(percentage(downloadCount, engagementEvents))
+                .build();
+    }
+
+    private String normalizeAuthorId(String authorId) {
+        String normalized = normalizeFilter(authorId);
+        return normalized == null ? ANONYMOUS_AUTHOR_ID : normalized;
+    }
+
+    private String resolveAuthorName(String authorId) {
+        return ANONYMOUS_AUTHOR_ID.equals(authorId) ? ANONYMOUS_AUTHOR_NAME : authorId;
     }
 }

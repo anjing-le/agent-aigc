@@ -129,6 +129,86 @@
         </section>
       </div>
 
+      <div class="gallery-report__tables gallery-report__tables--comparison">
+        <section class="gallery-report__panel">
+          <div class="gallery-report__panel-header">
+            <h3>创作者对比</h3>
+            <el-tag size="small" effect="plain">{{ creatorMetrics.length }} 位</el-tag>
+          </div>
+          <el-table :data="creatorMetrics" size="small" empty-text="暂无创作者数据">
+            <el-table-column prop="authorName" label="作者" min-width="140" show-overflow-tooltip />
+            <el-table-column label="作品" width="82" align="right">
+              <template #default="{ row }">{{ formatNumber(row.assetCount) }}</template>
+            </el-table-column>
+            <el-table-column label="事件" width="86" align="right">
+              <template #default="{ row }">{{ formatNumber(row.totalEvents) }}</template>
+            </el-table-column>
+            <el-table-column label="点赞" width="82" align="right">
+              <template #default="{ row }">{{ formatNumber(row.likeCount) }}</template>
+            </el-table-column>
+            <el-table-column label="收藏" width="82" align="right">
+              <template #default="{ row }">{{ formatNumber(row.favoriteCount) }}</template>
+            </el-table-column>
+            <el-table-column label="下载" width="82" align="right">
+              <template #default="{ row }">{{ formatNumber(row.downloadCount) }}</template>
+            </el-table-column>
+            <el-table-column label="打开" width="100" fixed="right">
+              <template #default="{ row }">
+                <el-button
+                  size="small"
+                  :icon="Link"
+                  :disabled="!row.authorId"
+                  @click="openAuthorPage(row.authorId)"
+                >
+                  主页
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+
+        <section class="gallery-report__panel">
+          <div class="gallery-report__panel-header">
+            <h3>作品互动结构</h3>
+            <el-tag size="small" effect="plain">{{ assetComparisons.length }} 个</el-tag>
+          </div>
+          <el-table :data="assetComparisons" size="small" empty-text="暂无作品对比数据">
+            <el-table-column prop="assetId" label="资产" min-width="170" show-overflow-tooltip />
+            <el-table-column label="类型" width="88">
+              <template #default="{ row }">
+                <el-tag size="small" :type="getContentTypeTag(row.contentType)" effect="plain">
+                  {{ formatContentType(row.contentType) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="事件占比" width="104" align="right">
+              <template #default="{ row }">{{ formatPercentValue(row.eventShareRate) }}</template>
+            </el-table-column>
+            <el-table-column label="互动" width="82" align="right">
+              <template #default="{ row }">{{ formatNumber(row.engagementEvents) }}</template>
+            </el-table-column>
+            <el-table-column label="收藏率" width="92" align="right">
+              <template #default="{ row }">{{ formatPercentValue(row.favoriteRate) }}</template>
+            </el-table-column>
+            <el-table-column label="下载率" width="92" align="right">
+              <template #default="{ row }">{{ formatPercentValue(row.downloadRate) }}</template>
+            </el-table-column>
+            <el-table-column label="打开" width="100" fixed="right">
+              <template #default="{ row }">
+                <el-button
+                  size="small"
+                  :icon="Link"
+                  :disabled="!row.assetId"
+                  @click="openSharePage(row.assetId)"
+                >
+                  分享页
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+      </div>
+
       <section class="gallery-report__panel gallery-report__panel--wide">
         <div class="gallery-report__panel-header">
           <h3>高互动作品</h3>
@@ -179,10 +259,12 @@
   import { ElMessage } from 'element-plus'
   import { fetchGetGalleryInteractionReport } from '@/api/aigc'
   import type {
+    GalleryAssetComparison,
     ContentType,
     GalleryActionMetric,
     GalleryAssetMetric,
     GalleryContentTypeMetric,
+    GalleryCreatorMetric,
     GalleryDailyMetric,
     GalleryInteractionReportResponse
   } from '@/api/model/aigcModel'
@@ -201,6 +283,10 @@
     () => report.value?.contentTypeMetrics || []
   )
   const topAssets = computed<GalleryAssetMetric[]>(() => report.value?.topAssets || [])
+  const creatorMetrics = computed<GalleryCreatorMetric[]>(() => report.value?.creatorMetrics || [])
+  const assetComparisons = computed<GalleryAssetComparison[]>(
+    () => report.value?.assetComparisons || []
+  )
   const dailyMetrics = computed<GalleryDailyMetric[]>(() => report.value?.dailyMetrics || [])
   const maxDailyEvents = computed(() =>
     Math.max(0, ...dailyMetrics.value.map(item => Number(item.totalEvents || 0)))
@@ -231,6 +317,8 @@
   }
 
   const formatNumber = (value?: number | null) => Number(value || 0).toLocaleString('zh-CN')
+
+  const formatPercentValue = (value?: number | null) => `${Number(value || 0).toFixed(2)}%`
 
   const formatRate = (successful?: number | null, total?: number | null) => {
     const denominator = Number(total || 0)
@@ -305,12 +393,19 @@
     window.open(`${window.location.origin}${window.location.pathname}${route.href}`, '_blank')
   }
 
+  const openAuthorPage = (authorId?: string) => {
+    if (!authorId) return
+    const route = router.resolve({ path: `/share/creators/${encodeURIComponent(authorId)}` })
+    window.open(`${window.location.origin}${window.location.pathname}${route.href}`, '_blank')
+  }
+
   const exportReportCsv = () => {
     if (!report.value) {
       ElMessage.warning('暂无可导出的报表')
       return
     }
     const rows = [
+      ['daily'],
       ['date', 'totalEvents', 'successfulEvents', 'publishCount', 'likeCount', 'favoriteCount', 'downloadCount'],
       ...dailyMetrics.value.map(item => [
         item.date || '',
@@ -320,6 +415,47 @@
         String(item.likeCount || 0),
         String(item.favoriteCount || 0),
         String(item.downloadCount || 0)
+      ]),
+      [],
+      ['creators'],
+      ['authorId', 'authorName', 'assetCount', 'totalEvents', 'successfulEvents', 'likeCount', 'favoriteCount', 'downloadCount'],
+      ...creatorMetrics.value.map(item => [
+        item.authorId || '',
+        item.authorName || '',
+        String(item.assetCount || 0),
+        String(item.totalEvents || 0),
+        String(item.successfulEvents || 0),
+        String(item.likeCount || 0),
+        String(item.favoriteCount || 0),
+        String(item.downloadCount || 0)
+      ]),
+      [],
+      ['assetComparisons'],
+      [
+        'assetId',
+        'contentType',
+        'model',
+        'totalEvents',
+        'engagementEvents',
+        'likeCount',
+        'favoriteCount',
+        'downloadCount',
+        'eventShareRate',
+        'favoriteRate',
+        'downloadRate'
+      ],
+      ...assetComparisons.value.map(item => [
+        item.assetId || '',
+        item.contentType || '',
+        item.model || '',
+        String(item.totalEvents || 0),
+        String(item.engagementEvents || 0),
+        String(item.likeCount || 0),
+        String(item.favoriteCount || 0),
+        String(item.downloadCount || 0),
+        String(item.eventShareRate || 0),
+        String(item.favoriteRate || 0),
+        String(item.downloadRate || 0)
       ])
     ]
     const csv = rows.map(row => row.map(escapeCsvCell).join(',')).join('\n')

@@ -311,6 +311,15 @@ export type GalleryAssetMetric = Omit<Schemas.GalleryAssetMetricResponse, 'conte
   contentType?: ContentType
 }
 
+/** 灵感广场互动报表创作者指标 */
+export type GalleryCreatorMetric = Schemas.GalleryCreatorMetricResponse
+
+/** 灵感广场互动报表作品对比指标 */
+export type GalleryAssetComparison = Omit<Schemas.GalleryAssetComparisonResponse, 'contentType'> & {
+  /** 内容类型 */
+  contentType?: ContentType
+}
+
 /** 灵感广场互动报表每日趋势指标 */
 export type GalleryDailyMetric = Schemas.GalleryDailyMetricResponse
 
@@ -326,7 +335,13 @@ export type GalleryInteractionReportSearchParams =
 /** 灵感广场互动报表响应 */
 export type GalleryInteractionReportResponse = Omit<
   OpenApiOperationData<'getGalleryInteractionReport'>,
-  'actionMetrics' | 'contentType' | 'contentTypeMetrics' | 'dailyMetrics' | 'topAssets'
+  | 'actionMetrics'
+  | 'assetComparisons'
+  | 'contentType'
+  | 'contentTypeMetrics'
+  | 'creatorMetrics'
+  | 'dailyMetrics'
+  | 'topAssets'
 > & {
   /** 内容类型筛选 */
   contentType?: ContentType
@@ -336,6 +351,10 @@ export type GalleryInteractionReportResponse = Omit<
   contentTypeMetrics?: GalleryContentTypeMetric[]
   /** 互动最高作品 */
   topAssets?: GalleryAssetMetric[]
+  /** 创作者互动对比 */
+  creatorMetrics?: GalleryCreatorMetric[]
+  /** 作品互动结构对比 */
+  assetComparisons?: GalleryAssetComparison[]
   /** 每日趋势 */
   dailyMetrics?: GalleryDailyMetric[]
 }

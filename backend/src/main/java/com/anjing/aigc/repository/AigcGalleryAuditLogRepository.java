@@ -108,6 +108,40 @@ public interface AigcGalleryAuditLogRepository extends JpaRepository<AigcGallery
             Pageable pageable);
 
     @Query("""
+            select case
+                       when asset.ownerId is null or asset.ownerId = '' then 'anonymous'
+                       else asset.ownerId
+                   end as authorId,
+                   count(distinct log.assetId) as assetCount,
+                   count(log) as totalEvents,
+                   coalesce(sum(case when log.success = true then 1 else 0 end), 0) as successfulEvents,
+                   coalesce(sum(case when log.action = :likeAction and log.success = true then 1 else 0 end), 0) as likeCount,
+                   coalesce(sum(case when log.action = :favoriteAction and log.success = true then 1 else 0 end), 0) as favoriteCount,
+                   coalesce(sum(case when log.action = :downloadAction and log.success = true then 1 else 0 end), 0) as downloadCount
+            from AigcGalleryAuditLog log
+            join AigcAsset asset on asset.assetId = log.assetId
+            where (:ownerId is null or log.operatorId is null or log.operatorId = :ownerId)
+              and (:tenantId is null or log.tenantId is null or log.tenantId = :tenantId)
+              and (:contentType is null or log.contentType = :contentType)
+              and (:startAt is null or log.createdAt >= :startAt)
+              and log.assetId is not null
+            group by case
+                         when asset.ownerId is null or asset.ownerId = '' then 'anonymous'
+                         else asset.ownerId
+                     end
+            order by count(log) desc
+            """)
+    List<CreatorMetricProjection> summarizeCreators(
+            @Param("ownerId") String ownerId,
+            @Param("tenantId") String tenantId,
+            @Param("contentType") ContentType contentType,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("likeAction") String likeAction,
+            @Param("favoriteAction") String favoriteAction,
+            @Param("downloadAction") String downloadAction,
+            Pageable pageable);
+
+    @Query("""
             select log
             from AigcGalleryAuditLog log
             where (:ownerId is null or log.operatorId is null or log.operatorId = :ownerId)
@@ -146,6 +180,22 @@ public interface AigcGalleryAuditLogRepository extends JpaRepository<AigcGallery
         String getModel();
 
         Long getTotalEvents();
+
+        Long getLikeCount();
+
+        Long getFavoriteCount();
+
+        Long getDownloadCount();
+    }
+
+    interface CreatorMetricProjection {
+        String getAuthorId();
+
+        Long getAssetCount();
+
+        Long getTotalEvents();
+
+        Long getSuccessfulEvents();
 
         Long getLikeCount();
 

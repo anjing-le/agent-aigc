@@ -65,6 +65,12 @@ public class GalleryInteractionReportResponse {
     /** 互动最高的作品 */
     private List<GalleryAssetMetricResponse> topAssets;
 
+    /** 创作者互动对比 */
+    private List<GalleryCreatorMetricResponse> creatorMetrics;
+
+    /** 作品互动结构对比 */
+    private List<GalleryAssetComparisonResponse> assetComparisons;
+
     /** 每日趋势 */
     private List<GalleryDailyMetricResponse> dailyMetrics;
 }

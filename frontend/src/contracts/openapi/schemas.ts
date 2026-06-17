@@ -390,6 +390,20 @@ export interface GalleryActionMetricResponse {
   totalEvents?: number
 }
 
+export interface GalleryAssetComparisonResponse {
+  assetId?: string
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  downloadCount?: number
+  downloadRate?: number
+  engagementEvents?: number
+  eventShareRate?: number
+  favoriteCount?: number
+  favoriteRate?: number
+  likeCount?: number
+  model?: string
+  totalEvents?: number
+}
+
 export interface GalleryAssetMetricResponse {
   assetId?: string
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
@@ -440,6 +454,17 @@ export interface GalleryContentTypeMetricResponse {
   totalEvents?: number
 }
 
+export interface GalleryCreatorMetricResponse {
+  assetCount?: number
+  authorId?: string
+  authorName?: string
+  downloadCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  successfulEvents?: number
+  totalEvents?: number
+}
+
 export interface GalleryDailyMetricResponse {
   date?: string
   downloadCount?: number
@@ -471,8 +496,10 @@ export interface GalleryDTO {
 
 export interface GalleryInteractionReportResponse {
   actionMetrics?: GalleryActionMetricResponse[]
+  assetComparisons?: GalleryAssetComparisonResponse[]
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   contentTypeMetrics?: GalleryContentTypeMetricResponse[]
+  creatorMetrics?: GalleryCreatorMetricResponse[]
   dailyMetrics?: GalleryDailyMetricResponse[]
   days?: number
   downloadCount?: number
@@ -1127,10 +1154,12 @@ export interface OpenApiSchemas {
   AuthTokenResponse: AuthTokenResponse
   CurrentUserResponse: CurrentUserResponse
   GalleryActionMetricResponse: GalleryActionMetricResponse
+  GalleryAssetComparisonResponse: GalleryAssetComparisonResponse
   GalleryAssetMetricResponse: GalleryAssetMetricResponse
   GalleryAuditLogResponse: GalleryAuditLogResponse
   GalleryAuthorProfileResponse: GalleryAuthorProfileResponse
   GalleryContentTypeMetricResponse: GalleryContentTypeMetricResponse
+  GalleryCreatorMetricResponse: GalleryCreatorMetricResponse
   GalleryDailyMetricResponse: GalleryDailyMetricResponse
   GalleryDTO: GalleryDTO
   GalleryInteractionReportResponse: GalleryInteractionReportResponse

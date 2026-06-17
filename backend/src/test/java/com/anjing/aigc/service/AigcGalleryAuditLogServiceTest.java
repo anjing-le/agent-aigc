@@ -117,6 +117,16 @@ class AigcGalleryAuditLogServiceTest {
                 eq(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD),
                 any(PageRequest.class)
         )).thenReturn(List.of(assetMetric("asset-1", ContentType.IMAGE, "mock-image-preview", 8L, 5L, 2L, 1L)));
+        when(repository.summarizeCreators(
+                nullable(String.class),
+                nullable(String.class),
+                eq(ContentType.IMAGE),
+                any(LocalDateTime.class),
+                eq(AigcGalleryAuditLogService.ACTION_LIKE),
+                eq(AigcGalleryAuditLogService.ACTION_FAVORITE),
+                eq(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD),
+                any(PageRequest.class)
+        )).thenReturn(List.of(creatorMetric("creator-1", 2L, 8L, 7L, 5L, 2L, 1L)));
         when(repository.findVisibleForReport(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
                 any(LocalDateTime.class))).thenReturn(List.of(
                         reportLog(AigcGalleryAuditLogService.ACTION_LIKE, true, LocalDateTime.now().minusDays(1)),
@@ -136,6 +146,13 @@ class AigcGalleryAuditLogServiceTest {
         assertEquals(4, report.getActionMetrics().size());
         assertEquals(1, report.getContentTypeMetrics().size());
         assertEquals("asset-1", report.getTopAssets().get(0).getAssetId());
+        assertEquals("creator-1", report.getCreatorMetrics().get(0).getAuthorId());
+        assertEquals(2L, report.getCreatorMetrics().get(0).getAssetCount());
+        assertEquals("asset-1", report.getAssetComparisons().get(0).getAssetId());
+        assertEquals(8L, report.getAssetComparisons().get(0).getEngagementEvents());
+        assertEquals(66.67D, report.getAssetComparisons().get(0).getEventShareRate());
+        assertEquals(25D, report.getAssetComparisons().get(0).getFavoriteRate());
+        assertEquals(12.5D, report.getAssetComparisons().get(0).getDownloadRate());
         assertEquals(7, report.getDailyMetrics().size());
         assertEquals(2L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getTotalEvents()).sum());
         assertEquals(1L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getLikeCount()).sum());
@@ -217,6 +234,52 @@ class AigcGalleryAuditLogServiceTest {
             @Override
             public Long getTotalEvents() {
                 return totalEvents;
+            }
+
+            @Override
+            public Long getLikeCount() {
+                return likeCount;
+            }
+
+            @Override
+            public Long getFavoriteCount() {
+                return favoriteCount;
+            }
+
+            @Override
+            public Long getDownloadCount() {
+                return downloadCount;
+            }
+        };
+    }
+
+    private static AigcGalleryAuditLogRepository.CreatorMetricProjection creatorMetric(
+            String authorId,
+            Long assetCount,
+            Long totalEvents,
+            Long successfulEvents,
+            Long likeCount,
+            Long favoriteCount,
+            Long downloadCount) {
+        return new AigcGalleryAuditLogRepository.CreatorMetricProjection() {
+            @Override
+            public String getAuthorId() {
+                return authorId;
+            }
+
+            @Override
+            public Long getAssetCount() {
+                return assetCount;
+            }
+
+            @Override
+            public Long getTotalEvents() {
+                return totalEvents;
+            }
+
+            @Override
+            public Long getSuccessfulEvents() {
+                return successfulEvents;
             }
 
             @Override
