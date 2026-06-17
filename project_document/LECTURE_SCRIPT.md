@@ -128,7 +128,7 @@
 | 25-35 分钟 | AIGC 前端页面拆解 | 逐个打开 studio、assets、gallery、report、models |
 | 35-45 分钟 | 跑通创作到分享和 Provider 观测闭环 | 生成作品、发布、分享、复用、看互动报表和调用报表 |
 | 45-55 分钟 | 设计一个新功能 | 以“作品合集”为例写 service boundary 和页面规划 |
-| 55-60 分钟 | 质量门禁和总结 | 运行 `check-contracts`，回顾哪些来自脚手架 |
+| 55-60 分钟 | 质量门禁和总结 | 运行 `check-contracts` 和 `aigc-demo-smoke`，回顾哪些来自脚手架 |
 
 ## 截图清单
 
@@ -148,7 +148,8 @@
 | 08 | `/aigc/gallery-report` | 分享转化漏斗 | 展示运营闭环 |
 | 09 | `/aigc/models` | Provider 调用报表 | 展示模型调度观测 |
 | 10 | `scripts/check-contracts.sh` | 检查通过输出 | 展示质量门禁 |
-| 11 | `project_document/DEMO_EVIDENCE.md` | 命令证据表 | 展示交付证据 |
+| 11 | `scripts/aigc-demo-smoke.sh` | 冒烟脚本通过输出 | 展示业务闭环自动验收 |
+| 12 | `project_document/DEMO_EVIDENCE.md` | 命令证据表 | 展示交付证据 |
 
 ## 截图命名建议
 
@@ -164,7 +165,8 @@ agent-aigc-teaching/
   08-gallery-report-funnel.png
   09-model-provider-execution-report.png
   10-contract-check.png
-  11-demo-evidence.png
+  11-aigc-demo-smoke.png
+  12-demo-evidence.png
 ```
 
 ## 课堂练习答案参考

@@ -18,11 +18,18 @@
 | `cd frontend && pnpm build` | passed | 前端类型检查和生产构建 |
 | `./scripts/check-contracts.sh` | passed | 脚手架契约、服务边界、OpenAPI、上下文和 AIGC 专属守卫 |
 | `./scripts/probe-backend-dev.sh 18181` | passed | dev profile runtime OpenAPI probe |
+| `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表和 Provider 调用报表闭环 |
 | `./scripts/quality-gate.sh` | passed | 契约、后端 package、前端 build、后端 runtime probe 一次性通过 |
 
 ## 业务冒烟证据
 
 本轮使用默认 mock provider 完成了一次公开分享转化闭环：
+
+可直接运行：
+
+```bash
+./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003
+```
 
 1. 调用 `/api/aigc/generate` 创建图片任务。
 2. 轮询 `/api/aigc/task/{taskId}` 至 `COMPLETED`。

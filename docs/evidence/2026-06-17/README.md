@@ -25,7 +25,13 @@ cd frontend
 VITE_API_PROXY_URL=http://127.0.0.1:18180 pnpm dev --host 127.0.0.1 --port 5174
 ```
 
-截图前先使用默认 mock provider 跑通一次演示资产：
+截图前先使用默认 mock provider 跑通一次演示资产。推荐优先使用脚本生成可追溯证据：
+
+```bash
+./scripts/aigc-demo-smoke.sh http://127.0.0.1:18180
+```
+
+也可以按页面手动演示：
 
 1. 打开 `http://127.0.0.1:5174/#/aigc/studio`。
 2. 输入 `生成一张蓝色科技感课程封面图` 并创建任务。

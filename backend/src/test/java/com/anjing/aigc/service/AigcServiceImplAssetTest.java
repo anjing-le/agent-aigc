@@ -149,6 +149,7 @@ class AigcServiceImplAssetTest {
         assertEquals("asset-0", detail.getAsset().getId());
         assertEquals("task-0", detail.getTask().getTaskId());
         assertEquals(TaskStatus.COMPLETED, detail.getTask().getStatus());
+        assertEquals(true, detail.getTask().getResult().isSuccess());
         assertEquals("clean prompt", detail.getTask().getAgentAnalysis().getCleanPrompt());
         assertEquals(0.8, detail.getTask().getAgentAnalysis().getConfidence());
         assertEquals("Mock Image Provider", detail.getTask().getProviderExecution().getProviderName());

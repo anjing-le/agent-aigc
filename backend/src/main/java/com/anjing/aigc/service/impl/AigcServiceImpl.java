@@ -228,6 +228,7 @@ public class AigcServiceImpl implements AigcService {
         if (task.getStatus() == TaskStatus.COMPLETED && task.getAssetId() != null) {
             findVisibleAsset(task.getAssetId()).ifPresent(asset -> {
                 response.setResult(GenerationResult.builder()
+                        .success(true)
                         .assetId(asset.getAssetId())
                         .contentType(asset.getContentType())
                         .url(asset.getUrl())

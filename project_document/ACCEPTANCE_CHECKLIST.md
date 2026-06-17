@@ -70,6 +70,12 @@ pnpm build
 ./scripts/probe-backend-dev.sh
 ```
 
+业务闭环冒烟：
+
+```bash
+./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003
+```
+
 完整发布前再跑：
 
 ```bash
