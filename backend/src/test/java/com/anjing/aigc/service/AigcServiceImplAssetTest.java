@@ -393,6 +393,11 @@ class AigcServiceImplAssetTest {
         assertEquals("/share/gallery/asset-share", response.getSharePath());
         assertEquals("/api/aigc/gallery/asset-share/preview", response.getPreviewUrl());
         assertEquals("/api/aigc/gallery/asset-share/download", response.getDownloadUrl());
+        assertEquals("prompt | agent-aigc", response.getSeoTitle());
+        assertEquals("AIGC,图片,Prompt,mock-image-preview", response.getSeoKeywords());
+        assertEquals("prompt", response.getPosterTitle());
+        assertEquals("图片 · creator-1 · mock-image-preview", response.getPosterSubtitle());
+        assertEquals("agent-aigc · /share/gallery/asset-share", response.getPosterFooter());
         assertEquals(7, response.getAsset().getLikeCount());
         assertEquals(3, response.getAsset().getFavoriteCount());
     }

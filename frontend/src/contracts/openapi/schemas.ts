@@ -487,7 +487,13 @@ export interface GalleryInteractionReportResponse {
 export interface GalleryShareResponse {
   asset?: GalleryDTO
   downloadUrl?: string
+  posterFooter?: string
+  posterSubtitle?: string
+  posterTitle?: string
   previewUrl?: string
+  seoDescription?: string
+  seoKeywords?: string
+  seoTitle?: string
   sharePath?: string
 }
 

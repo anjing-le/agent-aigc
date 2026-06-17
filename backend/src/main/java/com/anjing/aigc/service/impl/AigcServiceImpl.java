@@ -1050,11 +1050,21 @@ public class AigcServiceImpl implements AigcService {
         AigcAsset asset = findPublishedAsset(assetId);
         String previewUrl = buildGalleryPreviewUrl(asset);
         String downloadUrl = buildGalleryDownloadUrl(asset);
+        String shareTitle = buildShareTitle(asset);
+        String contentTypeLabel = contentTypeLabel(asset.getContentType());
+        String authorName = resolveAuthorName(asset);
+        String modelName = displayValue(asset.getModel(), "未知模型");
         return GalleryShareResponse.builder()
                 .asset(toGalleryDTO(asset))
                 .sharePath("/share/gallery/" + asset.getAssetId())
                 .previewUrl(previewUrl)
                 .downloadUrl(downloadUrl)
+                .seoTitle(shareTitle + " | agent-aigc")
+                .seoDescription(buildShareDescription(asset, contentTypeLabel, authorName, modelName))
+                .seoKeywords(String.join(",", "AIGC", contentTypeLabel, "Prompt", modelName))
+                .posterTitle(shareTitle)
+                .posterSubtitle(contentTypeLabel + " · " + authorName + " · " + modelName)
+                .posterFooter("agent-aigc · /share/gallery/" + asset.getAssetId())
                 .build();
     }
 
@@ -1453,6 +1463,48 @@ public class AigcServiceImpl implements AigcService {
     private String buildGalleryDownloadUrl(AigcAsset asset) {
         return ApiConstants.Aigc.GALLERY_ASSET_DOWNLOAD_FULL
                 .replace("{assetId}", asset.getAssetId());
+    }
+
+    private String buildShareTitle(AigcAsset asset) {
+        String prompt = normalizeFilter(asset.getPrompt());
+        if (prompt == null) {
+            return "AIGC 公开作品";
+        }
+        return truncateText(prompt, 34);
+    }
+
+    private String buildShareDescription(AigcAsset asset, String contentTypeLabel, String authorName, String modelName) {
+        String prompt = normalizeFilter(asset.getPrompt());
+        if (prompt == null) {
+            return "来自 " + authorName + " 的 " + contentTypeLabel + " AIGC 公开作品。";
+        }
+        return "来自 " + authorName + " 的 " + contentTypeLabel + " AIGC 作品，使用 "
+                + modelName + " 生成：" + truncateText(prompt, 96);
+    }
+
+    private String contentTypeLabel(ContentType contentType) {
+        if (contentType == ContentType.IMAGE) {
+            return "图片";
+        }
+        if (contentType == ContentType.VIDEO) {
+            return "视频";
+        }
+        if (contentType == ContentType.AUDIO) {
+            return "音频";
+        }
+        return "作品";
+    }
+
+    private String truncateText(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength) + "...";
+    }
+
+    private String displayValue(String value, String fallback) {
+        String normalized = normalizeFilter(value);
+        return normalized == null ? fallback : normalized;
     }
 
     private String normalizeAuthorId(String authorId) {

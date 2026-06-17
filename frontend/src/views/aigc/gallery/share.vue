@@ -48,6 +48,9 @@
         <div class="gallery-share__actions">
           <el-button type="primary" :icon="MagicStick" @click="handleReuse">复用 Prompt</el-button>
           <el-button :icon="Download" :disabled="!asset" @click="handleDownload">下载作品</el-button>
+          <el-button :icon="Picture" :disabled="!asset" @click="handleDownloadPoster">
+            下载海报
+          </el-button>
           <el-button :icon="Link" @click="handleCopyLink">复制链接</el-button>
           <el-button v-if="asset?.authorId" :icon="User" @click="openAuthorProfile">
             作者主页
@@ -66,20 +69,37 @@
         <p>{{ asset?.prompt || '-' }}</p>
       </div>
 
-      <div class="gallery-share__info">
-        <div>
-          <span>访问策略</span>
-          <strong>{{ asset?.publicAccessMode || 'published-preview' }}</strong>
+      <aside class="gallery-share__side">
+        <div class="gallery-share__poster">
+          <div class="gallery-share__poster-mark">agent-aigc</div>
+          <div class="gallery-share__poster-media">
+            <img
+              v-if="asset?.contentType === 'IMAGE' && previewUrl"
+              :src="previewUrl"
+              :alt="posterTitle"
+            />
+            <div v-else>{{ contentTypeLabel }}</div>
+          </div>
+          <h2>{{ posterTitle }}</h2>
+          <p>{{ posterSubtitle }}</p>
+          <span>{{ posterFooter }}</span>
         </div>
-        <div>
-          <span>资产 ID</span>
-          <strong>{{ asset?.id || routeAssetId }}</strong>
+
+        <div class="gallery-share__info">
+          <div>
+            <span>访问策略</span>
+            <strong>{{ asset?.publicAccessMode || 'published-preview' }}</strong>
+          </div>
+          <div>
+            <span>资产 ID</span>
+            <strong>{{ asset?.id || routeAssetId }}</strong>
+          </div>
+          <div>
+            <span>模型</span>
+            <strong>{{ asset?.model || '-' }}</strong>
+          </div>
         </div>
-        <div>
-          <span>模型</span>
-          <strong>{{ asset?.model || '-' }}</strong>
-        </div>
-      </div>
+      </aside>
     </section>
 
     <el-empty
@@ -113,6 +133,8 @@
   const loading = ref(false)
   const loadError = ref('')
   const share = ref<GalleryShareResponse | null>(null)
+  const originalDocumentTitle = ref('')
+  const managedSeoElements = new Map<HTMLMetaElement | HTMLLinkElement, string | null>()
   const asset = computed<GalleryItem | undefined>(() => share.value?.asset)
   const routeAssetId = computed(() => String(route.params.assetId || ''))
   const previewUrl = computed(() => {
@@ -121,8 +143,33 @@
   })
 
   const title = computed(() => {
+    if (share.value?.posterTitle) return share.value.posterTitle
     const prompt = asset.value?.prompt?.trim()
     return prompt ? truncate(prompt, 34) : 'AIGC 公开作品'
+  })
+
+  const seoTitle = computed(() => share.value?.seoTitle || `${title.value} | agent-aigc`)
+  const seoDescription = computed(() => {
+    if (share.value?.seoDescription) return share.value.seoDescription
+    return asset.value?.prompt ? truncate(asset.value.prompt, 96) : 'agent-aigc 公开分享作品'
+  })
+  const seoKeywords = computed(() => share.value?.seoKeywords || 'AIGC,Prompt,agent-aigc')
+  const posterTitle = computed(() => share.value?.posterTitle || title.value)
+  const posterSubtitle = computed(
+    () =>
+      share.value?.posterSubtitle ||
+      `${contentTypeLabel.value} · ${asset.value?.authorName || asset.value?.author || '匿名创作者'} · ${
+        asset.value?.model || '未知模型'
+      }`
+  )
+  const posterFooter = computed(
+    () => share.value?.posterFooter || `agent-aigc · /share/gallery/${routeAssetId.value}`
+  )
+  const shareUrl = computed(() => {
+    if (typeof window === 'undefined') return share.value?.sharePath || ''
+    const path = share.value?.sharePath || `/share/gallery/${routeAssetId.value}`
+    const href = router.resolve({ path }).href
+    return `${window.location.origin}${window.location.pathname}${href}`
   })
 
   const contentTypeLabel = computed(() => {
@@ -140,6 +187,7 @@
     loadError.value = ''
     try {
       share.value = await fetchGetGalleryShare(routeAssetId.value)
+      syncSeoMeta()
     } catch (error) {
       console.error('加载公开分享作品失败:', error)
       loadError.value = '公开作品不存在或已撤回'
@@ -172,7 +220,7 @@
   }
 
   const handleCopyLink = async () => {
-    await copyText(window.location.href, '链接已复制')
+    await copyText(shareUrl.value || window.location.href, '链接已复制')
   }
 
   const handleCopyPrompt = async () => {
@@ -183,6 +231,23 @@
   const openAuthorProfile = () => {
     if (!asset.value?.authorId) return
     router.push(`/share/creators/${encodeURIComponent(asset.value.authorId)}`)
+  }
+
+  const handleDownloadPoster = async () => {
+    if (!asset.value) return
+    try {
+      const blob = await createPosterBlob()
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `aigc-gallery-${asset.value.id || routeAssetId.value}-poster.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(link.href)
+    } catch (error) {
+      console.error('生成分享海报失败:', error)
+      ElMessage.error('海报生成失败')
+    }
   }
 
   const copyText = async (text: string, successMessage: string) => {
@@ -203,11 +268,208 @@
     return formatDateTime(value, { second: undefined })
   }
 
+  const syncSeoMeta = () => {
+    document.title = seoTitle.value
+    upsertMeta('name', 'description', seoDescription.value)
+    upsertMeta('name', 'keywords', seoKeywords.value)
+    upsertMeta('property', 'og:title', seoTitle.value)
+    upsertMeta('property', 'og:description', seoDescription.value)
+    upsertMeta('property', 'og:type', 'article')
+    upsertMeta('property', 'og:url', shareUrl.value || window.location.href)
+    if (previewUrl.value) {
+      upsertMeta('property', 'og:image', toAbsoluteUrl(previewUrl.value))
+    }
+    upsertCanonical(shareUrl.value || window.location.href)
+  }
+
+  const upsertMeta = (attribute: 'name' | 'property', key: string, content: string) => {
+    let element = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`)
+    const created = !element
+    if (!element) {
+      element = document.createElement('meta')
+      element.setAttribute(attribute, key)
+      element.dataset.aigcShareCreated = 'true'
+      document.head.appendChild(element)
+    }
+    if (!managedSeoElements.has(element)) {
+      managedSeoElements.set(element, created ? null : element.getAttribute('content'))
+    }
+    element.setAttribute('content', content)
+  }
+
+  const upsertCanonical = (href: string) => {
+    let element = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+    const created = !element
+    if (!element) {
+      element = document.createElement('link')
+      element.rel = 'canonical'
+      element.dataset.aigcShareCreated = 'true'
+      document.head.appendChild(element)
+    }
+    if (!managedSeoElements.has(element)) {
+      managedSeoElements.set(element, created ? null : element.getAttribute('href'))
+    }
+    element.href = href
+  }
+
+  const restoreSeoMeta = () => {
+    document.title = originalDocumentTitle.value
+    managedSeoElements.forEach((previousValue, element) => {
+      if (element.dataset.aigcShareCreated === 'true') {
+        element.remove()
+      } else if (previousValue == null) {
+        element.removeAttribute(element instanceof HTMLLinkElement ? 'href' : 'content')
+      } else {
+        element.setAttribute(element instanceof HTMLLinkElement ? 'href' : 'content', previousValue)
+      }
+    })
+    managedSeoElements.clear()
+  }
+
+  const toAbsoluteUrl = (value: string) => {
+    try {
+      return new URL(value, window.location.origin).toString()
+    } catch {
+      return value
+    }
+  }
+
   const truncate = (value: string, length: number) => {
     return value.length > length ? `${value.slice(0, length)}...` : value
   }
 
-  onMounted(loadShare)
+  const createPosterBlob = async () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1080
+    canvas.height = 1440
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('Canvas context unavailable')
+
+    context.fillStyle = '#101828'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+    drawPosterBackground(context)
+
+    if (asset.value?.contentType === 'IMAGE' && previewUrl.value) {
+      try {
+        const image = await loadImage(toAbsoluteUrl(previewUrl.value))
+        drawContainedImage(context, image, 72, 96, 936, 620)
+      } catch {
+        drawPosterPlaceholder(context, 72, 96, 936, 620)
+      }
+    } else {
+      drawPosterPlaceholder(context, 72, 96, 936, 620)
+    }
+
+    context.fillStyle = '#ffffff'
+    context.font = '700 58px sans-serif'
+    const titleBottom = drawWrappedText(context, posterTitle.value, 72, 820, 936, 72, 3)
+
+    context.fillStyle = '#cbd5e1'
+    context.font = '32px sans-serif'
+    context.fillText(posterSubtitle.value, 72, titleBottom + 58)
+
+    context.fillStyle = '#e2e8f0'
+    context.font = '32px sans-serif'
+    drawWrappedText(context, asset.value?.prompt || 'AIGC 公开作品', 72, titleBottom + 126, 936, 46, 4)
+
+    context.fillStyle = '#94a3b8'
+    context.font = '28px sans-serif'
+    context.fillText(posterFooter.value, 72, 1322)
+    context.fillText(shareUrl.value, 72, 1374)
+
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('Canvas export failed'))), 'image/png')
+    })
+  }
+
+  const drawPosterBackground = (context: CanvasRenderingContext2D) => {
+    const gradient = context.createLinearGradient(0, 0, 1080, 1440)
+    gradient.addColorStop(0, '#172554')
+    gradient.addColorStop(0.48, '#101828')
+    gradient.addColorStop(1, '#0f172a')
+    context.fillStyle = gradient
+    context.fillRect(0, 0, 1080, 1440)
+    context.fillStyle = 'rgba(255,255,255,0.08)'
+    context.fillRect(72, 52, 232, 48)
+    context.fillStyle = '#ffffff'
+    context.font = '700 24px sans-serif'
+    context.fillText('agent-aigc', 98, 84)
+  }
+
+  const drawPosterPlaceholder = (
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => {
+    context.fillStyle = 'rgba(255,255,255,0.1)'
+    context.fillRect(x, y, width, height)
+    context.fillStyle = '#e2e8f0'
+    context.font = '700 52px sans-serif'
+    context.fillText(contentTypeLabel.value, x + 56, y + height / 2)
+  }
+
+  const drawContainedImage = (
+    context: CanvasRenderingContext2D,
+    image: HTMLImageElement,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => {
+    context.fillStyle = 'rgba(255,255,255,0.1)'
+    context.fillRect(x, y, width, height)
+    const scale = Math.min(width / image.width, height / image.height)
+    const drawWidth = image.width * scale
+    const drawHeight = image.height * scale
+    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight)
+  }
+
+  const drawWrappedText = (
+    context: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    lineHeight: number,
+    maxLines: number
+  ) => {
+    let line = ''
+    let lineCount = 0
+    let currentY = y
+    Array.from(text).forEach(char => {
+      const testLine = line + char
+      if (context.measureText(testLine).width > maxWidth && line) {
+        context.fillText(line, x, currentY)
+        line = char
+        lineCount += 1
+        currentY += lineHeight
+      } else {
+        line = testLine
+      }
+    })
+    if (line && lineCount < maxLines) {
+      context.fillText(line, x, currentY)
+      currentY += lineHeight
+    }
+    return currentY
+  }
+
+  const loadImage = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.onload = () => resolve(image)
+      image.onerror = reject
+      image.src = src
+    })
+
+  onMounted(() => {
+    originalDocumentTitle.value = document.title
+    loadShare()
+  })
+  onUnmounted(restoreSeoMeta)
 </script>
 
 <style scoped lang="scss">
@@ -314,6 +576,7 @@
   }
 
   .gallery-share__prompt-panel,
+  .gallery-share__poster,
   .gallery-share__info {
     background: #fff;
     border: 1px solid #dfe6f0;
@@ -330,6 +593,73 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+  }
+
+  .gallery-share__side {
+    display: grid;
+    align-content: start;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .gallery-share__poster {
+    min-width: 0;
+    padding: 16px;
+  }
+
+  .gallery-share__poster-mark {
+    width: fit-content;
+    margin-bottom: 12px;
+    padding: 5px 9px;
+    color: #2f6fed;
+    font-size: 12px;
+    font-weight: 700;
+    background: #eef4ff;
+    border-radius: 6px;
+  }
+
+  .gallery-share__poster-media {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    color: #d7deea;
+    font-size: 20px;
+    font-weight: 700;
+    background: #101828;
+    border-radius: 6px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .gallery-share__poster h2 {
+    display: -webkit-box;
+    margin: 16px 0 8px;
+    overflow: hidden;
+    color: #172033;
+    font-size: 18px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .gallery-share__poster p {
+    margin: 0 0 12px;
+    color: #53627a;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .gallery-share__poster span {
+    display: block;
+    overflow-wrap: anywhere;
+    color: #8190a6;
+    font-size: 12px;
   }
 
   .gallery-share__section-head {

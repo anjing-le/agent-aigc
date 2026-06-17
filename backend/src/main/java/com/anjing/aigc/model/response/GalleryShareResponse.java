@@ -26,4 +26,22 @@ public class GalleryShareResponse {
 
     /** 公开下载 API */
     private String downloadUrl;
+
+    /** 分享页 SEO 标题 */
+    private String seoTitle;
+
+    /** 分享页 SEO 描述 */
+    private String seoDescription;
+
+    /** 分享页 SEO 关键词 */
+    private String seoKeywords;
+
+    /** 海报标题 */
+    private String posterTitle;
+
+    /** 海报副标题 */
+    private String posterSubtitle;
+
+    /** 海报页脚 */
+    private String posterFooter;
 }

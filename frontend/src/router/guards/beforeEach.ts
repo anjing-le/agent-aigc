@@ -134,18 +134,26 @@ async function handleRouteGuard(
     return
   }
 
-  // 2. 处理动态路由注册
+  // 2. 静态路由不参与动态菜单权限校验
+  if (isStaticRoute(to.path) && to.matched.length > 0) {
+    setWorktab(to)
+    setPageTitle(to)
+    next()
+    return
+  }
+
+  // 3. 处理动态路由注册
   if (!routeRegistry?.isRegistered() && userStore.isLogin) {
     await handleDynamicRoutes(to, next, router)
     return
   }
 
-  // 3. 处理根路径重定向
+  // 4. 处理根路径重定向
   if (handleRootPathRedirect(to, next)) {
     return
   }
 
-  // 4. 处理已匹配的路由
+  // 5. 处理已匹配的路由
   if (to.matched.length > 0) {
     setWorktab(to)
     setPageTitle(to)
@@ -153,7 +161,7 @@ async function handleRouteGuard(
     return
   }
 
-  // 5. 未匹配到路由，跳转到 404
+  // 6. 未匹配到路由，跳转到 404
   next({ name: 'Exception404' })
 }
 
