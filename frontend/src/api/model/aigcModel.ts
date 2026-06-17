@@ -248,6 +248,46 @@ export type GalleryRankingResponse = PageResult<
   GalleryItem
 >
 
+/** 灵感广场动态合集查询参数 */
+export type GalleryCollectionsSearchParams = OpenApiOperationQuery<'getGalleryCollections'> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 关键词搜索 */
+  keyword?: string
+  /** 每个合集的作品数量 */
+  size?: number
+}
+
+/** 灵感广场动态合集 */
+export type GalleryCollection = Omit<
+  Schemas.GalleryCollectionResponse,
+  'assets' | 'contentType' | 'coverAsset'
+> & {
+  /** 合集 ID */
+  id?: string
+  /** 合集标题 */
+  title?: string
+  /** 合集描述 */
+  description?: string
+  /** 内容类型范围 */
+  contentType?: ContentType
+  /** 封面作品 */
+  coverAsset?: GalleryItem
+  /** 合集作品 */
+  assets?: GalleryItem[]
+}
+
+/** 灵感广场动态合集响应 */
+export type GalleryCollectionsResponse = Omit<
+  OpenApiOperationData<'getGalleryCollections'>,
+  'collections' | 'contentType'
+> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 动态合集 */
+  collections?: GalleryCollection[]
+}
+
 /** 灵感广场公开分享页响应 */
 export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>, 'asset'> & {
   /** 已发布作品 */

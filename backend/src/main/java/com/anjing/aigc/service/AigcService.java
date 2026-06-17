@@ -10,6 +10,7 @@ import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
+import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -158,6 +159,16 @@ public interface AigcService {
      */
     PageResult<GalleryDTO> getGalleryRanking(
             Integer current, Integer size, String contentType, String model, String keyword);
+
+    /**
+     * 获取灵感广场动态作品合集。
+     *
+     * @param contentType 内容类型
+     * @param keyword 关键词
+     * @param size 每个合集的作品数量
+     * @return 动态合集
+     */
+    GalleryCollectionsResponse getGalleryCollections(String contentType, String keyword, Integer size);
 
     /**
      * 获取当前用户/会话收藏的灵感广场作品。

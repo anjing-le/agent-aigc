@@ -21,6 +21,8 @@ import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
 import com.anjing.aigc.model.response.AgentAnalysis;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
+import com.anjing.aigc.model.response.GalleryCollectionResponse;
+import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
@@ -76,6 +78,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -101,6 +104,8 @@ public class AigcServiceImpl implements AigcService {
     private static final String ANONYMOUS_AUTHOR_NAME = "匿名创作者";
     private static final int AUTHOR_TOP_ASSET_CANDIDATE_SIZE = 50;
     private static final int AUTHOR_TOP_ASSET_LIMIT = 5;
+    private static final int GALLERY_COLLECTION_DEFAULT_SIZE = 4;
+    private static final int GALLERY_COLLECTION_MAX_SIZE = 8;
 
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
@@ -1220,6 +1225,57 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public GalleryCollectionsResponse getGalleryCollections(String contentType, String keyword, Integer size) {
+        ContentType parsedContentType = parseContentType(contentType);
+        String normalizedKeyword = normalizeFilter(keyword);
+        int collectionSize = size != null && size > 0
+                ? Math.min(size, GALLERY_COLLECTION_MAX_SIZE)
+                : GALLERY_COLLECTION_DEFAULT_SIZE;
+        List<GalleryCollectionResponse> collections = new ArrayList<>();
+
+        addGalleryCollection(
+                collections,
+                "trending",
+                "热门复用",
+                "按点赞和收藏热度聚合的高反馈作品",
+                parsedContentType,
+                "trending",
+                loadGalleryRankingAssets(parsedContentType, normalizedKeyword, collectionSize)
+        );
+        addGalleryCollection(
+                collections,
+                "latest",
+                "最新发布",
+                "最近发布到灵感广场的创作结果",
+                parsedContentType,
+                "latest",
+                loadGalleryLatestAssets(parsedContentType, normalizedKeyword, collectionSize)
+        );
+
+        if (parsedContentType == null) {
+            for (ContentType type : List.of(ContentType.IMAGE, ContentType.VIDEO, ContentType.AUDIO)) {
+                addGalleryCollection(
+                        collections,
+                        "content-type-" + type.name().toLowerCase(),
+                        contentTypeLabel(type) + "精选",
+                        "按内容类型聚合的高互动作品",
+                        type,
+                        "content-type",
+                        loadGalleryRankingAssets(type, normalizedKeyword, collectionSize)
+                );
+            }
+        }
+
+        return GalleryCollectionsResponse.builder()
+                .contentType(parsedContentType)
+                .keyword(normalizedKeyword)
+                .collectionSize(collectionSize)
+                .generatedAt(DateUtils.nowIso())
+                .collections(collections)
+                .build();
+    }
+
+    @Override
     public PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size) {
         PageRequest pageRequest = PageRequest.of(
                 current != null && current > 0 ? current - 1 : 0,
@@ -1460,6 +1516,49 @@ public class AigcServiceImpl implements AigcService {
 
     private String normalizeFilter(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private List<AigcAsset> loadGalleryRankingAssets(ContentType contentType, String keyword, int size) {
+        return assetRepository.searchPublishedRanking(
+                        contentType,
+                        null,
+                        keyword,
+                        PageRequest.of(0, size))
+                .getContent();
+    }
+
+    private List<AigcAsset> loadGalleryLatestAssets(ContentType contentType, String keyword, int size) {
+        return assetRepository.searchPublished(
+                        contentType,
+                        null,
+                        keyword,
+                        PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt")))
+                .getContent();
+    }
+
+    private void addGalleryCollection(List<GalleryCollectionResponse> collections, String id, String title,
+            String description, ContentType contentType, String strategy, List<AigcAsset> assets) {
+        if (assets == null || assets.isEmpty()) {
+            return;
+        }
+        List<GalleryDTO> items = assets.stream()
+                .map(this::toGalleryDTO)
+                .toList();
+        long totalLikeCount = assets.stream().mapToLong(this::resolveLikeCount).sum();
+        long totalFavoriteCount = assets.stream().mapToLong(this::resolveFavoriteCount).sum();
+        collections.add(GalleryCollectionResponse.builder()
+                .id(id)
+                .title(title)
+                .description(description)
+                .contentType(contentType)
+                .strategy(strategy)
+                .itemCount(items.size())
+                .totalLikeCount(totalLikeCount)
+                .totalFavoriteCount(totalFavoriteCount)
+                .heatScore(totalLikeCount + totalFavoriteCount * 2)
+                .coverAsset(items.get(0))
+                .assets(items)
+                .build());
     }
 
     private void deleteAssetFiles(AigcAsset asset) {

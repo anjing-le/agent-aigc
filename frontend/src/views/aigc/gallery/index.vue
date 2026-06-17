@@ -25,6 +25,78 @@
       </div>
     </div>
 
+    <section
+      v-if="galleryCollections.length"
+      v-loading="collectionsLoading"
+      class="prompt-gallery__collections"
+    >
+      <div class="prompt-gallery__collections-header">
+        <div>
+          <h3>精选合集</h3>
+          <p>{{ collectionsDescription }}</p>
+        </div>
+        <el-tag effect="plain">{{ galleryCollections.length }} 个合集</el-tag>
+      </div>
+
+      <div class="prompt-gallery__collections-grid">
+        <article
+          v-for="collection in galleryCollections"
+          :key="collection.id"
+          class="prompt-gallery__collection"
+        >
+          <button
+            type="button"
+            class="prompt-gallery__collection-cover"
+            @click="collection.coverAsset && openPublicGalleryPage(collection.coverAsset)"
+          >
+            <img
+              v-if="collection.coverAsset"
+              :src="resolveAigcGalleryPreviewUrl(collection.coverAsset)"
+              alt=""
+            />
+            <span v-else>{{ formatContentType(collection.contentType) }}</span>
+          </button>
+
+          <div class="prompt-gallery__collection-main">
+            <div class="prompt-gallery__collection-heading">
+              <el-tag size="small" effect="plain">
+                {{ formatCollectionStrategy(collection.strategy) }}
+              </el-tag>
+              <h3>{{ collection.title }}</h3>
+            </div>
+            <p>{{ collection.description }}</p>
+            <div class="prompt-gallery__collection-meta">
+              <span>{{ collection.itemCount || 0 }} 个作品</span>
+              <span>{{ collection.heatScore || 0 }} 热度</span>
+              <span>{{ collection.totalLikeCount || 0 }} 赞</span>
+              <span>{{ collection.totalFavoriteCount || 0 }} 收藏</span>
+            </div>
+            <div class="prompt-gallery__collection-assets">
+              <button
+                v-for="asset in (collection.assets || []).slice(0, 3)"
+                :key="asset.id"
+                type="button"
+                @click="handleUse(asset)"
+              >
+                {{ truncateText(asset.prompt, 28) }}
+              </button>
+            </div>
+          </div>
+
+          <div class="prompt-gallery__collection-actions">
+            <el-button
+              v-if="collection.coverAsset"
+              size="small"
+              :icon="MagicStick"
+              @click="handleUse(collection.coverAsset)"
+            >
+              复用封面
+            </el-button>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <div class="prompt-gallery__filter">
       <div class="prompt-gallery__filter-left">
         <el-radio-group v-model="activeContentType" @change="handleFilterChange">
@@ -204,6 +276,7 @@
   import {
     fetchFavoriteGalleryAsset,
     fetchGetGalleryAuditLogs,
+    fetchGetGalleryCollections,
     fetchGetFavoriteGalleryList,
     fetchGetGalleryList,
     fetchGetGalleryRanking,
@@ -211,7 +284,12 @@
     fetchUnfavoriteGalleryAsset,
     fetchUnlikeGalleryAsset
   } from '@/api/aigc'
-  import type { ContentType, GalleryAuditLogItem, GalleryItem } from '@/api/model/aigcModel'
+  import type {
+    ContentType,
+    GalleryAuditLogItem,
+    GalleryCollection,
+    GalleryItem
+  } from '@/api/model/aigcModel'
   import {
     downloadAigcGalleryAsset,
     resolveAigcGalleryPreviewUrl
@@ -227,6 +305,8 @@
   const rankingList = ref<GalleryItem[]>([])
   const rankingLoading = ref(false)
   const rankingTotal = ref(0)
+  const galleryCollections = ref<GalleryCollection[]>([])
+  const collectionsLoading = ref(false)
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(24)
@@ -323,6 +403,12 @@
       : '按当前筛选结果的点赞和收藏热度排序，方便快速复用高反馈 Prompt'
   )
 
+  const collectionsDescription = computed(() =>
+    activeContentType.value
+      ? `${formatContentType(activeContentType.value)}作品的热门和最新聚合`
+      : '按热度、发布时间和内容类型自动组织公开作品'
+  )
+
   const galleryAuditActionLabels: Record<string, string> = {
     publish: '发布',
     unpublish: '撤回',
@@ -352,6 +438,7 @@
       }
       if (!append) {
         await loadRankingData()
+        await loadCollectionsData()
       }
     } catch (error) {
       console.error('加载数据失败:', error)
@@ -446,6 +533,28 @@
     }
   }
 
+  const loadCollectionsData = async () => {
+    if (dataSource.value !== 'api' || showOnlyFavorites.value) {
+      galleryCollections.value = []
+      return
+    }
+
+    try {
+      collectionsLoading.value = true
+      const response = await fetchGetGalleryCollections({
+        size: 4,
+        keyword: searchKeyword.value || undefined,
+        contentType: activeContentType.value || undefined
+      })
+      galleryCollections.value = (response.collections || []).map(normalizeGalleryCollection)
+    } catch (error) {
+      console.warn('加载灵感广场作品合集失败:', error)
+      galleryCollections.value = []
+    } finally {
+      collectionsLoading.value = false
+    }
+  }
+
   /** 加载静态提示词数据 */
   const loadStaticPrompts = async () => {
     if (staticPrompts.value.length > 0) return
@@ -475,6 +584,17 @@
     favoriteCount: item.favoriteCount ?? 0,
     favoritedByCurrentUser: item.favoritedByCurrentUser ?? favoritedAssetIds.value.has(item.id)
   })
+
+  const normalizeGalleryCollection = (collection: GalleryCollection): GalleryCollection => {
+    const assets = (collection.assets || []).map(normalizeGalleryItem)
+    return {
+      ...collection,
+      assets,
+      coverAsset: collection.coverAsset
+        ? normalizeGalleryItem(collection.coverAsset)
+        : assets[0]
+    }
+  }
 
   /** 筛选静态数据 */
   const filterStaticPrompts = () => {
@@ -624,6 +744,7 @@
     rankingList.value = rankingList.value.map((item) =>
       item.id === assetId ? { ...item, ...patch } : item
     )
+    galleryCollections.value = patchGalleryCollections(assetId, patch)
     if (patch.likedByCurrentUser) {
       likedAssetIds.value.add(assetId)
     } else {
@@ -673,6 +794,7 @@
     rankingList.value = rankingList.value.map((item) =>
       item.id === assetId ? { ...item, ...patch } : item
     )
+    galleryCollections.value = patchGalleryCollections(assetId, patch)
     if (patch.favoritedByCurrentUser) {
       favoritedAssetIds.value.add(assetId)
     } else {
@@ -691,6 +813,18 @@
       }
     })
   }
+
+  const patchGalleryCollections = (assetId: string, patch: Partial<GalleryItem>) =>
+    galleryCollections.value.map((collection) => ({
+      ...collection,
+      coverAsset:
+        collection.coverAsset?.id === assetId
+          ? { ...collection.coverAsset, ...patch }
+          : collection.coverAsset,
+      assets: (collection.assets || []).map((asset) =>
+        asset.id === assetId ? { ...asset, ...patch } : asset
+      )
+    }))
 
   const loadGalleryAuditLogs = async () => {
     try {
@@ -733,6 +867,15 @@
       AUDIO: '音频'
     }
     return contentType ? labels[contentType] || contentType : '-'
+  }
+
+  const formatCollectionStrategy = (strategy?: string) => {
+    const labels: Record<string, string> = {
+      trending: '热门',
+      latest: '最新',
+      'content-type': '类型'
+    }
+    return strategy ? labels[strategy] || strategy : '合集'
   }
 
   const formatAuditTime = (value?: string) => {
@@ -818,6 +961,147 @@
         line-height: 1;
         color: var(--el-text-color-primary);
       }
+    }
+
+    &__collections {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__collections-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__collections-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    &__collection {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr) auto;
+      gap: 12px;
+      min-height: 132px;
+      padding: 12px;
+      background: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 8px;
+    }
+
+    &__collection-cover {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 112px;
+      height: 108px;
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      span {
+        font-size: 13px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__collection-main {
+      min-width: 0;
+
+      > p {
+        display: -webkit-box;
+        margin: 8px 0 0;
+        overflow: hidden;
+        color: var(--el-text-color-secondary);
+        font-size: 12px;
+        line-height: 1.5;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+    }
+
+    &__collection-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+
+      h3 {
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+    }
+
+    &__collection-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__collection-assets {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      overflow: hidden;
+
+      button {
+        max-width: 140px;
+        height: 28px;
+        padding: 0 10px;
+        overflow: hidden;
+        cursor: pointer;
+        color: var(--el-text-color-regular);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: var(--el-bg-color);
+        border: 1px solid var(--el-border-color-light);
+        border-radius: 6px;
+      }
+    }
+
+    &__collection-actions {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      min-width: 96px;
     }
 
     &__ranking {
@@ -1016,6 +1300,10 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
+      &__collections-grid {
+        grid-template-columns: 1fr;
+      }
+
       &__ranking-item {
         grid-template-columns: 44px minmax(0, 1fr);
       }
@@ -1052,6 +1340,32 @@
 
       &__stats {
         grid-template-columns: 1fr;
+      }
+
+      &__collections-header {
+        flex-direction: column;
+      }
+
+      &__collection {
+        grid-template-columns: 1fr;
+      }
+
+      &__collection-cover {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+
+      &__collection-assets {
+        flex-wrap: wrap;
+
+        button {
+          max-width: 100%;
+        }
+      }
+
+      &__collection-actions {
+        justify-content: flex-start;
       }
 
       &__ranking-item {

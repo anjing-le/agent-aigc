@@ -73,6 +73,15 @@ export interface APIResponseGalleryAuthorProfileResponse {
   timestamp?: number
 }
 
+export interface APIResponseGalleryCollectionsResponse {
+  code?: string
+  data?: GalleryCollectionsResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGalleryDTO {
   code?: string
   data?: GalleryDTO
@@ -455,6 +464,82 @@ export interface GalleryAuthorProfileResponse {
   totalInteractionCount?: number
   totalLikeCount?: number
   videoCount?: number
+}
+
+/**
+ * AIGC gallery dynamic collection
+ */
+export interface GalleryCollectionResponse {
+  /**
+   * Collection assets
+   */
+  assets?: GalleryDTO[]
+  /**
+   * Optional content type scope
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Cover asset
+   */
+  coverAsset?: GalleryDTO
+  /**
+   * Collection description
+   */
+  description?: string
+  /**
+   * Heat score: likes + favorites * 2
+   */
+  heatScore?: number
+  /**
+   * Stable collection id
+   */
+  id?: string
+  /**
+   * Collection item count
+   */
+  itemCount?: number
+  /**
+   * Collection strategy, such as trending, latest, or content-type
+   */
+  strategy?: string
+  /**
+   * Collection title
+   */
+  title?: string
+  /**
+   * Total favorite count in this collection
+   */
+  totalFavoriteCount?: number
+  /**
+   * Total like count in this collection
+   */
+  totalLikeCount?: number
+}
+
+/**
+ * AIGC gallery dynamic collections response
+ */
+export interface GalleryCollectionsResponse {
+  /**
+   * Dynamic collections
+   */
+  collections?: GalleryCollectionResponse[]
+  /**
+   * Max assets in each collection
+   */
+  collectionSize?: number
+  /**
+   * Optional content type filter
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Response generation time
+   */
+  generatedAt?: string
+  /**
+   * Optional keyword filter
+   */
+  keyword?: string
 }
 
 export interface GalleryContentTypeMetricResponse {
@@ -1277,6 +1362,7 @@ export interface OpenApiSchemas {
   APIResponseAuthTokenResponse: APIResponseAuthTokenResponse
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
   APIResponseGalleryAuthorProfileResponse: APIResponseGalleryAuthorProfileResponse
+  APIResponseGalleryCollectionsResponse: APIResponseGalleryCollectionsResponse
   APIResponseGalleryDTO: APIResponseGalleryDTO
   APIResponseGalleryInteractionReportResponse: APIResponseGalleryInteractionReportResponse
   APIResponseGalleryShareResponse: APIResponseGalleryShareResponse
@@ -1313,6 +1399,8 @@ export interface OpenApiSchemas {
   GalleryAssetMetricResponse: GalleryAssetMetricResponse
   GalleryAuditLogResponse: GalleryAuditLogResponse
   GalleryAuthorProfileResponse: GalleryAuthorProfileResponse
+  GalleryCollectionResponse: GalleryCollectionResponse
+  GalleryCollectionsResponse: GalleryCollectionsResponse
   GalleryContentTypeMetricResponse: GalleryContentTypeMetricResponse
   GalleryCreatorMetricResponse: GalleryCreatorMetricResponse
   GalleryDailyMetricResponse: GalleryDailyMetricResponse

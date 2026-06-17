@@ -5,9 +5,9 @@
 ## 最新验收记录
 
 - 日期：2026-06-17
-- 功能基线：`e0fc2bfdccfe17dab118d1b93f76fb32043fdfa6`
+- 功能基线：以 `main` 最新提交为准，本轮提交可通过 `git log -1 --pretty=fuller` 查看
 - Git author：`安静 <245548353+anjing-le@users.noreply.github.com>`
-- 结论：通过 V1 教学演示验收，当前已具备创作、资产、公开分享、互动报表和 Provider 调用报表的教学闭环。
+- 结论：通过 V1 教学演示验收，当前已具备创作、资产、灵感广场动态合集、公开分享、互动报表和 Provider 调用报表的教学闭环。
 
 ## 命令证据
 
@@ -19,6 +19,7 @@
 | `./scripts/check-contracts.sh` | passed | 脚手架契约、服务边界、OpenAPI、上下文和 AIGC 专属守卫 |
 | `./scripts/probe-backend-dev.sh 18181` | passed | dev profile runtime OpenAPI probe |
 | `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表和 Provider 调用报表闭环 |
+| `curl 'http://127.0.0.1:18183/api/aigc/gallery/collections?size=3'` | passed | 灵感广场动态作品合集返回 3 个合集 |
 | `./scripts/quality-gate.sh` | passed | 契约、后端 package、前端 build、后端 runtime probe 一次性通过 |
 
 ## 业务冒烟证据
@@ -39,6 +40,7 @@
 6. 调用 `/api/aigc/gallery/{assetId}/download`，记录 `public-download`。
 7. 查询 `/api/aigc/gallery/reports/interactions?days=1`，确认 `shareFunnel` 返回分享访问、公开下载、Prompt 复用和转化率。
 8. 查询 `/api/aigc/models/provider-execution-report?days=7&contentType=IMAGE`，确认当前用户上下文下 Provider/模型调用指标可见。
+9. 查询 `/api/aigc/gallery/collections?size=3`，确认 `trending`、`latest` 和内容类型合集从已发布作品动态聚合。
 
 示例结果：
 
@@ -74,9 +76,21 @@ Provider 调用报表示例结果：
 }
 ```
 
+动态作品合集示例结果：
+
+```json
+{
+  "collectionCount": 3,
+  "firstCollection": "trending",
+  "firstCollectionItems": 1,
+  "heatScore": 0
+}
+```
+
 ## 浏览器检查证据
 
 - `/aigc/gallery-report` 桌面视口：分享转化漏斗、动作分布、每日趋势和对比表正常渲染，无页面级横向溢出，无 console error。
+- `/aigc/gallery` 桌面视口：动态精选合集、全局热门榜单和公开作品列表正常渲染，无页面级横向溢出。
 - `/aigc/gallery-report` 390px 移动视口：8 个统计项单列展示，漏斗面板存在，无页面级横向溢出。
 - `/aigc/models` 桌面视口：Provider 调用报表、Provider 表现表和模型表现表正常渲染，无页面级横向溢出，无 console error。
 - `/aigc/models` 390px 移动视口：报表统计两列展示，表格不造成页面级横向溢出。
@@ -94,7 +108,7 @@ Provider 调用报表示例结果：
 
 - 按 `docs/evidence/2026-06-17/README.md` 录制一次完整演示视频或保存关键截图。
 - 在真实 Google Key 环境下补一次图片 Provider smoke test 证据。
-- 为作者主页、作品合集和榜单补产品化截图。
+- 为作者主页、动态作品合集和榜单补产品化截图。
 
 ## 不提交内容
 

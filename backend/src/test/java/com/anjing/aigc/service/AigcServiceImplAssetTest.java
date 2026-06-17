@@ -217,6 +217,69 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void getGalleryCollectionsBuildsDynamicPublishedAssetCollections() {
+        AigcAsset hotAsset = asset("asset-hot");
+        hotAsset.setIsPublished(true);
+        hotAsset.setLikeCount(4);
+        hotAsset.setFavoriteCount(3);
+        hotAsset.setCreatedAt(LocalDateTime.now().minusDays(1));
+        AigcAsset freshAsset = asset("asset-fresh");
+        freshAsset.setIsPublished(true);
+        freshAsset.setLikeCount(1);
+        freshAsset.setFavoriteCount(1);
+        freshAsset.setCreatedAt(LocalDateTime.now());
+
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.<ContentType>isNull(),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0 && pageable.getPageSize() == 3)))
+                .thenReturn(new PageImpl<>(List.of(hotAsset)));
+        when(assetRepository.searchPublished(
+                org.mockito.ArgumentMatchers.<ContentType>isNull(),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0
+                                && pageable.getPageSize() == 3
+                                && pageable.getSort().getOrderFor("createdAt") != null)))
+                .thenReturn(new PageImpl<>(List.of(freshAsset)));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0 && pageable.getPageSize() == 3)))
+                .thenReturn(new PageImpl<>(List.of(hotAsset, freshAsset)));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.VIDEO),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.AUDIO),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        var response = aigcService.getGalleryCollections(null, " cat ", 3);
+
+        assertEquals(3, response.getCollectionSize());
+        assertEquals("cat", response.getKeyword());
+        assertEquals(3, response.getCollections().size());
+        assertEquals("trending", response.getCollections().get(0).getId());
+        assertEquals("asset-hot", response.getCollections().get(0).getCoverAsset().getId());
+        assertEquals(10L, response.getCollections().get(0).getHeatScore());
+        assertEquals("latest", response.getCollections().get(1).getId());
+        assertEquals("asset-fresh", response.getCollections().get(1).getCoverAsset().getId());
+        assertEquals(ContentType.IMAGE, response.getCollections().get(2).getContentType());
+        assertEquals(2, response.getCollections().get(2).getItemCount());
+    }
+
+    @Test
     void probeProviderReportsMissingGoogleConfiguration() {
         givenImageProviders();
 

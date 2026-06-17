@@ -4,7 +4,7 @@
 
 ## 基线
 
-- 功能基线：`e0fc2bfdccfe17dab118d1b93f76fb32043fdfa6`
+- 功能基线：以 `main` 最新提交为准，本轮提交可通过 `git log -1 --pretty=fuller` 查看
 - 远端分支：`main` / `master`
 - 作者：`安静 <245548353+anjing-le@users.noreply.github.com>`
 - 验证：`./scripts/check-contracts.sh`、`mvn -q test`、`pnpm build` 已通过；发布前再跑 `./scripts/quality-gate.sh`
@@ -49,6 +49,7 @@ VITE_API_PROXY_URL=http://127.0.0.1:18180 pnpm dev --host 127.0.0.1 --port 5174
 | `03-service-boundary-aigc.png` | 桌面 | `contracts/service-boundaries.json` | `aigc` boundary 和 route 声明 |
 | `04-studio-agent-decision.png` | 1440x900 | `/aigc/studio` | 一句话输入、Agent 决策、生成结果 |
 | `05-assets-publication.png` | 1440x900 | `/aigc/assets` | 资产沉淀、来源任务、发布动作 |
+| `06-gallery-collections.png` | 1440x900 | `/aigc/gallery` | 动态精选合集、封面作品、热度分和 Prompt 复用 |
 | `06-gallery-card.png` | 1440x900 | `/aigc/gallery` | 已发布作品、点赞/收藏/下载/分享 |
 | `07-share-page-reuse-prompt.png` | 390x844 | `/share/gallery/:assetId` | 公开分享页、复用 Prompt 按钮 |
 | `08-gallery-report-funnel.png` | 1440x900 | `/aigc/gallery-report` | 分享访问、公开下载、Prompt 复用漏斗 |
