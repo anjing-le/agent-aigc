@@ -11,6 +11,7 @@
 - `ROADMAP.md`：V0.8 到 V1.2 的业务演进路线
 - `LOCAL_STARTUP_GUIDE.md`：本地启动和验证流程
 - `DEMO_EVIDENCE.md`：演示证据和验证记录
+- `TEACHING_GUIDE.md`：教学讲解顺序、课堂任务和讲师检查清单
 
 ## 脚手架继承层
 
