@@ -88,13 +88,16 @@ Provider 调用报表示例结果：
 
 ## 浏览器检查证据
 
-- `/aigc/gallery-report` 桌面视口：分享转化漏斗、动作分布、每日趋势和对比表正常渲染，无页面级横向溢出，无 console error。
-- `/aigc/gallery` 桌面视口：动态精选合集、全局热门榜单和公开作品列表正常渲染，无页面级横向溢出。
-- `/aigc/gallery-report` 390px 移动视口：8 个统计项单列展示，漏斗面板存在，无页面级横向溢出。
-- `/aigc/models` 桌面视口：Provider 调用报表、Provider 表现表和模型表现表正常渲染，无页面级横向溢出，无 console error。
-- `/aigc/models` 390px 移动视口：报表统计两列展示，表格不造成页面级横向溢出。
-- `/share/gallery/:assetId` 390px 移动视口：公开分享页可见，`复用 Prompt` 按钮可见，无页面级横向溢出，无 console error。
-- 点击分享页 `复用 Prompt` 后跳转 `/aigc/studio?prompt=...&contentType=IMAGE`，报表中 `prompt-reuse` 计数增加。
+- 2026-06-17 使用 `SPRING_PROFILES_ACTIVE=dev SERVER_PORT=18185` 和 `VITE_API_PROXY_URL=http://127.0.0.1:18185 pnpm dev --host 127.0.0.1 --port 5176` 完成浏览器检查。
+- 检查前运行 `./scripts/aigc-demo-smoke.sh http://127.0.0.1:18185` 生成公开作品，输出 `gallery collections=3 matched=trending`。
+- `/aigc/gallery` 桌面视口：动态精选合集、全局热门榜单和公开作品列表正常渲染，合集显示热门复用、最新发布、图片精选，无 console error。
+- `/aigc/gallery` 390px 移动视口：动态精选合集可见，`documentElement.scrollWidth === clientWidth`，无页面级横向溢出，无 console error。
+- `/aigc/gallery-report` 桌面视口：互动报表、分享转化和导出入口正常渲染，无 console error。
+- `/aigc/gallery-report` 390px 移动视口：互动报表和分享转化可见，`documentElement.scrollWidth === clientWidth`，无页面级横向溢出，无 console error。
+- `/aigc/models` 桌面视口：模型配置、Provider 信息和调用报表正常渲染，无 console error。
+- `/share/gallery/:assetId` 桌面视口：公开分享页可见，复制链接、下载作品和 `复用 Prompt` 入口正常渲染，无 console error。
+- `prompt-reuse` 转化由 `aigc-demo-smoke` 调用 `/api/aigc/gallery/{assetId}/share/reuse` 验证；浏览器检查确认分享页 `复用 Prompt` 入口可见。
+- 浏览器临时截图保存到 `/tmp/agent-aigc-visual-evidence/`，当前仓库只保留截图索引和检查结论，不提交 PNG。
 
 ## 教学讲解顺序
 

@@ -7,7 +7,7 @@
 - 功能基线：以 `main` 最新提交为准，本轮提交可通过 `git log -1 --pretty=fuller` 查看
 - 远端分支：`main` / `master`
 - 作者：`安静 <245548353+anjing-le@users.noreply.github.com>`
-- 验证：`./scripts/check-contracts.sh`、`mvn -q test`、`pnpm build` 已通过；发布前再跑 `./scripts/quality-gate.sh`
+- 验证：`./scripts/check-contracts.sh`、`mvn -q test`、`pnpm build`、`./scripts/aigc-demo-smoke.sh` 和浏览器视觉检查已通过；发布前再跑 `./scripts/quality-gate.sh`
 
 ## 环境准备
 
@@ -54,11 +54,12 @@ VITE_API_PROXY_URL=http://127.0.0.1:18180 pnpm dev --host 127.0.0.1 --port 5174
 | `07-share-page-reuse-prompt.png` | 390x844 | `/share/gallery/:assetId` | 公开分享页、复用 Prompt 按钮 |
 | `08-gallery-report-funnel.png` | 1440x900 | `/aigc/gallery-report` | 分享访问、公开下载、Prompt 复用漏斗 |
 | `09-model-provider-execution-report.png` | 1440x900 | `/aigc/models` | Provider 调用报表、模型配置、审计入口 |
-| `10-mobile-model-report.png` | 390x844 | `/aigc/models` | 移动端报表统计和表格无页面级横向溢出 |
-| `11-mobile-report-funnel.png` | 390x844 | `/aigc/gallery-report` | 移动端统计卡和漏斗无横向溢出 |
-| `12-contract-check.png` | 终端 | `./scripts/check-contracts.sh` | 契约检查通过 |
-| `13-quality-gate.png` | 终端 | `./scripts/quality-gate.sh` | 完整质量门禁通过 |
-| `14-demo-evidence.png` | 桌面 | `project_document/DEMO_EVIDENCE.md` | 命令证据和浏览器检查结果 |
+| `10-mobile-gallery-collections.png` | 390x844 | `/aigc/gallery` | 移动端动态合集可见且无页面级横向溢出 |
+| `11-mobile-model-report.png` | 390x844 | `/aigc/models` | 移动端报表统计和表格无页面级横向溢出 |
+| `12-mobile-report-funnel.png` | 390x844 | `/aigc/gallery-report` | 移动端统计卡和漏斗无横向溢出 |
+| `13-contract-check.png` | 终端 | `./scripts/check-contracts.sh` | 契约检查通过 |
+| `14-quality-gate.png` | 终端 | `./scripts/quality-gate.sh` | 完整质量门禁通过 |
+| `15-demo-evidence.png` | 桌面 | `project_document/DEMO_EVIDENCE.md` | 命令证据和浏览器检查结果 |
 
 ## 截图规范
 
@@ -73,6 +74,6 @@ VITE_API_PROXY_URL=http://127.0.0.1:18180 pnpm dev --host 127.0.0.1 --port 5174
 
 - `01` 到 `03` 用于说明“为什么先继承脚手架”。
 - `04` 到 `09` 用于说明“业务如何从创作走到传播、运营和 Provider 观测”。
-- `10` 和 `11` 用于说明“页面响应式也属于验收范围”。
-- `12` 和 `13` 用于说明“质量门禁保证业务没有背离底座”。
-- `14` 用于说明“交付不是口头完成，而是有可追溯证据”。
+- `10` 到 `12` 用于说明“页面响应式也属于验收范围”。
+- `13` 和 `14` 用于说明“质量门禁保证业务没有背离底座”。
+- `15` 用于说明“交付不是口头完成，而是有可追溯证据”。
