@@ -8,6 +8,7 @@ PROMPT="${AIGC_SMOKE_PROMPT:-blue futuristic course cover image for an AIGC work
 CONTENT_TYPE="${AIGC_SMOKE_CONTENT_TYPE:-IMAGE}"
 ATTEMPTS="${AIGC_SMOKE_ATTEMPTS:-60}"
 SLEEP_SECONDS="${AIGC_SMOKE_SLEEP_SECONDS:-1}"
+COLLECTION_SIZE="${AIGC_SMOKE_COLLECTION_SIZE:-3}"
 USER_ID="${AIGC_SMOKE_USER_ID:-demo-smoke}"
 USER_NAME="${AIGC_SMOKE_USER_NAME:-Demo Smoke}"
 USER_ROLES="${AIGC_SMOKE_USER_ROLES:-R_ADMIN}"
@@ -115,6 +116,7 @@ REUSE_FILE="$TMP_DIR/reuse.json"
 DOWNLOAD_FILE="$TMP_DIR/gallery-download.bin"
 REPORT_FILE="$TMP_DIR/gallery-report.json"
 PROVIDER_FILE="$TMP_DIR/provider-report.json"
+COLLECTIONS_FILE="$TMP_DIR/gallery-collections.json"
 
 api GET "/api/test/health" > "$HEALTH_FILE"
 assert_api_success "$HEALTH_FILE" "health"
@@ -187,12 +189,16 @@ assert_api_success "$REPORT_FILE" "gallery interaction report"
 api GET "/api/aigc/models/provider-execution-report?days=7&contentType=$CONTENT_TYPE" > "$PROVIDER_FILE"
 assert_api_success "$PROVIDER_FILE" "provider execution report"
 
-node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" <<'NODE'
+api GET "/api/aigc/gallery/collections?size=$COLLECTION_SIZE" > "$COLLECTIONS_FILE"
+assert_api_success "$COLLECTIONS_FILE" "gallery collections"
+
+node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" <<'NODE'
 const fs = require('fs')
 
 const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
 const galleryResponse = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'))
 const providerResponse = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'))
+const collectionsResponse = JSON.parse(fs.readFileSync(process.argv[5], 'utf8'))
 
 function number(value) {
   const parsed = Number(value ?? 0)
@@ -227,9 +233,25 @@ assert(number(provider.completedTasks) >= 1, 'provider report must include compl
 assert(Array.isArray(provider.providerMetrics) && provider.providerMetrics.length > 0, 'provider metrics are required')
 assert(Array.isArray(provider.modelMetrics) && provider.modelMetrics.length > 0, 'model metrics are required')
 
+const collectionsData = collectionsResponse.data || {}
+const collections = collectionsData.collections || []
+assert(Array.isArray(collections), 'gallery collections must be an array')
+assert(collections.length >= 1, 'gallery collections must include at least one collection')
+assert(number(collectionsData.collectionSize) >= 1, 'gallery collectionSize must be positive')
+
+const createdAssetId = result.assetId
+const collectionWithCreatedAsset = collections.find((collection) => {
+  return Array.isArray(collection.assets)
+    && collection.assets.some((asset) => asset.id === createdAssetId)
+})
+assert(collectionWithCreatedAsset, 'gallery collections must include the generated published asset')
+assert(collectionWithCreatedAsset.coverAsset?.id, 'gallery collection coverAsset is required')
+assert(number(collectionWithCreatedAsset.itemCount) >= 1, 'gallery collection itemCount must be positive')
+
 console.log('aigc-demo-smoke: ok')
 console.log(`aigc-demo-smoke: taskId=${task.taskId}`)
 console.log(`aigc-demo-smoke: assetId=${result.assetId}`)
 console.log(`aigc-demo-smoke: gallery shareView=${shareViewCount} download=${downloadCount} promptReuse=${promptReuseCount}`)
 console.log(`aigc-demo-smoke: provider totalTasks=${provider.totalTasks} completedTasks=${provider.completedTasks} successRate=${provider.successRate}`)
+console.log(`aigc-demo-smoke: gallery collections=${collections.length} matched=${collectionWithCreatedAsset.id}`)
 NODE

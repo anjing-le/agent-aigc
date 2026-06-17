@@ -18,8 +18,7 @@
 | `cd frontend && pnpm build` | passed | 前端类型检查和生产构建 |
 | `./scripts/check-contracts.sh` | passed | 脚手架契约、服务边界、OpenAPI、上下文和 AIGC 专属守卫 |
 | `./scripts/probe-backend-dev.sh 18181` | passed | dev profile runtime OpenAPI probe |
-| `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表和 Provider 调用报表闭环 |
-| `curl 'http://127.0.0.1:18183/api/aigc/gallery/collections?size=3'` | passed | 灵感广场动态作品合集返回 3 个合集 |
+| `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表、Provider 调用报表和灵感广场动态作品合集闭环 |
 | `./scripts/quality-gate.sh` | passed | 契约、后端 package、前端 build、后端 runtime probe 一次性通过 |
 
 ## 业务冒烟证据
@@ -40,7 +39,7 @@
 6. 调用 `/api/aigc/gallery/{assetId}/download`，记录 `public-download`。
 7. 查询 `/api/aigc/gallery/reports/interactions?days=1`，确认 `shareFunnel` 返回分享访问、公开下载、Prompt 复用和转化率。
 8. 查询 `/api/aigc/models/provider-execution-report?days=7&contentType=IMAGE`，确认当前用户上下文下 Provider/模型调用指标可见。
-9. 查询 `/api/aigc/gallery/collections?size=3`，确认 `trending`、`latest` 和内容类型合集从已发布作品动态聚合。
+9. 查询 `/api/aigc/gallery/collections?size=3`，确认 `trending`、`latest` 和内容类型合集从已发布作品动态聚合，并且新发布作品出现在合集资产里。
 
 示例结果：
 

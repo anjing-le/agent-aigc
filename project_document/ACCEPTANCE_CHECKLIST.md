@@ -76,11 +76,7 @@ pnpm build
 ./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003
 ```
 
-广场合集冒烟：
-
-```bash
-curl 'http://127.0.0.1:10003/api/aigc/gallery/collections?size=3'
-```
+该脚本会覆盖生成、发布、分享、公开下载、Prompt 复用、互动报表、Provider 调用报表和灵感广场动态作品合集。
 
 完整发布前再跑：
 
