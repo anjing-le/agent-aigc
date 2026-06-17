@@ -46,6 +46,7 @@ pnpm dev
 - `project_document/STATUS.md`：当前状态。
 - `project_document/ACCEPTANCE_CHECKLIST.md`：V1 验收清单。
 - `project_document/TEACHING_GUIDE.md`：教学讲解顺序和课堂任务。
+- `project_document/LECTURE_SCRIPT.md`：课堂讲稿和截图清单。
 - `project_document/ROADMAP.md`：阶段规划。
 - `project_document/SCAFFOLD_INHERITANCE_MAP.md`：脚手架继承地图。
 - `project_document/LOCAL_STARTUP_GUIDE.md`：本地启动。

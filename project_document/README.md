@@ -12,6 +12,7 @@
 - `LOCAL_STARTUP_GUIDE.md`：本地启动和验证流程
 - `DEMO_EVIDENCE.md`：演示证据和验证记录
 - `TEACHING_GUIDE.md`：教学讲解顺序、课堂任务和讲师检查清单
+- `LECTURE_SCRIPT.md`：30/60 分钟课堂讲稿、截图清单和练习答案
 
 ## 脚手架继承层
 
