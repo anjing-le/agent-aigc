@@ -249,7 +249,7 @@ export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>,
 /** 灵感广场公开作者主页响应 */
 export type GalleryAuthorProfileResponse = Omit<
   OpenApiOperationData<'getGalleryAuthorProfile'>,
-  'assets'
+  'assets' | 'dominantContentType' | 'topAssets'
 > & {
   /** 公开作者标识 */
   authorId?: string
@@ -263,6 +263,16 @@ export type GalleryAuthorProfileResponse = Omit<
   videoCount?: number
   /** 公开音频数 */
   audioCount?: number
+  /** 公开作品总点赞数 */
+  totalLikeCount?: number
+  /** 公开作品总收藏数 */
+  totalFavoriteCount?: number
+  /** 公开作品总互动数 */
+  totalInteractionCount?: number
+  /** 作者当前最主要的公开创作类型 */
+  dominantContentType?: ContentType
+  /** 高互动公开作品 */
+  topAssets?: GalleryItem[]
   /** 公开作品分页 */
   assets?: GalleryListResponse
 }

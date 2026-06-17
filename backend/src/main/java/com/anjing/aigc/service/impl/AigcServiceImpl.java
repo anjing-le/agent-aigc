@@ -71,6 +71,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,6 +93,8 @@ public class AigcServiceImpl implements AigcService {
 
     private static final String ANONYMOUS_AUTHOR_ID = "anonymous";
     private static final String ANONYMOUS_AUTHOR_NAME = "匿名创作者";
+    private static final int AUTHOR_TOP_ASSET_CANDIDATE_SIZE = 50;
+    private static final int AUTHOR_TOP_ASSET_LIMIT = 5;
 
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
@@ -1092,13 +1095,26 @@ public class AigcServiceImpl implements AigcService {
                 .map(this::toGalleryDTO)
                 .collect(Collectors.toList());
 
+        long publishedCount = assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, null);
+        long imageCount = assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.IMAGE);
+        long videoCount = assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.VIDEO);
+        long audioCount = assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.AUDIO);
+        long totalLikeCount = assetRepository.sumPublishedLikeCountByOwner(normalizedAuthorId, anonymousOwner);
+        long totalFavoriteCount = assetRepository.sumPublishedFavoriteCountByOwner(normalizedAuthorId, anonymousOwner);
+        List<GalleryDTO> topAssets = resolveTopAuthorAssets(normalizedAuthorId, anonymousOwner);
+
         return GalleryAuthorProfileResponse.builder()
                 .authorId(normalizedAuthorId)
                 .authorName(resolveAuthorName(normalizedAuthorId))
-                .publishedCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, null))
-                .imageCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.IMAGE))
-                .videoCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.VIDEO))
-                .audioCount(assetRepository.countPublishedByOwner(normalizedAuthorId, anonymousOwner, ContentType.AUDIO))
+                .publishedCount(publishedCount)
+                .imageCount(imageCount)
+                .videoCount(videoCount)
+                .audioCount(audioCount)
+                .totalLikeCount(totalLikeCount)
+                .totalFavoriteCount(totalFavoriteCount)
+                .totalInteractionCount(totalLikeCount + totalFavoriteCount)
+                .dominantContentType(resolveDominantContentType(imageCount, videoCount, audioCount))
+                .topAssets(topAssets)
                 .assets(PageResult.of(records, page.getTotalElements(), safeCurrent, safeSize))
                 .build();
     }
@@ -1453,6 +1469,57 @@ public class AigcServiceImpl implements AigcService {
 
     private int resolveFavoriteCount(AigcAsset asset) {
         return asset.getFavoriteCount() == null ? 0 : asset.getFavoriteCount();
+    }
+
+    private List<GalleryDTO> resolveTopAuthorAssets(String authorId, boolean anonymousOwner) {
+        PageRequest topCandidateRequest = PageRequest.of(
+                0,
+                AUTHOR_TOP_ASSET_CANDIDATE_SIZE,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return assetRepository.searchPublishedByOwner(authorId, anonymousOwner, null, topCandidateRequest)
+                .getContent()
+                .stream()
+                .sorted(this::compareAuthorAssetInteraction)
+                .limit(AUTHOR_TOP_ASSET_LIMIT)
+                .map(this::toGalleryDTO)
+                .collect(Collectors.toList());
+    }
+
+    private int compareAuthorAssetInteraction(AigcAsset left, AigcAsset right) {
+        int scoreCompare = Integer.compare(authorAssetInteractionScore(right), authorAssetInteractionScore(left));
+        if (scoreCompare != 0) {
+            return scoreCompare;
+        }
+        LocalDateTime leftCreatedAt = left.getCreatedAt();
+        LocalDateTime rightCreatedAt = right.getCreatedAt();
+        if (leftCreatedAt == null && rightCreatedAt == null) {
+            return 0;
+        }
+        if (leftCreatedAt == null) {
+            return 1;
+        }
+        if (rightCreatedAt == null) {
+            return -1;
+        }
+        return rightCreatedAt.compareTo(leftCreatedAt);
+    }
+
+    private int authorAssetInteractionScore(AigcAsset asset) {
+        return resolveLikeCount(asset) + resolveFavoriteCount(asset);
+    }
+
+    private ContentType resolveDominantContentType(long imageCount, long videoCount, long audioCount) {
+        if (imageCount <= 0 && videoCount <= 0 && audioCount <= 0) {
+            return null;
+        }
+        if (imageCount >= videoCount && imageCount >= audioCount) {
+            return ContentType.IMAGE;
+        }
+        if (videoCount >= imageCount && videoCount >= audioCount) {
+            return ContentType.VIDEO;
+        }
+        return ContentType.AUDIO;
     }
 
     private String buildGalleryPreviewUrl(AigcAsset asset) {

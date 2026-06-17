@@ -130,4 +130,28 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
             @Param("ownerId") String ownerId,
             @Param("anonymousOwner") boolean anonymousOwner,
             @Param("contentType") ContentType contentType);
+
+    @Query("""
+            select coalesce(sum(a.likeCount), 0) from AigcAsset a
+            where a.isPublished = true
+              and (
+                    (:anonymousOwner = true and (a.ownerId is null or a.ownerId = ''))
+                    or (:anonymousOwner = false and a.ownerId = :ownerId)
+                  )
+            """)
+    long sumPublishedLikeCountByOwner(
+            @Param("ownerId") String ownerId,
+            @Param("anonymousOwner") boolean anonymousOwner);
+
+    @Query("""
+            select coalesce(sum(a.favoriteCount), 0) from AigcAsset a
+            where a.isPublished = true
+              and (
+                    (:anonymousOwner = true and (a.ownerId is null or a.ownerId = ''))
+                    or (:anonymousOwner = false and a.ownerId = :ownerId)
+                  )
+            """)
+    long sumPublishedFavoriteCountByOwner(
+            @Param("ownerId") String ownerId,
+            @Param("anonymousOwner") boolean anonymousOwner);
 }

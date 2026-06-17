@@ -424,8 +424,13 @@ export interface GalleryAuthorProfileResponse {
   audioCount?: number
   authorId?: string
   authorName?: string
+  dominantContentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   imageCount?: number
   publishedCount?: number
+  topAssets?: GalleryDTO[]
+  totalFavoriteCount?: number
+  totalInteractionCount?: number
+  totalLikeCount?: number
   videoCount?: number
 }
 

@@ -4,7 +4,10 @@
       <div>
         <div class="gallery-author__eyebrow">Creator Gallery</div>
         <h1>{{ profile?.authorName || routeAuthorId }}</h1>
-        <p>{{ profile?.publishedCount || 0 }} 个公开作品沉淀在灵感广场</p>
+        <p>
+          {{ profile?.publishedCount || 0 }} 个公开作品 · {{ dominantTypeLabel }}创作为主 ·
+          {{ profile?.totalInteractionCount || 0 }} 次互动
+        </p>
       </div>
 
       <div class="gallery-author__actions">
@@ -19,6 +22,29 @@
       <div v-for="item in stats" :key="item.label">
         <span>{{ item.label }}</span>
         <strong>{{ item.value }}</strong>
+      </div>
+    </section>
+
+    <section v-if="topAssets.length > 0" class="gallery-author__spotlight">
+      <div class="gallery-author__spotlight-title">
+        <span>Top Works</span>
+        <strong>高互动作品</strong>
+      </div>
+
+      <div class="gallery-author__top-list">
+        <button
+          v-for="(item, index) in topAssets"
+          :key="item.id"
+          type="button"
+          class="gallery-author__top-item"
+          @click="openShare(item)"
+        >
+          <span class="gallery-author__top-rank">#{{ index + 1 }}</span>
+          <span class="gallery-author__top-copy">{{ truncate(item.prompt, 46) }}</span>
+          <span class="gallery-author__top-score">
+            {{ interactionScore(item) }} 互动
+          </span>
+        </button>
       </div>
     </section>
 
@@ -112,12 +138,25 @@
   const activeContentType = ref<ContentType | ''>('')
   const routeAuthorId = computed(() => String(route.params.authorId || 'anonymous'))
   const hasMore = computed(() => assets.value.length < total.value)
+  const topAssets = computed(() => profile.value?.topAssets || [])
+  const dominantTypeLabel = computed(() => {
+    return profile.value?.dominantContentType
+      ? formatContentType(profile.value.dominantContentType)
+      : '多类型'
+  })
 
   const stats = computed(() => [
     { label: '公开作品', value: profile.value?.publishedCount || 0 },
-    { label: '图片', value: profile.value?.imageCount || 0 },
-    { label: '视频', value: profile.value?.videoCount || 0 },
-    { label: '音频', value: profile.value?.audioCount || 0 }
+    { label: '总互动', value: profile.value?.totalInteractionCount || 0 },
+    { label: '点赞', value: profile.value?.totalLikeCount || 0 },
+    { label: '收藏', value: profile.value?.totalFavoriteCount || 0 },
+    { label: '主类型', value: dominantTypeLabel.value },
+    {
+      label: '图 / 视 / 音',
+      value: `${profile.value?.imageCount || 0} / ${profile.value?.videoCount || 0} / ${
+        profile.value?.audioCount || 0
+      }`
+    }
   ])
 
   const loadProfile = async (append = false) => {
@@ -175,6 +214,10 @@
     }
   }
 
+  const interactionScore = (item: GalleryItem) => {
+    return (item.likeCount || 0) + (item.favoriteCount || 0)
+  }
+
   const formatContentType = (value: ContentType) => {
     const labels: Record<ContentType, string> = {
       IMAGE: '图片',
@@ -210,6 +253,7 @@
 
   .gallery-author__hero,
   .gallery-author__stats,
+  .gallery-author__spotlight,
   .gallery-author__toolbar,
   .gallery-author__content {
     max-width: 1220px;
@@ -253,7 +297,7 @@
 
   .gallery-author__stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 12px;
     margin-top: 24px;
 
@@ -274,6 +318,85 @@
     strong {
       font-size: 24px;
     }
+  }
+
+  .gallery-author__spotlight {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 18px;
+    align-items: stretch;
+    margin-top: 18px;
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #dfe6f0;
+    border-radius: 8px;
+  }
+
+  .gallery-author__spotlight-title {
+    display: grid;
+    align-content: center;
+    gap: 8px;
+
+    span {
+      color: #2f6fed;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    strong {
+      font-size: 22px;
+      line-height: 1.25;
+    }
+  }
+
+  .gallery-author__top-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px;
+  }
+
+  .gallery-author__top-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px 10px;
+    align-items: center;
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
+    background: #f7f9fd;
+    border: 1px solid #dfe6f0;
+    border-radius: 8px;
+    transition:
+      border-color 0.2s ease,
+      transform 0.2s ease;
+
+    &:hover {
+      border-color: #2f6fed;
+      transform: translateY(-1px);
+    }
+  }
+
+  .gallery-author__top-rank {
+    color: #2f6fed;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .gallery-author__top-copy {
+    overflow: hidden;
+    color: #172033;
+    font-size: 13px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .gallery-author__top-score {
+    grid-column: 2;
+    color: #6a7890;
+    font-size: 12px;
   }
 
   .gallery-author__toolbar {
@@ -372,6 +495,10 @@
 
     .gallery-author__stats {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gallery-author__spotlight {
+      grid-template-columns: 1fr;
     }
 
     .gallery-author__toolbar {

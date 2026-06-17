@@ -63,7 +63,7 @@
 - AIGC 我的收藏 V1 已接入：新增 `/api/aigc/gallery/favorites`，按当前用户/会话返回已收藏且仍公开发布的广场作品；前端灵感广场新增“我的收藏”开关，可在后端作品和当前收藏视图之间切换。
 - AIGC 广场公开下载/分享 V1 已接入：新增 `/api/aigc/gallery/{assetId}/download`，只允许已发布作品以 attachment 下载；前端广场卡片支持下载作品和复制公开预览链接，mock data URL 作品也可通过公开预览端点正常展示。
 - AIGC 广场公开分享页 V1 已接入：新增 `/api/aigc/gallery/{assetId}/share`，只返回已发布作品的分享页数据、预览 URL、下载 URL、SEO 元数据和海报文案；前端新增 `/share/gallery/:assetId` 静态公开路由，可未登录查看作品、复制链接/Prompt、下载作品、下载分享海报并复用 Prompt 回到创作工作台。
-- AIGC 广场个人公开主页 V1 已接入：新增 `/api/aigc/gallery/authors/{authorId}`，按公开作者标识返回作品分页和图片/视频/音频统计；Gallery DTO 新增 `authorId/authorName`，前端新增 `/share/creators/:authorId` 静态公开路由，分享页可进入作者主页，作者主页可查看作品并跳回作品分享页。
+- AIGC 广场个人公开主页 V1 已接入：新增 `/api/aigc/gallery/authors/{authorId}`，按公开作者标识返回作品分页、图片/视频/音频统计、总点赞/收藏/互动、主创作类型和高互动作品；Gallery DTO 新增 `authorId/authorName`，前端新增 `/share/creators/:authorId` 静态公开路由，分享页可进入作者主页，作者主页可查看作品、浏览 Top 作品并跳回作品分享页。
 - AIGC 广场审计 V1 已接入：新增 `/api/aigc/gallery/audits`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；发布、撤回、点赞、取消点赞、收藏、取消收藏和公开下载会写入 `aigc_gallery_audit_log`，审计继承脚手架 requestId、traceId、tenantId、operator、callerId 和 clientIp，广场页展示最近互动审计。
 - AIGC 广场互动报表 V1 已接入：新增 `/api/aigc/gallery/reports/interactions`，按当前脚手架 user/tenant 上下文聚合可见审计数据，返回动作分布、内容类型分布、每日趋势、核心互动计数和高互动作品；前端新增 `/aigc/gallery-report` 后台报表页，支持趋势查看、CSV 导出，并从灵感广场提供入口。
 - AIGC 存储状态诊断 V1 已接入：新增 `/api/aigc/storage/status`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；资产页展示 activeMode、本地目录可读写、清理能力、URL 前缀和 OSS 配置状态，响应不暴露任何密钥字段。
@@ -94,7 +94,7 @@
 
 ## 推荐下一步
 
-1. 做广场产品化：作者主页增强、作者/作品对比分析，以及公开分享转化漏斗。
+1. 做广场产品化：作者/作品对比分析，以及公开分享转化漏斗。
 2. 做 Provider 管理：KMS 托管替换、本地 legacy 凭证升级任务、真实用量计费和细粒度权限。
 3. 做真实调用报表：按 Provider、模型、内容类型聚合成功率、耗时和估算成本。
 4. 做用户维度：资产、素材、广场发布、收藏和点赞的用户隔离。

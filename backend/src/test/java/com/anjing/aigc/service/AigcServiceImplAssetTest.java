@@ -416,13 +416,25 @@ class AigcServiceImplAssetTest {
         AigcAsset asset = asset("asset-author");
         asset.setIsPublished(true);
         asset.setOwnerId("creator-1");
+        asset.setLikeCount(8);
+        asset.setFavoriteCount(3);
+        AigcAsset lowerRankedAsset = asset("asset-lower-ranked");
+        lowerRankedAsset.setIsPublished(true);
+        lowerRankedAsset.setOwnerId("creator-1");
+        lowerRankedAsset.setLikeCount(1);
+        lowerRankedAsset.setFavoriteCount(1);
         PageRequest pageRequest = PageRequest.of(0, 12, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest topCandidateRequest = PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt"));
         when(assetRepository.searchPublishedByOwner("creator-1", false, ContentType.IMAGE, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(asset), pageRequest, 1));
+        when(assetRepository.searchPublishedByOwner("creator-1", false, null, topCandidateRequest))
+                .thenReturn(new PageImpl<>(List.of(lowerRankedAsset, asset), topCandidateRequest, 2));
         when(assetRepository.countPublishedByOwner("creator-1", false, null)).thenReturn(4L);
         when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.IMAGE)).thenReturn(2L);
         when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.VIDEO)).thenReturn(1L);
         when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.AUDIO)).thenReturn(1L);
+        when(assetRepository.sumPublishedLikeCountByOwner("creator-1", false)).thenReturn(9L);
+        when(assetRepository.sumPublishedFavoriteCountByOwner("creator-1", false)).thenReturn(4L);
 
         GalleryAuthorProfileResponse response = aigcService.getGalleryAuthorProfile(
                 "creator-1", 1, 12, "IMAGE");
@@ -433,6 +445,11 @@ class AigcServiceImplAssetTest {
         assertEquals(2L, response.getImageCount());
         assertEquals(1L, response.getVideoCount());
         assertEquals(1L, response.getAudioCount());
+        assertEquals(9L, response.getTotalLikeCount());
+        assertEquals(4L, response.getTotalFavoriteCount());
+        assertEquals(13L, response.getTotalInteractionCount());
+        assertEquals(ContentType.IMAGE, response.getDominantContentType());
+        assertEquals("asset-author", response.getTopAssets().get(0).getId());
         assertEquals(1, response.getAssets().getRecords().size());
         assertEquals("asset-author", response.getAssets().getRecords().get(0).getId());
         assertEquals("creator-1", response.getAssets().getRecords().get(0).getAuthorId());
@@ -441,8 +458,11 @@ class AigcServiceImplAssetTest {
     @Test
     void getGalleryAuthorProfileMapsBlankAuthorToAnonymous() {
         PageRequest pageRequest = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageRequest topCandidateRequest = PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt"));
         when(assetRepository.searchPublishedByOwner("anonymous", true, null, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
+        when(assetRepository.searchPublishedByOwner("anonymous", true, null, topCandidateRequest))
+                .thenReturn(new PageImpl<>(List.of(), topCandidateRequest, 0));
 
         GalleryAuthorProfileResponse response = aigcService.getGalleryAuthorProfile(
                 " ", 0, 0, null);
