@@ -1,43 +1,68 @@
 # Demo Evidence
 
-本文档记录母版发布或复制前需要保留的演示证据。目标不是堆材料，而是让“能跑、好看、可复制”有可追溯凭据。
+本文档记录 `agent-aigc` 作为 AIGC 教学项目的演示证据。目标不是堆材料，而是让“继承脚手架、跑通业务闭环、通过质量门禁”有可追溯凭据。
 
-## 当前证据
+## 最新验收记录
 
-- `./scripts/quality-gate.sh`：聚合模板、契约、复制烟测、后端测试、前端构建、后端 dev runtime probe。
-- `./scripts/probe-backend-dev.sh`：启动 dev profile，验证 `/api/test/health`、`/api/test/features` 和 `/v3/api-docs`。
-- `project_document/STATUS.md`：记录每个阶段的状态和证据链。
+- 日期：2026-06-17
+- 功能基线：`bea813186597492666e735614530f907c32853c7`
+- Git author：`安静 <245548353+anjing-le@users.noreply.github.com>`
+- 结论：通过 V1 教学演示验收，后续可继续补截图和课堂讲稿。
 
-## 发布前证据清单
+## 命令证据
 
-1. 运行 `./scripts/quality-gate.sh` 并保留通过的提交号。
-2. 打开 `http://localhost:13006`，保留登录页桌面截图和移动端截图。
-3. 登录或游客进入工作台，保留首页截图。
-4. 启动后端 dev profile，记录 `/api/test/health`、`/api/test/features`、`/v3/api-docs` 可访问。
-5. 如演示 MySQL profile，记录使用的 `.env` 模板字段，不记录真实密码。
+| 命令 | 结果 | 说明 |
+| --- | --- | --- |
+| `mvn -q -Dtest=AigcServiceImplAssetTest,AigcGalleryAuditLogServiceTest test` | passed | 覆盖分享访问、Prompt 复用和互动报表漏斗 |
+| `mvn -q test` | passed | 后端全量单测 |
+| `cd frontend && pnpm build` | passed | 前端类型检查和生产构建 |
+| `./scripts/check-contracts.sh` | passed | 脚手架契约、服务边界、OpenAPI、上下文和 AIGC 专属守卫 |
+| `./scripts/probe-backend-dev.sh 18181` | passed | dev profile runtime OpenAPI probe |
+| `./scripts/quality-gate.sh` | passed | 契约、后端 package、前端 build、后端 runtime probe 一次性通过 |
 
-## 建议目录
+## 业务冒烟证据
 
-```text
-docs/evidence/YYYY-MM-DD/
-  README.md
-  login-desktop.png
-  login-mobile.png
-  dashboard.png
-  backend-probe.txt
+本轮使用默认 mock provider 完成了一次公开分享转化闭环：
+
+1. 调用 `/api/aigc/generate` 创建图片任务。
+2. 轮询 `/api/aigc/task/{taskId}` 至 `COMPLETED`。
+3. 调用 `/api/aigc/gallery/save` 发布资产。
+4. 访问 `/api/aigc/gallery/{assetId}/share`，记录 `share-view`。
+5. 调用 `/api/aigc/gallery/{assetId}/share/reuse`，记录 `prompt-reuse`。
+6. 调用 `/api/aigc/gallery/{assetId}/download`，记录 `public-download`。
+7. 查询 `/api/aigc/gallery/reports/interactions?days=1`，确认 `shareFunnel` 返回分享访问、公开下载、Prompt 复用和转化率。
+
+示例结果：
+
+```json
+{
+  "shareViewCount": 2,
+  "downloadCount": 1,
+  "promptReuseCount": 2,
+  "downloadRate": 50.0,
+  "promptReuseRate": 100.0
+}
 ```
 
-## 记录模板
+## 浏览器检查证据
 
-```markdown
-# Evidence YYYY-MM-DD
+- `/aigc/gallery-report` 桌面视口：分享转化漏斗、动作分布、每日趋势和对比表正常渲染，无页面级横向溢出，无 console error。
+- `/aigc/gallery-report` 390px 移动视口：8 个统计项单列展示，漏斗面板存在，无页面级横向溢出。
+- `/share/gallery/:assetId` 390px 移动视口：公开分享页可见，`复用 Prompt` 按钮可见，无页面级横向溢出，无 console error。
+- 点击分享页 `复用 Prompt` 后跳转 `/aigc/studio?prompt=...&contentType=IMAGE`，报表中 `prompt-reuse` 计数增加。
 
-- Commit: `<commit>`
-- Frontend: `http://localhost:13006`
-- Backend: `http://localhost:18080`
-- Gate: `./scripts/quality-gate.sh`
-- Result: passed
-```
+## 教学讲解顺序
+
+1. 先讲 `infra-dev-scaffolding` 继承点：目录、统一响应、OpenAPI、服务边界、请求上下文和质量门禁。
+2. 再讲 AIGC 业务增量：Agent 链路、Provider 路由、任务、素材、资产和灵感广场。
+3. 然后讲 API 生长方式：`ApiConstants` -> `service-boundaries.json` -> Controller/Service/DTO -> OpenAPI 类型 -> `openApiRequest`。
+4. 最后讲验证闭环：单测、构建、契约脚本、runtime probe、API 冒烟和浏览器检查。
+
+## 后续可补证据
+
+- 录制一次完整演示视频或保存关键截图。
+- 在真实 Google Key 环境下补一次图片 Provider smoke test 证据。
+- 为作者主页、作品合集和榜单补产品化截图。
 
 ## 不提交内容
 
