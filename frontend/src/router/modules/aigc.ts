@@ -35,6 +35,16 @@ export const aigcRoutes: AppRouteRecord = {
       }
     },
     {
+      path: 'gallery-report',
+      name: 'AIGCGalleryReport',
+      component: '/aigc/gallery-report',
+      meta: {
+        title: '互动报表',
+        icon: 'ri:bar-chart-box-line',
+        keepAlive: true
+      }
+    },
+    {
       path: 'materials',
       name: 'AIGCMaterials',
       component: '/aigc/materials',

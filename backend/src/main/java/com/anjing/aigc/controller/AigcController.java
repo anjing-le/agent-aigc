@@ -13,6 +13,7 @@ import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuditLogResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
+import com.anjing.aigc.model.response.GalleryInteractionReportResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -240,6 +241,16 @@ public class AigcController {
         PageResult<GalleryAuditLogResponse> logs = aigcGalleryAuditLogService.getAuditLogs(
                 current, size, action, assetId, success);
         return APIResponse.success(logs);
+    }
+
+    @GetMapping(ApiConstants.Aigc.GALLERY_INTERACTION_REPORT)
+    @Operation(summary = "获取 AIGC 广场互动报表")
+    public APIResponse<GalleryInteractionReportResponse> getGalleryInteractionReport(
+            @RequestParam(defaultValue = "30") Integer days,
+            @RequestParam(required = false) String contentType) {
+        GalleryInteractionReportResponse report = aigcGalleryAuditLogService.getInteractionReport(
+                days, contentType);
+        return APIResponse.success(report);
     }
 
     @DeleteMapping(ApiConstants.Aigc.MATERIAL_DETAIL)

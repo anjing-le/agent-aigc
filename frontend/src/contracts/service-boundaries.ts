@@ -401,6 +401,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryInteractionReport",
+          "backendConstant": "GALLERY_INTERACTION_REPORT_FULL",
+          "frontendKey": "galleryInteractionReport",
+          "path": "/api/aigc/gallery/reports/interactions",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "galleryFavorites",
           "backendConstant": "GALLERY_FAVORITES_FULL",
           "frontendKey": "galleryFavorites",
@@ -584,6 +593,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "galleryAuthorProfile": "/api/aigc/gallery/authors/{authorId}",
     "galleryFavorite": "/api/aigc/gallery/{assetId}/favorite",
     "galleryFavorites": "/api/aigc/gallery/favorites",
+    "galleryInteractionReport": "/api/aigc/gallery/reports/interactions",
     "galleryLike": "/api/aigc/gallery/{assetId}/like",
     "galleryPublication": "/api/aigc/gallery/{assetId}/publication",
     "gallerySave": "/api/aigc/gallery/save",

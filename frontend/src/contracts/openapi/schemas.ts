@@ -82,6 +82,15 @@ export interface APIResponseGalleryDTO {
   timestamp?: number
 }
 
+export interface APIResponseGalleryInteractionReportResponse {
+  code?: string
+  data?: GalleryInteractionReportResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGalleryShareResponse {
   code?: string
   data?: GalleryShareResponse
@@ -375,6 +384,22 @@ export interface CurrentUserResponse {
   userName: string
 }
 
+export interface GalleryActionMetricResponse {
+  action?: string
+  successfulEvents?: number
+  totalEvents?: number
+}
+
+export interface GalleryAssetMetricResponse {
+  assetId?: string
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  downloadCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  model?: string
+  totalEvents?: number
+}
+
 export interface GalleryAuditLogResponse {
   action?: string
   assetId?: string
@@ -404,6 +429,12 @@ export interface GalleryAuthorProfileResponse {
   videoCount?: number
 }
 
+export interface GalleryContentTypeMetricResponse {
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  successfulEvents?: number
+  totalEvents?: number
+}
+
 export interface GalleryDTO {
   authorId?: string
   authorName?: string
@@ -421,6 +452,25 @@ export interface GalleryDTO {
   publicAccessMode?: string
   thumbnailUrl?: string
   url?: string
+}
+
+export interface GalleryInteractionReportResponse {
+  actionMetrics?: GalleryActionMetricResponse[]
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  contentTypeMetrics?: GalleryContentTypeMetricResponse[]
+  days?: number
+  downloadCount?: number
+  favoriteCount?: number
+  generatedAt?: string
+  likeCount?: number
+  publishCount?: number
+  startAt?: string
+  successfulEvents?: number
+  topAssets?: GalleryAssetMetricResponse[]
+  totalEvents?: number
+  unfavoriteCount?: number
+  unlikeCount?: number
+  unpublishCount?: number
 }
 
 export interface GalleryShareResponse {
@@ -1025,6 +1075,7 @@ export interface OpenApiSchemas {
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
   APIResponseGalleryAuthorProfileResponse: APIResponseGalleryAuthorProfileResponse
   APIResponseGalleryDTO: APIResponseGalleryDTO
+  APIResponseGalleryInteractionReportResponse: APIResponseGalleryInteractionReportResponse
   APIResponseGalleryShareResponse: APIResponseGalleryShareResponse
   APIResponseGenerateResponse: APIResponseGenerateResponse
   APIResponseMapStringObject: APIResponseMapStringObject
@@ -1053,9 +1104,13 @@ export interface OpenApiSchemas {
   AudioParams: AudioParams
   AuthTokenResponse: AuthTokenResponse
   CurrentUserResponse: CurrentUserResponse
+  GalleryActionMetricResponse: GalleryActionMetricResponse
+  GalleryAssetMetricResponse: GalleryAssetMetricResponse
   GalleryAuditLogResponse: GalleryAuditLogResponse
   GalleryAuthorProfileResponse: GalleryAuthorProfileResponse
+  GalleryContentTypeMetricResponse: GalleryContentTypeMetricResponse
   GalleryDTO: GalleryDTO
+  GalleryInteractionReportResponse: GalleryInteractionReportResponse
   GalleryShareResponse: GalleryShareResponse
   GenerateRequest: GenerateRequest
   GenerateResponse: GenerateResponse

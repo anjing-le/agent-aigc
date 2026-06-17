@@ -80,6 +80,7 @@ export const ApiPaths = {
     ownershipBackfill: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.ownershipBackfill,
     gallery: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallery,
     galleryAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAudits,
+    galleryInteractionReport: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryInteractionReport,
     galleryFavorites: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorites,
     gallerySave: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallerySave,
     galleryPublication: (assetId: string | number) =>

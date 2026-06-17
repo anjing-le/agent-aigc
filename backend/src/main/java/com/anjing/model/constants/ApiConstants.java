@@ -271,6 +271,7 @@ public class ApiConstants {
         public static final String OWNERSHIP_BACKFILL = "/ownership/backfill";
         public static final String GALLERY = "/gallery";
         public static final String GALLERY_AUDITS = "/gallery/audits";
+        public static final String GALLERY_INTERACTION_REPORT = "/gallery/reports/interactions";
         public static final String GALLERY_FAVORITES = "/gallery/favorites";
         public static final String GALLERY_SAVE = "/gallery/save";
         public static final String GALLERY_PUBLICATION = "/gallery/{assetId}/publication";
@@ -306,6 +307,7 @@ public class ApiConstants {
         public static final String OWNERSHIP_BACKFILL_FULL = BASE + OWNERSHIP_BACKFILL;
         public static final String GALLERY_FULL = BASE + GALLERY;
         public static final String GALLERY_AUDITS_FULL = BASE + GALLERY_AUDITS;
+        public static final String GALLERY_INTERACTION_REPORT_FULL = BASE + GALLERY_INTERACTION_REPORT;
         public static final String GALLERY_FAVORITES_FULL = BASE + GALLERY_FAVORITES;
         public static final String GALLERY_SAVE_FULL = BASE + GALLERY_SAVE;
         public static final String GALLERY_PUBLICATION_FULL = BASE + GALLERY_PUBLICATION;

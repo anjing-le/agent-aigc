@@ -286,6 +286,45 @@ export type GalleryAuditLogListResponse = PageResult<
   GalleryAuditLogItem
 >
 
+/** 灵感广场互动报表动作指标 */
+export type GalleryActionMetric = Schemas.GalleryActionMetricResponse
+
+/** 灵感广场互动报表内容类型指标 */
+export type GalleryContentTypeMetric = Omit<Schemas.GalleryContentTypeMetricResponse, 'contentType'> & {
+  /** 内容类型 */
+  contentType?: ContentType
+}
+
+/** 灵感广场互动报表作品指标 */
+export type GalleryAssetMetric = Omit<Schemas.GalleryAssetMetricResponse, 'contentType'> & {
+  /** 内容类型 */
+  contentType?: ContentType
+}
+
+/** 灵感广场互动报表查询参数 */
+export type GalleryInteractionReportSearchParams =
+  OpenApiOperationQuery<'getGalleryInteractionReport'> & {
+    /** 统计窗口天数 */
+    days?: number
+    /** 内容类型筛选 */
+    contentType?: ContentType
+  }
+
+/** 灵感广场互动报表响应 */
+export type GalleryInteractionReportResponse = Omit<
+  OpenApiOperationData<'getGalleryInteractionReport'>,
+  'actionMetrics' | 'contentType' | 'contentTypeMetrics' | 'topAssets'
+> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 动作分布 */
+  actionMetrics?: GalleryActionMetric[]
+  /** 内容类型分布 */
+  contentTypeMetrics?: GalleryContentTypeMetric[]
+  /** 互动最高作品 */
+  topAssets?: GalleryAssetMetric[]
+}
+
 /** 资产列表响应 */
 export type AssetListResponse = PageResult<OpenApiOperationData<'getAssetList'>, AssetItem>
 

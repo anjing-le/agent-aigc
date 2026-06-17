@@ -11,6 +11,9 @@
         <el-tag :type="dataSource === 'api' ? 'success' : 'warning'" effect="plain">
           {{ dataSource === 'api' ? '后端作品' : '静态后备' }}
         </el-tag>
+        <el-button :icon="DataAnalysis" @click="$router.push('/aigc/gallery-report')">
+          互动报表
+        </el-button>
         <el-button :icon="Refresh" :loading="loading" @click="handleRefresh">刷新</el-button>
       </div>
     </div>
@@ -154,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-  import { MagicStick, Refresh, Search } from '@element-plus/icons-vue'
+  import { DataAnalysis, MagicStick, Refresh, Search } from '@element-plus/icons-vue'
   import { useDebounceFn, useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import PromptCard from './components/PromptCard.vue'

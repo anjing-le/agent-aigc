@@ -91,6 +91,7 @@ for (const token of [
   'public static final String BASE = API_PREFIX + "/aigc"',
   'public static final String GENERATE_FULL = BASE + GENERATE',
   'public static final String GALLERY_AUDITS_FULL = BASE + GALLERY_AUDITS',
+  'public static final String GALLERY_INTERACTION_REPORT_FULL = BASE + GALLERY_INTERACTION_REPORT',
   'public static final String GALLERY_FAVORITES_FULL = BASE + GALLERY_FAVORITES',
   'public static final String GALLERY_SHARE_FULL = BASE + GALLERY_SHARE',
   'public static final String GALLERY_AUTHOR_PROFILE_FULL = BASE + GALLERY_AUTHOR_PROFILE',
@@ -166,7 +167,8 @@ for (const token of [
   'ACTION_LIKE',
   'ACTION_FAVORITE',
   'ACTION_PUBLIC_DOWNLOAD',
-  'getAuditLogs'
+  'getAuditLogs',
+  'getInteractionReport'
 ]) {
   requireToken('backend/src/main/java/com/anjing/aigc/service/AigcGalleryAuditLogService.java', token)
 }

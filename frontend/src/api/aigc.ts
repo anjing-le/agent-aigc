@@ -9,6 +9,8 @@ import type {
   GalleryShareResponse,
   GalleryAuditLogListResponse,
   GalleryAuditLogSearchParams,
+  GalleryInteractionReportResponse,
+  GalleryInteractionReportSearchParams,
   AssetListResponse,
   GallerySearchParams,
   AssetSearchParams,
@@ -92,6 +94,16 @@ export function fetchGetGalleryAuditLogs(params: GalleryAuditLogSearchParams) {
   return openApiRequest('getGalleryAuditLogs', {
     query: params
   }) as Promise<GalleryAuditLogListResponse>
+}
+
+/**
+ * 获取灵感广场互动报表
+ * @param params 查询参数
+ */
+export function fetchGetGalleryInteractionReport(params: GalleryInteractionReportSearchParams) {
+  return openApiRequest('getGalleryInteractionReport', {
+    query: params
+  }) as Promise<GalleryInteractionReportResponse>
 }
 
 /**

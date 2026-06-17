@@ -98,6 +98,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/gallery/authors/{authorId}",
     operationId: "getGalleryAuthorProfile"
   },
+  getGalleryInteractionReport: {
+    method: "GET",
+    path: "/api/aigc/gallery/reports/interactions",
+    operationId: "getGalleryInteractionReport"
+  },
   getGalleryList: {
     method: "GET",
     path: "/api/aigc/gallery",
@@ -391,6 +396,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseGalleryAuthorProfileResponse
     data: NonNullable<Schemas.APIResponseGalleryAuthorProfileResponse['data']>
+  }
+  getGalleryInteractionReport: {
+    pathParams: undefined
+    query: { contentType?: string; days?: number }
+    request: undefined
+    response: Schemas.APIResponseGalleryInteractionReportResponse
+    data: NonNullable<Schemas.APIResponseGalleryInteractionReportResponse['data']>
   }
   getGalleryList: {
     pathParams: undefined

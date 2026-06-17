@@ -13,10 +13,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,5 +90,132 @@ class AigcGalleryAuditLogServiceTest {
         assertEquals(10, result.getSize());
         assertEquals(1L, result.getTotal());
         assertEquals(1, result.getRecords().size());
+    }
+
+    @Test
+    void getInteractionReportAggregatesVisibleAuditMetrics() {
+        when(repository.countVisible(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
+                any(LocalDateTime.class))).thenReturn(12L);
+        when(repository.countVisibleSuccessful(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
+                any(LocalDateTime.class))).thenReturn(10L);
+        when(repository.summarizeActions(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
+                any(LocalDateTime.class))).thenReturn(List.of(
+                        actionMetric(AigcGalleryAuditLogService.ACTION_PUBLISH, 2L, 2L),
+                        actionMetric(AigcGalleryAuditLogService.ACTION_LIKE, 7L, 6L),
+                        actionMetric(AigcGalleryAuditLogService.ACTION_FAVORITE, 3L, 2L),
+                        actionMetric(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD, 1L, 1L)
+                ));
+        when(repository.summarizeContentTypes(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
+                any(LocalDateTime.class))).thenReturn(List.of(contentTypeMetric(ContentType.IMAGE, 12L, 10L)));
+        when(repository.summarizeTopAssets(
+                nullable(String.class),
+                nullable(String.class),
+                eq(ContentType.IMAGE),
+                any(LocalDateTime.class),
+                eq(AigcGalleryAuditLogService.ACTION_LIKE),
+                eq(AigcGalleryAuditLogService.ACTION_FAVORITE),
+                eq(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD),
+                any(PageRequest.class)
+        )).thenReturn(List.of(assetMetric("asset-1", ContentType.IMAGE, "mock-image-preview", 8L, 5L, 2L, 1L)));
+
+        var report = service.getInteractionReport(7, "image");
+
+        assertEquals(7, report.getDays());
+        assertEquals(ContentType.IMAGE, report.getContentType());
+        assertEquals(12L, report.getTotalEvents());
+        assertEquals(10L, report.getSuccessfulEvents());
+        assertEquals(2L, report.getPublishCount());
+        assertEquals(6L, report.getLikeCount());
+        assertEquals(2L, report.getFavoriteCount());
+        assertEquals(1L, report.getDownloadCount());
+        assertEquals(4, report.getActionMetrics().size());
+        assertEquals(1, report.getContentTypeMetrics().size());
+        assertEquals("asset-1", report.getTopAssets().get(0).getAssetId());
+    }
+
+    private static AigcGalleryAuditLogRepository.ActionMetricProjection actionMetric(
+            String action, Long totalEvents, Long successfulEvents) {
+        return new AigcGalleryAuditLogRepository.ActionMetricProjection() {
+            @Override
+            public String getAction() {
+                return action;
+            }
+
+            @Override
+            public Long getTotalEvents() {
+                return totalEvents;
+            }
+
+            @Override
+            public Long getSuccessfulEvents() {
+                return successfulEvents;
+            }
+        };
+    }
+
+    private static AigcGalleryAuditLogRepository.ContentTypeMetricProjection contentTypeMetric(
+            ContentType contentType, Long totalEvents, Long successfulEvents) {
+        return new AigcGalleryAuditLogRepository.ContentTypeMetricProjection() {
+            @Override
+            public ContentType getContentType() {
+                return contentType;
+            }
+
+            @Override
+            public Long getTotalEvents() {
+                return totalEvents;
+            }
+
+            @Override
+            public Long getSuccessfulEvents() {
+                return successfulEvents;
+            }
+        };
+    }
+
+    private static AigcGalleryAuditLogRepository.AssetMetricProjection assetMetric(
+            String assetId,
+            ContentType contentType,
+            String model,
+            Long totalEvents,
+            Long likeCount,
+            Long favoriteCount,
+            Long downloadCount) {
+        return new AigcGalleryAuditLogRepository.AssetMetricProjection() {
+            @Override
+            public String getAssetId() {
+                return assetId;
+            }
+
+            @Override
+            public ContentType getContentType() {
+                return contentType;
+            }
+
+            @Override
+            public String getModel() {
+                return model;
+            }
+
+            @Override
+            public Long getTotalEvents() {
+                return totalEvents;
+            }
+
+            @Override
+            public Long getLikeCount() {
+                return likeCount;
+            }
+
+            @Override
+            public Long getFavoriteCount() {
+                return favoriteCount;
+            }
+
+            @Override
+            public Long getDownloadCount() {
+                return downloadCount;
+            }
+        };
     }
 }
