@@ -56,6 +56,15 @@ public class GalleryInteractionReportResponse {
     /** 成功公开下载数 */
     private Long downloadCount;
 
+    /** 公开分享页访问数 */
+    private Long shareViewCount;
+
+    /** Prompt 复用数 */
+    private Long promptReuseCount;
+
+    /** 公开分享页转化漏斗 */
+    private GalleryShareFunnelResponse shareFunnel;
+
     /** 动作分布 */
     private List<GalleryActionMetricResponse> actionMetrics;
 

@@ -320,6 +320,9 @@ export type GalleryAssetComparison = Omit<Schemas.GalleryAssetComparisonResponse
   contentType?: ContentType
 }
 
+/** 灵感广场公开分享页转化漏斗 */
+export type GalleryShareFunnel = Schemas.GalleryShareFunnelResponse
+
 /** 灵感广场互动报表每日趋势指标 */
 export type GalleryDailyMetric = Schemas.GalleryDailyMetricResponse
 
@@ -341,6 +344,7 @@ export type GalleryInteractionReportResponse = Omit<
   | 'contentTypeMetrics'
   | 'creatorMetrics'
   | 'dailyMetrics'
+  | 'shareFunnel'
   | 'topAssets'
 > & {
   /** 内容类型筛选 */
@@ -355,6 +359,8 @@ export type GalleryInteractionReportResponse = Omit<
   creatorMetrics?: GalleryCreatorMetric[]
   /** 作品互动结构对比 */
   assetComparisons?: GalleryAssetComparison[]
+  /** 公开分享页转化漏斗 */
+  shareFunnel?: GalleryShareFunnel
   /** 每日趋势 */
   dailyMetrics?: GalleryDailyMetric[]
 }

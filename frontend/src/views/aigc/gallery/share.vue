@@ -116,7 +116,7 @@
   import { DocumentCopy, Download, Link, MagicStick, Picture, User } from '@element-plus/icons-vue'
   import { useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
-  import { fetchGetGalleryShare } from '@/api/aigc'
+  import { fetchGetGalleryShare, fetchRecordGallerySharePromptReuse } from '@/api/aigc'
   import type { GalleryItem, GalleryShareResponse } from '@/api/model/aigcModel'
   import {
     downloadAigcGalleryAsset,
@@ -133,7 +133,6 @@
   const loading = ref(false)
   const loadError = ref('')
   const share = ref<GalleryShareResponse | null>(null)
-  const originalDocumentTitle = ref('')
   const managedSeoElements = new Map<HTMLMetaElement | HTMLLinkElement, string | null>()
   const asset = computed<GalleryItem | undefined>(() => share.value?.asset)
   const routeAssetId = computed(() => String(route.params.assetId || ''))
@@ -199,6 +198,13 @@
   const handleReuse = async () => {
     if (asset.value?.prompt) {
       await copy(asset.value.prompt)
+    }
+    if (asset.value?.id) {
+      try {
+        await fetchRecordGallerySharePromptReuse(asset.value.id)
+      } catch (error) {
+        console.error('记录 Prompt 复用失败:', error)
+      }
     }
     router.push({
       path: '/aigc/studio',
@@ -313,7 +319,6 @@
   }
 
   const restoreSeoMeta = () => {
-    document.title = originalDocumentTitle.value
     managedSeoElements.forEach((previousValue, element) => {
       if (element.dataset.aigcShareCreated === 'true') {
         element.remove()
@@ -466,7 +471,6 @@
     })
 
   onMounted(() => {
-    originalDocumentTitle.value = document.title
     loadShare()
   })
   onUnmounted(restoreSeoMeta)

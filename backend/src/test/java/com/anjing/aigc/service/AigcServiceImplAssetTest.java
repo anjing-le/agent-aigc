@@ -400,6 +400,7 @@ class AigcServiceImplAssetTest {
         assertEquals("agent-aigc · /share/gallery/asset-share", response.getPosterFooter());
         assertEquals(7, response.getAsset().getLikeCount());
         assertEquals(3, response.getAsset().getFavoriteCount());
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_SHARE_VIEW, asset);
     }
 
     @Test
@@ -407,6 +408,29 @@ class AigcServiceImplAssetTest {
         when(assetRepository.findByAssetIdAndIsPublishedTrue("draft")).thenReturn(Optional.empty());
 
         AigcException error = assertThrows(AigcException.class, () -> aigcService.getGalleryShare("draft"));
+
+        assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
+    }
+
+    @Test
+    void recordGallerySharePromptReuseRecordsPublishedAssetAudit() {
+        AigcAsset asset = asset("asset-reuse");
+        asset.setIsPublished(true);
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("asset-reuse")).thenReturn(Optional.of(asset));
+
+        aigcService.recordGallerySharePromptReuse("asset-reuse");
+
+        verify(galleryAuditLogService).recordSuccess(AigcGalleryAuditLogService.ACTION_PROMPT_REUSE, asset);
+    }
+
+    @Test
+    void recordGallerySharePromptReuseRequiresPublishedAsset() {
+        when(assetRepository.findByAssetIdAndIsPublishedTrue("draft")).thenReturn(Optional.empty());
+
+        AigcException error = assertThrows(
+                AigcException.class,
+                () -> aigcService.recordGallerySharePromptReuse("draft")
+        );
 
         assertEquals(AigcErrorCode.ASSET_NOT_FOUND, error.getErrorCode());
     }

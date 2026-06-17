@@ -34,4 +34,10 @@ public class GalleryDailyMetricResponse {
 
     /** 成功公开下载数 */
     private Long downloadCount;
+
+    /** 分享页访问数 */
+    private Long shareViewCount;
+
+    /** Prompt 复用数 */
+    private Long promptReuseCount;
 }

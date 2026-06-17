@@ -203,6 +203,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/models/probe",
     operationId: "probeModel"
   },
+  recordGallerySharePromptReuse: {
+    method: "POST",
+    path: "/api/aigc/gallery/{assetId}/share/reuse",
+    operationId: "recordGallerySharePromptReuse"
+  },
   refreshToken: {
     method: "POST",
     path: "/api/auth/refresh",
@@ -543,6 +548,13 @@ export interface OpenApiOperationTypes {
     request: Schemas.ProviderProbeRequest
     response: Schemas.APIResponseProviderProbeResponse
     data: NonNullable<Schemas.APIResponseProviderProbeResponse['data']>
+  }
+  recordGallerySharePromptReuse: {
+    pathParams: { assetId: string }
+    query: undefined
+    request: undefined
+    response: Schemas.APIResponseVoid
+    data: NonNullable<Schemas.APIResponseVoid['data']>
   }
   refreshToken: {
     pathParams: undefined

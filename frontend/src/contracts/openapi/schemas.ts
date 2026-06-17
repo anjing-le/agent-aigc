@@ -470,7 +470,9 @@ export interface GalleryDailyMetricResponse {
   downloadCount?: number
   favoriteCount?: number
   likeCount?: number
+  promptReuseCount?: number
   publishCount?: number
+  shareViewCount?: number
   successfulEvents?: number
   totalEvents?: number
 }
@@ -506,7 +508,10 @@ export interface GalleryInteractionReportResponse {
   favoriteCount?: number
   generatedAt?: string
   likeCount?: number
+  promptReuseCount?: number
   publishCount?: number
+  shareFunnel?: GalleryShareFunnelResponse
+  shareViewCount?: number
   startAt?: string
   successfulEvents?: number
   topAssets?: GalleryAssetMetricResponse[]
@@ -514,6 +519,14 @@ export interface GalleryInteractionReportResponse {
   unfavoriteCount?: number
   unlikeCount?: number
   unpublishCount?: number
+}
+
+export interface GalleryShareFunnelResponse {
+  downloadCount?: number
+  downloadRate?: number
+  promptReuseCount?: number
+  promptReuseRate?: number
+  shareViewCount?: number
 }
 
 export interface GalleryShareResponse {
@@ -1163,6 +1176,7 @@ export interface OpenApiSchemas {
   GalleryDailyMetricResponse: GalleryDailyMetricResponse
   GalleryDTO: GalleryDTO
   GalleryInteractionReportResponse: GalleryInteractionReportResponse
+  GalleryShareFunnelResponse: GalleryShareFunnelResponse
   GalleryShareResponse: GalleryShareResponse
   GenerateRequest: GenerateRequest
   GenerateResponse: GenerateResponse

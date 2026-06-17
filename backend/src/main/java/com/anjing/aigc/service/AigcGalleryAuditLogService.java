@@ -11,6 +11,7 @@ import com.anjing.aigc.model.response.GalleryContentTypeMetricResponse;
 import com.anjing.aigc.model.response.GalleryCreatorMetricResponse;
 import com.anjing.aigc.model.response.GalleryDailyMetricResponse;
 import com.anjing.aigc.model.response.GalleryInteractionReportResponse;
+import com.anjing.aigc.model.response.GalleryShareFunnelResponse;
 import com.anjing.aigc.repository.AigcGalleryAuditLogRepository;
 import com.anjing.context.GlobalRequestContextHolder;
 import com.anjing.aigc.exception.AigcException;
@@ -51,6 +52,8 @@ public class AigcGalleryAuditLogService {
     public static final String ACTION_FAVORITE = "favorite";
     public static final String ACTION_UNFAVORITE = "unfavorite";
     public static final String ACTION_PUBLIC_DOWNLOAD = "public-download";
+    public static final String ACTION_SHARE_VIEW = "share-view";
+    public static final String ACTION_PROMPT_REUSE = "prompt-reuse";
     private static final int DEFAULT_REPORT_DAYS = 30;
     private static final int MAX_REPORT_DAYS = 365;
     private static final int TOP_ASSET_LIMIT = 10;
@@ -146,6 +149,9 @@ public class AigcGalleryAuditLogService {
                 startDate,
                 generatedAt.toLocalDate()
         );
+        long downloadCount = successfulCount(actionMetrics, ACTION_PUBLIC_DOWNLOAD);
+        long shareViewCount = successfulCount(actionMetrics, ACTION_SHARE_VIEW);
+        long promptReuseCount = successfulCount(actionMetrics, ACTION_PROMPT_REUSE);
 
         return GalleryInteractionReportResponse.builder()
                 .days(normalizedDays)
@@ -160,7 +166,10 @@ public class AigcGalleryAuditLogService {
                 .unlikeCount(successfulCount(actionMetrics, ACTION_UNLIKE))
                 .favoriteCount(successfulCount(actionMetrics, ACTION_FAVORITE))
                 .unfavoriteCount(successfulCount(actionMetrics, ACTION_UNFAVORITE))
-                .downloadCount(successfulCount(actionMetrics, ACTION_PUBLIC_DOWNLOAD))
+                .downloadCount(downloadCount)
+                .shareViewCount(shareViewCount)
+                .promptReuseCount(promptReuseCount)
+                .shareFunnel(buildShareFunnel(shareViewCount, downloadCount, promptReuseCount))
                 .actionMetrics(actionMetrics)
                 .contentTypeMetrics(contentTypeMetrics)
                 .topAssets(topAssets)
@@ -268,6 +277,17 @@ public class AigcGalleryAuditLogService {
                 .orElse(0L);
     }
 
+    private GalleryShareFunnelResponse buildShareFunnel(long shareViewCount, long downloadCount,
+            long promptReuseCount) {
+        return GalleryShareFunnelResponse.builder()
+                .shareViewCount(shareViewCount)
+                .downloadCount(downloadCount)
+                .promptReuseCount(promptReuseCount)
+                .downloadRate(percentage(downloadCount, shareViewCount))
+                .promptReuseRate(percentage(promptReuseCount, shareViewCount))
+                .build();
+    }
+
     private Long coalesce(Long value) {
         return value == null ? 0L : value;
     }
@@ -291,6 +311,8 @@ public class AigcGalleryAuditLogService {
                     .likeCount(0L)
                     .favoriteCount(0L)
                     .downloadCount(0L)
+                    .shareViewCount(0L)
+                    .promptReuseCount(0L)
                     .build());
         }
         for (AigcGalleryAuditLog logEntry : logs) {
@@ -316,6 +338,8 @@ public class AigcGalleryAuditLogService {
             case ACTION_LIKE -> metric.setLikeCount(coalesce(metric.getLikeCount()) + 1);
             case ACTION_FAVORITE -> metric.setFavoriteCount(coalesce(metric.getFavoriteCount()) + 1);
             case ACTION_PUBLIC_DOWNLOAD -> metric.setDownloadCount(coalesce(metric.getDownloadCount()) + 1);
+            case ACTION_SHARE_VIEW -> metric.setShareViewCount(coalesce(metric.getShareViewCount()) + 1);
+            case ACTION_PROMPT_REUSE -> metric.setPromptReuseCount(coalesce(metric.getPromptReuseCount()) + 1);
             default -> {
             }
         }

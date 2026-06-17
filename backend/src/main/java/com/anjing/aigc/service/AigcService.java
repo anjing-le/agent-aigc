@@ -154,6 +154,13 @@ public interface AigcService {
     GalleryShareResponse getGalleryShare(String assetId);
 
     /**
+     * 记录公开分享页 Prompt 复用行为。
+     *
+     * @param assetId 资产ID
+     */
+    void recordGallerySharePromptReuse(String assetId);
+
+    /**
      * 获取公开作者主页。
      *
      * @param authorId 公开作者标识

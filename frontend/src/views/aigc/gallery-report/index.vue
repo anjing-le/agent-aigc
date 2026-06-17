@@ -46,6 +46,20 @@
         </div>
       </div>
 
+      <section class="gallery-report__panel gallery-report__panel--wide gallery-report__funnel">
+        <div class="gallery-report__panel-header">
+          <h3>分享转化漏斗</h3>
+          <el-tag size="small" effect="plain">{{ formatPercentValue(shareFunnel.promptReuseRate) }}</el-tag>
+        </div>
+        <div class="gallery-report__funnel-steps">
+          <div v-for="item in funnelSteps" :key="item.label" class="gallery-report__funnel-step">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+            <em>{{ item.rate }}</em>
+          </div>
+        </div>
+      </section>
+
       <section class="gallery-report__panel gallery-report__panel--wide gallery-report__trend">
         <div class="gallery-report__panel-header">
           <h3>每日趋势</h3>
@@ -266,7 +280,8 @@
     GalleryContentTypeMetric,
     GalleryCreatorMetric,
     GalleryDailyMetric,
-    GalleryInteractionReportResponse
+    GalleryInteractionReportResponse,
+    GalleryShareFunnel
   } from '@/api/model/aigcModel'
 
   defineOptions({ name: 'AIGCGalleryReport' })
@@ -288,6 +303,19 @@
     () => report.value?.assetComparisons || []
   )
   const dailyMetrics = computed<GalleryDailyMetric[]>(() => report.value?.dailyMetrics || [])
+  const shareFunnel = computed<GalleryShareFunnel>(() => {
+    const base = report.value?.shareFunnel || {}
+    const shareViewCount = Number(base.shareViewCount ?? report.value?.shareViewCount ?? 0)
+    const downloadCount = Number(base.downloadCount ?? report.value?.downloadCount ?? 0)
+    const promptReuseCount = Number(base.promptReuseCount ?? report.value?.promptReuseCount ?? 0)
+    return {
+      shareViewCount,
+      downloadCount,
+      promptReuseCount,
+      downloadRate: Number(base.downloadRate ?? rateValue(downloadCount, shareViewCount)),
+      promptReuseRate: Number(base.promptReuseRate ?? rateValue(promptReuseCount, shareViewCount))
+    }
+  })
   const maxDailyEvents = computed(() =>
     Math.max(0, ...dailyMetrics.value.map(item => Number(item.totalEvents || 0)))
   )
@@ -298,7 +326,27 @@
     { label: '发布', value: formatNumber(report.value?.publishCount) },
     { label: '点赞', value: formatNumber(report.value?.likeCount) },
     { label: '收藏', value: formatNumber(report.value?.favoriteCount) },
-    { label: '公开下载', value: formatNumber(report.value?.downloadCount) }
+    { label: '公开下载', value: formatNumber(report.value?.downloadCount) },
+    { label: '分享访问', value: formatNumber(report.value?.shareViewCount) },
+    { label: 'Prompt 复用', value: formatNumber(report.value?.promptReuseCount) }
+  ])
+
+  const funnelSteps = computed(() => [
+    {
+      label: '分享访问',
+      value: formatNumber(shareFunnel.value.shareViewCount),
+      rate: '基准'
+    },
+    {
+      label: '公开下载',
+      value: formatNumber(shareFunnel.value.downloadCount),
+      rate: formatPercentValue(shareFunnel.value.downloadRate)
+    },
+    {
+      label: 'Prompt 复用',
+      value: formatNumber(shareFunnel.value.promptReuseCount),
+      rate: formatPercentValue(shareFunnel.value.promptReuseRate)
+    }
   ])
 
   const loadReport = async () => {
@@ -326,6 +374,12 @@
     return `${Math.round((Number(successful || 0) / denominator) * 100)}%`
   }
 
+  const rateValue = (successful?: number | null, total?: number | null) => {
+    const denominator = Number(total || 0)
+    if (denominator <= 0) return 0
+    return Math.round((Number(successful || 0) * 10000) / denominator) / 100
+  }
+
   const formatTime = (value?: string) => {
     if (!value) return '-'
     const date = new Date(value)
@@ -347,7 +401,7 @@
   }
 
   const formatTrendTitle = (item: GalleryDailyMetric) =>
-    `${item.date || '-'} | 总事件 ${formatNumber(item.totalEvents)} | 成功 ${formatNumber(item.successfulEvents)}`
+    `${item.date || '-'} | 总事件 ${formatNumber(item.totalEvents)} | 成功 ${formatNumber(item.successfulEvents)} | 分享 ${formatNumber(item.shareViewCount)} | 复用 ${formatNumber(item.promptReuseCount)}`
 
   const formatAction = (action?: string) => {
     const labels: Record<string, string> = {
@@ -357,7 +411,9 @@
       unlike: '取消点赞',
       favorite: '收藏',
       unfavorite: '取消收藏',
-      'public-download': '公开下载'
+      'public-download': '公开下载',
+      'share-view': '分享访问',
+      'prompt-reuse': '复用 Prompt'
     }
     return action ? labels[action] || action : '-'
   }
@@ -366,7 +422,7 @@
     if (action === 'publish') return 'success'
     if (action === 'unpublish') return 'warning'
     if (action === 'like' || action === 'favorite') return 'primary'
-    if (action === 'public-download') return 'info'
+    if (action === 'public-download' || action === 'share-view' || action === 'prompt-reuse') return 'info'
     return 'info'
   }
 
@@ -406,7 +462,17 @@
     }
     const rows = [
       ['daily'],
-      ['date', 'totalEvents', 'successfulEvents', 'publishCount', 'likeCount', 'favoriteCount', 'downloadCount'],
+      [
+        'date',
+        'totalEvents',
+        'successfulEvents',
+        'publishCount',
+        'likeCount',
+        'favoriteCount',
+        'downloadCount',
+        'shareViewCount',
+        'promptReuseCount'
+      ],
       ...dailyMetrics.value.map(item => [
         item.date || '',
         String(item.totalEvents || 0),
@@ -414,8 +480,16 @@
         String(item.publishCount || 0),
         String(item.likeCount || 0),
         String(item.favoriteCount || 0),
-        String(item.downloadCount || 0)
+        String(item.downloadCount || 0),
+        String(item.shareViewCount || 0),
+        String(item.promptReuseCount || 0)
       ]),
+      [],
+      ['shareFunnel'],
+      ['step', 'count', 'rate'],
+      ['shareView', String(shareFunnel.value.shareViewCount || 0), '100'],
+      ['publicDownload', String(shareFunnel.value.downloadCount || 0), String(shareFunnel.value.downloadRate || 0)],
+      ['promptReuse', String(shareFunnel.value.promptReuseCount || 0), String(shareFunnel.value.promptReuseRate || 0)],
       [],
       ['creators'],
       ['authorId', 'authorName', 'assetCount', 'totalEvents', 'successfulEvents', 'likeCount', 'favoriteCount', 'downloadCount'],
@@ -555,7 +629,7 @@
 
     &__stats {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 16px;
     }
@@ -615,6 +689,43 @@
 
     &__trend {
       margin-bottom: 16px;
+    }
+
+    &__funnel {
+      margin-bottom: 16px;
+    }
+
+    &__funnel-steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    &__funnel-step {
+      min-width: 0;
+      padding: 12px 14px;
+      background: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 8px;
+
+      span,
+      em {
+        display: block;
+        overflow: hidden;
+        color: var(--el-text-color-secondary);
+        font-size: 12px;
+        font-style: normal;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      strong {
+        display: block;
+        margin: 8px 0 6px;
+        font-size: 24px;
+        line-height: 1;
+        color: var(--el-text-color-primary);
+      }
     }
 
     &__trend-scroll {
@@ -703,6 +814,10 @@
       }
 
       &__stats {
+        grid-template-columns: 1fr;
+      }
+
+      &__funnel-steps {
         grid-template-columns: 1fr;
       }
 

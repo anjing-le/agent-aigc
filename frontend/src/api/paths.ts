@@ -91,6 +91,8 @@ export const ApiPaths = {
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorite, { assetId }),
     galleryShare: (assetId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryShare, { assetId }),
+    galleryShareReuse: (assetId: string | number) =>
+      bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryShareReuse, { assetId }),
     galleryAuthorProfile: (authorId: string | number) =>
       bindApiPathParams(SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAuthorProfile, { authorId }),
     galleryAssetPreview: (assetId: string | number) =>

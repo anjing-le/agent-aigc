@@ -320,6 +320,16 @@ public class AigcController {
         return APIResponse.success(response);
     }
 
+    @PostMapping(ApiConstants.Aigc.GALLERY_SHARE_REUSE)
+    @Operation(
+            summary = "记录公开分享页 Prompt 复用",
+            operationId = "recordGallerySharePromptReuse"
+    )
+    public APIResponse<Void> recordGallerySharePromptReuse(@PathVariable String assetId) {
+        aigcService.recordGallerySharePromptReuse(assetId);
+        return APIResponse.success(null);
+    }
+
     @GetMapping(ApiConstants.Aigc.GALLERY_AUTHOR_PROFILE)
     @Operation(summary = "获取灵感广场公开作者主页")
     public APIResponse<GalleryAuthorProfileResponse> getGalleryAuthorProfile(

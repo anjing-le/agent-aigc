@@ -1051,6 +1051,7 @@ public class AigcServiceImpl implements AigcService {
     @Override
     public GalleryShareResponse getGalleryShare(String assetId) {
         AigcAsset asset = findPublishedAsset(assetId);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_SHARE_VIEW, asset);
         String previewUrl = buildGalleryPreviewUrl(asset);
         String downloadUrl = buildGalleryDownloadUrl(asset);
         String shareTitle = buildShareTitle(asset);
@@ -1069,6 +1070,12 @@ public class AigcServiceImpl implements AigcService {
                 .posterSubtitle(contentTypeLabel + " · " + authorName + " · " + modelName)
                 .posterFooter("agent-aigc · /share/gallery/" + asset.getAssetId())
                 .build();
+    }
+
+    @Override
+    public void recordGallerySharePromptReuse(String assetId) {
+        AigcAsset asset = findPublishedAsset(assetId);
+        galleryAuditLogService.recordSuccess(AigcGalleryAuditLogService.ACTION_PROMPT_REUSE, asset);
     }
 
     @Override

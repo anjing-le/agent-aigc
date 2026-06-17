@@ -127,6 +127,16 @@ export function fetchGetGalleryShare(assetId: string) {
 }
 
 /**
+ * 记录公开分享页 Prompt 复用
+ * @param assetId 资产ID
+ */
+export function fetchRecordGallerySharePromptReuse(assetId: string) {
+  return openApiRequest('recordGallerySharePromptReuse', {
+    pathParams: { assetId }
+  }) as unknown as Promise<void>
+}
+
+/**
  * 获取灵感广场公开作者主页
  * @param authorId 作者公开标识
  * @param params 分页和筛选参数

@@ -95,18 +95,20 @@ class AigcGalleryAuditLogServiceTest {
     @Test
     void getInteractionReportAggregatesVisibleAuditMetrics() {
         when(repository.countVisible(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
-                any(LocalDateTime.class))).thenReturn(12L);
+                any(LocalDateTime.class))).thenReturn(18L);
         when(repository.countVisibleSuccessful(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
-                any(LocalDateTime.class))).thenReturn(10L);
+                any(LocalDateTime.class))).thenReturn(16L);
         when(repository.summarizeActions(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
                 any(LocalDateTime.class))).thenReturn(List.of(
                         actionMetric(AigcGalleryAuditLogService.ACTION_PUBLISH, 2L, 2L),
                         actionMetric(AigcGalleryAuditLogService.ACTION_LIKE, 7L, 6L),
                         actionMetric(AigcGalleryAuditLogService.ACTION_FAVORITE, 3L, 2L),
-                        actionMetric(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD, 1L, 1L)
+                        actionMetric(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD, 1L, 1L),
+                        actionMetric(AigcGalleryAuditLogService.ACTION_SHARE_VIEW, 4L, 4L),
+                        actionMetric(AigcGalleryAuditLogService.ACTION_PROMPT_REUSE, 2L, 2L)
                 ));
         when(repository.summarizeContentTypes(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
-                any(LocalDateTime.class))).thenReturn(List.of(contentTypeMetric(ContentType.IMAGE, 12L, 10L)));
+                any(LocalDateTime.class))).thenReturn(List.of(contentTypeMetric(ContentType.IMAGE, 18L, 16L)));
         when(repository.summarizeTopAssets(
                 nullable(String.class),
                 nullable(String.class),
@@ -130,33 +132,44 @@ class AigcGalleryAuditLogServiceTest {
         when(repository.findVisibleForReport(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
                 any(LocalDateTime.class))).thenReturn(List.of(
                         reportLog(AigcGalleryAuditLogService.ACTION_LIKE, true, LocalDateTime.now().minusDays(1)),
-                        reportLog(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD, true, LocalDateTime.now())
+                        reportLog(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD, true, LocalDateTime.now()),
+                        reportLog(AigcGalleryAuditLogService.ACTION_SHARE_VIEW, true, LocalDateTime.now()),
+                        reportLog(AigcGalleryAuditLogService.ACTION_PROMPT_REUSE, true, LocalDateTime.now())
                 ));
 
         var report = service.getInteractionReport(7, "image");
 
         assertEquals(7, report.getDays());
         assertEquals(ContentType.IMAGE, report.getContentType());
-        assertEquals(12L, report.getTotalEvents());
-        assertEquals(10L, report.getSuccessfulEvents());
+        assertEquals(18L, report.getTotalEvents());
+        assertEquals(16L, report.getSuccessfulEvents());
         assertEquals(2L, report.getPublishCount());
         assertEquals(6L, report.getLikeCount());
         assertEquals(2L, report.getFavoriteCount());
         assertEquals(1L, report.getDownloadCount());
-        assertEquals(4, report.getActionMetrics().size());
+        assertEquals(4L, report.getShareViewCount());
+        assertEquals(2L, report.getPromptReuseCount());
+        assertEquals(4L, report.getShareFunnel().getShareViewCount());
+        assertEquals(1L, report.getShareFunnel().getDownloadCount());
+        assertEquals(2L, report.getShareFunnel().getPromptReuseCount());
+        assertEquals(25D, report.getShareFunnel().getDownloadRate());
+        assertEquals(50D, report.getShareFunnel().getPromptReuseRate());
+        assertEquals(6, report.getActionMetrics().size());
         assertEquals(1, report.getContentTypeMetrics().size());
         assertEquals("asset-1", report.getTopAssets().get(0).getAssetId());
         assertEquals("creator-1", report.getCreatorMetrics().get(0).getAuthorId());
         assertEquals(2L, report.getCreatorMetrics().get(0).getAssetCount());
         assertEquals("asset-1", report.getAssetComparisons().get(0).getAssetId());
         assertEquals(8L, report.getAssetComparisons().get(0).getEngagementEvents());
-        assertEquals(66.67D, report.getAssetComparisons().get(0).getEventShareRate());
+        assertEquals(44.44D, report.getAssetComparisons().get(0).getEventShareRate());
         assertEquals(25D, report.getAssetComparisons().get(0).getFavoriteRate());
         assertEquals(12.5D, report.getAssetComparisons().get(0).getDownloadRate());
         assertEquals(7, report.getDailyMetrics().size());
-        assertEquals(2L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getTotalEvents()).sum());
+        assertEquals(4L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getTotalEvents()).sum());
         assertEquals(1L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getLikeCount()).sum());
         assertEquals(1L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getDownloadCount()).sum());
+        assertEquals(1L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getShareViewCount()).sum());
+        assertEquals(1L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getPromptReuseCount()).sum());
     }
 
     private static AigcGalleryAuditLog reportLog(String action, boolean success, LocalDateTime createdAt) {
