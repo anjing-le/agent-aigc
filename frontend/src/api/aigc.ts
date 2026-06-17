@@ -6,6 +6,8 @@ import type {
   GalleryItem,
   GalleryAuthorProfileResponse,
   GalleryListResponse,
+  GalleryRankingResponse,
+  GalleryRankingSearchParams,
   GalleryShareResponse,
   GalleryAuditLogListResponse,
   GalleryAuditLogSearchParams,
@@ -84,6 +86,16 @@ export function fetchGetGalleryList(params: GallerySearchParams) {
   return openApiRequest('getGalleryList', {
     query: params
   }) as Promise<GalleryListResponse>
+}
+
+/**
+ * 获取灵感广场全局热门榜单
+ * @param params 查询参数
+ */
+export function fetchGetGalleryRanking(params: GalleryRankingSearchParams) {
+  return openApiRequest('getGalleryRanking', {
+    query: params
+  }) as Promise<GalleryRankingResponse>
 }
 
 /**

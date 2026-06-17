@@ -102,6 +102,28 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
             @Param("keyword") String keyword,
             Pageable pageable);
 
+    @Query(value = """
+            select a from AigcAsset a
+            where a.isPublished = true
+              and (:contentType is null or a.contentType = :contentType)
+              and (:model is null or lower(a.model) like lower(concat('%', :model, '%')))
+              and (:keyword is null or lower(a.prompt) like lower(concat('%', :keyword, '%')))
+            order by (coalesce(a.likeCount, 0) + coalesce(a.favoriteCount, 0) * 2) desc,
+                     a.createdAt desc
+            """,
+            countQuery = """
+            select count(a) from AigcAsset a
+            where a.isPublished = true
+              and (:contentType is null or a.contentType = :contentType)
+              and (:model is null or lower(a.model) like lower(concat('%', :model, '%')))
+              and (:keyword is null or lower(a.prompt) like lower(concat('%', :keyword, '%')))
+            """)
+    Page<AigcAsset> searchPublishedRanking(
+            @Param("contentType") ContentType contentType,
+            @Param("model") String model,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
     @Query("""
             select a from AigcAsset a
             where a.isPublished = true

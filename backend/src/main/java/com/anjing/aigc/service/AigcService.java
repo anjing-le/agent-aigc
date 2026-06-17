@@ -137,6 +137,19 @@ public interface AigcService {
     PageResult<GalleryDTO> getGalleryList(Integer current, Integer size, String contentType, String model, String keyword);
 
     /**
+     * 获取灵感广场全局热门榜单。
+     *
+     * @param current 当前页
+     * @param size 每页大小
+     * @param contentType 内容类型
+     * @param model 模型
+     * @param keyword 关键词
+     * @return 分页榜单
+     */
+    PageResult<GalleryDTO> getGalleryRanking(
+            Integer current, Integer size, String contentType, String model, String keyword);
+
+    /**
      * 获取当前用户/会话收藏的灵感广场作品。
      *
      * @param current 当前页

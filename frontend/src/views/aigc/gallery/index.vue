@@ -68,13 +68,13 @@
       </div>
     </div>
 
-    <section v-if="rankedGalleryItems.length" class="prompt-gallery__ranking">
+    <section v-if="rankedGalleryItems.length" v-loading="rankingLoading" class="prompt-gallery__ranking">
       <div class="prompt-gallery__ranking-header">
         <div>
           <h3>热门榜单</h3>
-          <p>按当前筛选结果的点赞和收藏热度排序，方便快速复用高反馈 Prompt</p>
+          <p>{{ rankingDescription }}</p>
         </div>
-        <el-tag effect="plain">Top {{ rankedGalleryItems.length }}</el-tag>
+        <el-tag effect="plain">{{ rankingScopeLabel }}</el-tag>
       </div>
 
       <div class="prompt-gallery__ranking-list">
@@ -206,6 +206,7 @@
     fetchGetGalleryAuditLogs,
     fetchGetFavoriteGalleryList,
     fetchGetGalleryList,
+    fetchGetGalleryRanking,
     fetchLikeGalleryAsset,
     fetchUnfavoriteGalleryAsset,
     fetchUnlikeGalleryAsset
@@ -223,6 +224,9 @@
   // ==================== 状态 ====================
   const loading = ref(false)
   const galleryList = ref<GalleryItem[]>([])
+  const rankingList = ref<GalleryItem[]>([])
+  const rankingLoading = ref(false)
+  const rankingTotal = ref(0)
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(24)
@@ -288,8 +292,12 @@
     }
   ])
 
+  const rankingSourceItems = computed(() =>
+    rankingList.value.length > 0 ? rankingList.value : galleryList.value
+  )
+
   const rankedGalleryItems = computed(() =>
-    galleryList.value
+    rankingSourceItems.value
       .map((item, index) => ({
         item,
         score: getRankingScore(item),
@@ -301,6 +309,18 @@
         ...entry,
         rank: index + 1
       }))
+  )
+
+  const rankingScopeLabel = computed(() =>
+    rankingList.value.length > 0
+      ? `全局 Top ${rankedGalleryItems.value.length}`
+      : `当前筛选 Top ${rankedGalleryItems.value.length}`
+  )
+
+  const rankingDescription = computed(() =>
+    rankingList.value.length > 0
+      ? `后端按全部已发布作品计算热度，当前匹配 ${rankingTotal.value} 个候选作品`
+      : '按当前筛选结果的点赞和收藏热度排序，方便快速复用高反馈 Prompt'
   )
 
   const galleryAuditActionLabels: Record<string, string> = {
@@ -330,6 +350,9 @@
       } else {
         await loadFromStatic(append)
       }
+      if (!append) {
+        await loadRankingData()
+      }
     } catch (error) {
       console.error('加载数据失败:', error)
     } finally {
@@ -353,13 +376,7 @@
             contentType: activeContentType.value || undefined
           })
 
-      const records = (res?.records || []).map((item: any) => ({
-        ...item,
-        likeCount: item.likeCount ?? 0,
-        likedByCurrentUser: item.likedByCurrentUser ?? likedAssetIds.value.has(item.id),
-        favoriteCount: item.favoriteCount ?? 0,
-        favoritedByCurrentUser: item.favoritedByCurrentUser ?? favoritedAssetIds.value.has(item.id)
-      }))
+      const records = (res?.records || []).map(normalizeGalleryItem)
 
       // 后端无已发布作品时，自动切换到静态数据后备
       if (
@@ -403,6 +420,32 @@
     total.value = filtered.length
   }
 
+  const loadRankingData = async () => {
+    if (dataSource.value !== 'api' || showOnlyFavorites.value) {
+      rankingList.value = []
+      rankingTotal.value = 0
+      return
+    }
+
+    try {
+      rankingLoading.value = true
+      const response = await fetchGetGalleryRanking({
+        current: 1,
+        size: 5,
+        keyword: searchKeyword.value || undefined,
+        contentType: activeContentType.value || undefined
+      })
+      rankingList.value = (response.records || []).map(normalizeGalleryItem)
+      rankingTotal.value = response.total || 0
+    } catch (error) {
+      console.warn('加载广场热门榜单失败，使用当前列表回退:', error)
+      rankingList.value = []
+      rankingTotal.value = 0
+    } finally {
+      rankingLoading.value = false
+    }
+  }
+
   /** 加载静态提示词数据 */
   const loadStaticPrompts = async () => {
     if (staticPrompts.value.length > 0) return
@@ -424,6 +467,14 @@
       console.error('加载静态数据失败:', error)
     }
   }
+
+  const normalizeGalleryItem = (item: GalleryItem): GalleryItem => ({
+    ...item,
+    likeCount: item.likeCount ?? 0,
+    likedByCurrentUser: item.likedByCurrentUser ?? likedAssetIds.value.has(item.id),
+    favoriteCount: item.favoriteCount ?? 0,
+    favoritedByCurrentUser: item.favoritedByCurrentUser ?? favoritedAssetIds.value.has(item.id)
+  })
 
   /** 筛选静态数据 */
   const filterStaticPrompts = () => {
@@ -570,6 +621,9 @@
     galleryList.value = galleryList.value.map((item) =>
       item.id === assetId ? { ...item, ...patch } : item
     )
+    rankingList.value = rankingList.value.map((item) =>
+      item.id === assetId ? { ...item, ...patch } : item
+    )
     if (patch.likedByCurrentUser) {
       likedAssetIds.value.add(assetId)
     } else {
@@ -614,6 +668,9 @@
     patch: Pick<GalleryItem, 'favoriteCount' | 'favoritedByCurrentUser'>
   ) => {
     galleryList.value = galleryList.value.map((item) =>
+      item.id === assetId ? { ...item, ...patch } : item
+    )
+    rankingList.value = rankingList.value.map((item) =>
       item.id === assetId ? { ...item, ...patch } : item
     )
     if (patch.favoritedByCurrentUser) {

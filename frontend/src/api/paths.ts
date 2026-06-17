@@ -79,6 +79,7 @@ export const ApiPaths = {
     storageAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.storageAudits,
     ownershipBackfill: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.ownershipBackfill,
     gallery: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.gallery,
+    galleryRanking: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryRanking,
     galleryAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAudits,
     galleryInteractionReport: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryInteractionReport,
     galleryFavorites: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorites,

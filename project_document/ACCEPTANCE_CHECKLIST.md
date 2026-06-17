@@ -29,7 +29,7 @@
 | `/aigc/studio` | 可创建任务、查看 Agent 决策、轮询结果、复用历史 Prompt |
 | `/aigc/materials` | 可上传/筛选/预览/删除素材，并查看引用任务 |
 | `/aigc/assets` | 可查看资产、来源任务、存储状态，支持下载/预览/发布/撤回/删除 |
-| `/aigc/gallery` | 可浏览公开作品、筛选、点赞、收藏、下载、复制分享入口 |
+| `/aigc/gallery` | 可浏览公开作品、筛选、全局热门榜单、点赞、收藏、下载、复制分享入口 |
 | `/aigc/gallery-report` | 可查看互动报表、分享转化漏斗、作者/作品对比并导出 CSV |
 | `/aigc/models` | 可探测 Provider、切换 active provider、管理凭证/参数和查看审计 |
 | `/share/gallery/:assetId` | 未登录可访问已发布作品，复用 Prompt 会记录 `prompt-reuse` |

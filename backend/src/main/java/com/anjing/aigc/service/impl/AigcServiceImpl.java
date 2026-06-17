@@ -1029,6 +1029,26 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public PageResult<GalleryDTO> getGalleryRanking(
+            Integer current, Integer size, String contentType, String model, String keyword) {
+        int safeCurrent = current != null && current > 0 ? current : 1;
+        int safeSize = size != null && size > 0 ? Math.min(size, 50) : 10;
+        PageRequest pageRequest = PageRequest.of(safeCurrent - 1, safeSize);
+
+        Page<AigcAsset> page = assetRepository.searchPublishedRanking(
+                parseContentType(contentType),
+                normalizeFilter(model),
+                normalizeFilter(keyword),
+                pageRequest);
+
+        List<GalleryDTO> records = page.getContent().stream()
+                .map(this::toGalleryDTO)
+                .collect(Collectors.toList());
+
+        return PageResult.of(records, page.getTotalElements(), safeCurrent, safeSize);
+    }
+
+    @Override
     public PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size) {
         PageRequest pageRequest = PageRequest.of(
                 current != null && current > 0 ? current - 1 : 0,

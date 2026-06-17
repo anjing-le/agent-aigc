@@ -392,6 +392,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryRanking",
+          "backendConstant": "GALLERY_RANKING_FULL",
+          "frontendKey": "galleryRanking",
+          "path": "/api/aigc/gallery/ranking",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "galleryAudits",
           "backendConstant": "GALLERY_AUDITS_FULL",
           "frontendKey": "galleryAudits",
@@ -605,6 +614,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "galleryInteractionReport": "/api/aigc/gallery/reports/interactions",
     "galleryLike": "/api/aigc/gallery/{assetId}/like",
     "galleryPublication": "/api/aigc/gallery/{assetId}/publication",
+    "galleryRanking": "/api/aigc/gallery/ranking",
     "gallerySave": "/api/aigc/gallery/save",
     "galleryShare": "/api/aigc/gallery/{assetId}/share",
     "galleryShareReuse": "/api/aigc/gallery/{assetId}/share/reuse",

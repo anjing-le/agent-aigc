@@ -225,6 +225,14 @@ export type GallerySearchParams = OpenApiOperationQuery<'getGalleryList'> & {
   keyword?: string
 }
 
+/** 灵感广场热门榜单查询参数 */
+export type GalleryRankingSearchParams = OpenApiOperationQuery<'getGalleryRanking'> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 关键词搜索 */
+  keyword?: string
+}
+
 /** 资产搜索参数 */
 export type AssetSearchParams = OpenApiOperationQuery<'getAssetList'> & {
   /** 内容类型筛选 */
@@ -233,6 +241,12 @@ export type AssetSearchParams = OpenApiOperationQuery<'getAssetList'> & {
 
 /** 灵感广场列表响应 */
 export type GalleryListResponse = PageResult<OpenApiOperationData<'getGalleryList'>, GalleryItem>
+
+/** 灵感广场热门榜单响应 */
+export type GalleryRankingResponse = PageResult<
+  OpenApiOperationData<'getGalleryRanking'>,
+  GalleryItem
+>
 
 /** 灵感广场公开分享页响应 */
 export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>, 'asset'> & {

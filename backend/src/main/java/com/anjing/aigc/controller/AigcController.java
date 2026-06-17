@@ -304,6 +304,19 @@ public class AigcController {
         return APIResponse.success(gallery);
     }
 
+    @GetMapping(ApiConstants.Aigc.GALLERY_RANKING)
+    @Operation(summary = "获取灵感广场全局热门榜单")
+    public APIResponse<PageResult<GalleryDTO>> getGalleryRanking(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String contentType,
+            @RequestParam(required = false) String model,
+            @RequestParam(required = false) String keyword) {
+        PageResult<GalleryDTO> gallery = aigcService.getGalleryRanking(
+                current, size, contentType, model, keyword);
+        return APIResponse.success(gallery);
+    }
+
     @GetMapping(ApiConstants.Aigc.GALLERY_FAVORITES)
     @Operation(summary = "获取当前用户收藏的灵感广场作品")
     public APIResponse<PageResult<GalleryDTO>> getFavoriteGalleryList(

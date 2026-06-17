@@ -64,6 +64,7 @@
 - AIGC 广场公开下载/分享 V1 已接入：新增 `/api/aigc/gallery/{assetId}/download`，只允许已发布作品以 attachment 下载；前端广场卡片支持下载作品和复制公开预览链接，mock data URL 作品也可通过公开预览端点正常展示。
 - AIGC 广场公开分享页 V1 已接入：新增 `/api/aigc/gallery/{assetId}/share`，只返回已发布作品的分享页数据、预览 URL、下载 URL、SEO 元数据和海报文案；前端新增 `/share/gallery/:assetId` 静态公开路由，可未登录查看作品、复制链接/Prompt、下载作品、下载分享海报并复用 Prompt 回到创作工作台。
 - AIGC 广场个人公开主页 V1 已接入：新增 `/api/aigc/gallery/authors/{authorId}`，按公开作者标识返回作品分页、图片/视频/音频统计、总点赞/收藏/互动、主创作类型和高互动作品；Gallery DTO 新增 `authorId/authorName`，前端新增 `/share/creators/:authorId` 静态公开路由，分享页可进入作者主页，作者主页可查看作品、浏览 Top 作品并跳回作品分享页。
+- AIGC 广场全局热门榜单 V1 已接入：新增 `/api/aigc/gallery/ranking`，按 `点赞 + 收藏 * 2` 对已发布作品排序并支持内容类型、模型和关键词筛选；前端灵感广场优先展示后端全局 Top 榜单，后端不可用或静态演示时回退当前筛选列表。
 - AIGC 广场审计 V1 已接入：新增 `/api/aigc/gallery/audits`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；发布、撤回、点赞、取消点赞、收藏、取消收藏和公开下载会写入 `aigc_gallery_audit_log`，审计继承脚手架 requestId、traceId、tenantId、operator、callerId 和 clientIp，广场页展示最近互动审计。
 - AIGC 广场互动报表 V1 已接入：新增 `/api/aigc/gallery/reports/interactions`，按当前脚手架 user/tenant 上下文聚合可见审计数据，返回动作分布、内容类型分布、每日趋势、核心互动计数、高互动作品、创作者对比和作品互动结构对比；前端新增 `/aigc/gallery-report` 后台报表页，支持趋势查看、作者/作品对比、CSV 导出，并从灵感广场提供入口。
 - AIGC 广场公开分享转化漏斗 V1 已接入：分享页访问会写入 `share-view` 审计，分享页点击“复用 Prompt”会写入 `prompt-reuse` 审计；互动报表新增分享访问数、Prompt 复用数、公开下载/Prompt 复用转化率、每日分享/复用趋势和 CSV 导出字段，形成“分享访问 -> 公开下载 / Prompt 复用”的轻量运营闭环。

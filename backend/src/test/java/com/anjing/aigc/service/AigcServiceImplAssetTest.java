@@ -183,6 +183,39 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void getGalleryRankingReturnsPublishedAssetsByRepositoryRanking() {
+        AigcAsset hotAsset = asset("asset-hot");
+        hotAsset.setIsPublished(true);
+        hotAsset.setLikeCount(4);
+        hotAsset.setFavoriteCount(3);
+        hotAsset.setCreatedAt(LocalDateTime.now().minusDays(1));
+        AigcAsset freshAsset = asset("asset-fresh");
+        freshAsset.setIsPublished(true);
+        freshAsset.setLikeCount(1);
+        freshAsset.setFavoriteCount(1);
+        freshAsset.setCreatedAt(LocalDateTime.now());
+        PageRequest pageRequest = PageRequest.of(0, 5);
+
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.eq("mock"),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0
+                                && pageable.getPageSize() == 5
+                                && pageable.getSort().isUnsorted())))
+                .thenReturn(new PageImpl<>(List.of(hotAsset, freshAsset), pageRequest, 2));
+
+        var result = aigcService.getGalleryRanking(1, 5, "IMAGE", "mock", "cat");
+
+        assertEquals(2L, result.getTotal());
+        assertEquals("asset-hot", result.getRecords().get(0).getId());
+        assertEquals(4, result.getRecords().get(0).getLikeCount());
+        assertEquals(3, result.getRecords().get(0).getFavoriteCount());
+        assertEquals("asset-fresh", result.getRecords().get(1).getId());
+    }
+
+    @Test
     void probeProviderReportsMissingGoogleConfiguration() {
         givenImageProviders();
 
