@@ -5,9 +5,9 @@
 ## 最新验收记录
 
 - 日期：2026-06-17
-- 功能基线：`bea813186597492666e735614530f907c32853c7`
+- 功能基线：`e0fc2bfdccfe17dab118d1b93f76fb32043fdfa6`
 - Git author：`安静 <245548353+anjing-le@users.noreply.github.com>`
-- 结论：通过 V1 教学演示验收，后续可继续补截图和课堂讲稿。
+- 结论：通过 V1 教学演示验收，当前已具备创作、资产、公开分享、互动报表和 Provider 调用报表的教学闭环。
 
 ## 命令证据
 
@@ -31,6 +31,7 @@
 5. 调用 `/api/aigc/gallery/{assetId}/share/reuse`，记录 `prompt-reuse`。
 6. 调用 `/api/aigc/gallery/{assetId}/download`，记录 `public-download`。
 7. 查询 `/api/aigc/gallery/reports/interactions?days=1`，确认 `shareFunnel` 返回分享访问、公开下载、Prompt 复用和转化率。
+8. 查询 `/api/aigc/models/provider-execution-report?days=7&contentType=IMAGE`，确认当前用户上下文下 Provider/模型调用指标可见。
 
 示例结果：
 
@@ -44,10 +45,34 @@
 }
 ```
 
+Provider 调用报表示例结果：
+
+```json
+{
+  "totalTasks": 1,
+  "completedTasks": 1,
+  "providerMetrics": [
+    {
+      "label": "Mock Image Provider",
+      "successRate": 100.0,
+      "costStatusSummary": "MOCK_FREE: 1"
+    }
+  ],
+  "modelMetrics": [
+    {
+      "label": "mock-image-preview",
+      "contentType": "IMAGE"
+    }
+  ]
+}
+```
+
 ## 浏览器检查证据
 
 - `/aigc/gallery-report` 桌面视口：分享转化漏斗、动作分布、每日趋势和对比表正常渲染，无页面级横向溢出，无 console error。
 - `/aigc/gallery-report` 390px 移动视口：8 个统计项单列展示，漏斗面板存在，无页面级横向溢出。
+- `/aigc/models` 桌面视口：Provider 调用报表、Provider 表现表和模型表现表正常渲染，无页面级横向溢出，无 console error。
+- `/aigc/models` 390px 移动视口：报表统计两列展示，表格不造成页面级横向溢出。
 - `/share/gallery/:assetId` 390px 移动视口：公开分享页可见，`复用 Prompt` 按钮可见，无页面级横向溢出，无 console error。
 - 点击分享页 `复用 Prompt` 后跳转 `/aigc/studio?prompt=...&contentType=IMAGE`，报表中 `prompt-reuse` 计数增加。
 
@@ -56,7 +81,7 @@
 1. 先讲 `infra-dev-scaffolding` 继承点：目录、统一响应、OpenAPI、服务边界、请求上下文和质量门禁。
 2. 再讲 AIGC 业务增量：Agent 链路、Provider 路由、任务、素材、资产和灵感广场。
 3. 然后讲 API 生长方式：`ApiConstants` -> `service-boundaries.json` -> Controller/Service/DTO -> OpenAPI 类型 -> `openApiRequest`。
-4. 最后讲验证闭环：单测、构建、契约脚本、runtime probe、API 冒烟和浏览器检查。
+4. 最后讲验证闭环：单测、构建、契约脚本、runtime probe、API 冒烟、Provider 调用报表和浏览器检查。
 
 ## 后续可补证据
 

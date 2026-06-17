@@ -75,31 +75,32 @@
 6. 到 `/share/gallery/:assetId` 查看公开分享页。
 7. 点击“复用 Prompt”。
 8. 到 `/aigc/gallery-report` 查看分享转化漏斗。
+9. 到 `/aigc/models` 查看 Provider 调用报表。
 
 讲师说：
 
-> 这一步的重点不是生成图片多漂亮，而是看业务闭环：创作、资产、公开、传播、复用、报表都串起来了。
+> 这一步的重点不是生成图片多漂亮，而是看业务闭环：创作、资产、公开、传播、复用、运营报表和 Provider 观测都串起来了。
 
 ### 24-28 分钟：看一次接口生长
 
 讲师说：
 
-> 公开分享转化漏斗是一个很小的功能，但它穿过了完整工程链路。
+> Provider 调用报表是一个很适合教学的功能：它不改变创作主流程，却穿过了完整工程链路。
 
 展示：
 
-- `ApiConstants.Aigc.GALLERY_SHARE_REUSE`
-- `contracts/service-boundaries.json` 里的 `galleryShareReuse`
-- `AigcController.recordGallerySharePromptReuse`
-- `AigcGalleryAuditLogService.ACTION_PROMPT_REUSE`
+- `ApiConstants.Aigc.MODEL_PROVIDER_EXECUTION_REPORT`
+- `contracts/service-boundaries.json` 里的 `modelProviderExecutionReport`
+- `AigcController.getProviderExecutionReport`
+- `AigcTaskRepository.findVisibleForExecutionReport`
+- `ProviderExecutionReportResponse`
 - `frontend/src/api/aigc.ts`
-- `frontend/src/views/aigc/gallery/share.vue`
-- `frontend/src/views/aigc/gallery-report/index.vue`
+- `frontend/src/views/aigc/models/index.vue`
 
 强调：
 
-- 业务动作先进入审计。
-- 报表从审计聚合。
+- 查询先遵守当前 user/tenant 可见性。
+- 报表从任务执行事实聚合。
 - 前端通过 typed API 调用。
 - 契约脚本保证链路没有绕开脚手架。
 
@@ -124,8 +125,8 @@
 | 0-5 分钟 | 项目定位和脚手架继承 | 打开 README 和继承地图 |
 | 5-15 分钟 | 工程底座和契约链路 | 找出 service boundary、ApiConstants、OpenAPI client |
 | 15-25 分钟 | AIGC 后端模块拆解 | 画出 Agent、Provider、Task、Asset、Gallery 的关系 |
-| 25-35 分钟 | AIGC 前端页面拆解 | 逐个打开 studio、assets、gallery、report |
-| 35-45 分钟 | 跑通创作到分享转化闭环 | 生成作品、发布、分享、复用、看报表 |
+| 25-35 分钟 | AIGC 前端页面拆解 | 逐个打开 studio、assets、gallery、report、models |
+| 35-45 分钟 | 跑通创作到分享和 Provider 观测闭环 | 生成作品、发布、分享、复用、看互动报表和调用报表 |
 | 45-55 分钟 | 设计一个新功能 | 以“作品合集”为例写 service boundary 和页面规划 |
 | 55-60 分钟 | 质量门禁和总结 | 运行 `check-contracts`，回顾哪些来自脚手架 |
 
@@ -145,8 +146,9 @@
 | 06 | `/aigc/gallery` | 灵感广场卡片 | 展示公开传播 |
 | 07 | `/share/gallery/:assetId` | 分享页和复用 Prompt 按钮 | 展示公开页面 |
 | 08 | `/aigc/gallery-report` | 分享转化漏斗 | 展示运营闭环 |
-| 09 | `scripts/check-contracts.sh` | 检查通过输出 | 展示质量门禁 |
-| 10 | `project_document/DEMO_EVIDENCE.md` | 命令证据表 | 展示交付证据 |
+| 09 | `/aigc/models` | Provider 调用报表 | 展示模型调度观测 |
+| 10 | `scripts/check-contracts.sh` | 检查通过输出 | 展示质量门禁 |
+| 11 | `project_document/DEMO_EVIDENCE.md` | 命令证据表 | 展示交付证据 |
 
 ## 截图命名建议
 
@@ -160,8 +162,9 @@ agent-aigc-teaching/
   06-gallery-card.png
   07-share-page-reuse-prompt.png
   08-gallery-report-funnel.png
-  09-contract-check.png
-  10-demo-evidence.png
+  09-model-provider-execution-report.png
+  10-contract-check.png
+  11-demo-evidence.png
 ```
 
 ## 课堂练习答案参考
@@ -179,13 +182,19 @@ agent-aigc-teaching/
 7. 页面只调用 API 模块。
 8. 运行 `./scripts/check-contracts.sh`。
 
-### 练习 2：为什么报表从审计表聚合？
+### 练习 2：为什么互动报表从审计表聚合？
 
 参考答案：
 
 报表要回答的是“发生过什么”，而不是“现在对象状态是什么”。点赞、下载、分享访问、Prompt 复用都是行为事件，进入审计后可以按时间、动作、内容类型、作品和作者聚合，也能继承脚手架 request context。
 
-### 练习 3：为什么保留 mock provider？
+### 练习 3：为什么 Provider 调用报表从任务表聚合？
+
+参考答案：
+
+Provider 调用报表关心的是生成任务执行事实：Provider、模型、状态、耗时、成本状态和归属上下文都已经沉淀在 `aigc_task`。它先按当前 user/tenant 可见性过滤，再按 Provider、模型和内容类型聚合，既能支撑管理台观测，也不会绕开脚手架权限边界。
+
+### 练习 4：为什么保留 mock provider？
 
 参考答案：
 
