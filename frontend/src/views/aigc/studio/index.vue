@@ -35,6 +35,31 @@
         </div>
       </div>
 
+      <section class="aigc-studio__orchestration">
+        <div class="aigc-studio__orchestration-header">
+          <div>
+            <h3>Agent 编排链路</h3>
+            <p>{{ orchestrationSubtitle }}</p>
+          </div>
+          <el-tag :type="currentTaskTagType" effect="plain">{{ orchestrationStageText }}</el-tag>
+        </div>
+
+        <div class="aigc-studio__orchestration-steps">
+          <article
+            v-for="(item, index) in orchestrationSteps"
+            :key="item.label"
+            class="aigc-studio__orchestration-step"
+            :class="`aigc-studio__orchestration-step--${item.state}`"
+          >
+            <span class="aigc-studio__orchestration-index">{{ index + 1 }}</span>
+            <div class="aigc-studio__orchestration-copy">
+              <strong>{{ item.label }}</strong>
+              <span>{{ item.value }}</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <!-- 中间：作品展示区域 -->
       <div class="aigc-studio__preview">
         <GenerationPreview
@@ -137,6 +162,14 @@
 
   const availableModelCards = computed(() => availableModels.value.slice(0, 6))
 
+  type OrchestrationStepState = 'idle' | 'active' | 'done' | 'error'
+
+  type OrchestrationStep = {
+    label: string
+    value: string
+    state: OrchestrationStepState
+  }
+
   const studioStats = computed(() => [
     {
       label: '创作记录',
@@ -177,7 +210,128 @@
     return 'info'
   })
 
+  const orchestrationSubtitle = computed(() => {
+    if (currentTask.value?.taskId) return `任务 ${currentTask.value.taskId}`
+    if (userInput.value.trim()) return '基于当前输入预估执行链路'
+    if (generationResult.value) return `最近作品 ${generationResult.value.id}`
+    return '等待新的创作任务'
+  })
+
+  const orchestrationStageText = computed(() => {
+    if (generationResult.value && currentTask.value?.status === 'COMPLETED') return '已归档'
+    if (currentTask.value?.agentAnalysis) return 'Agent 已决策'
+    if (userInput.value.trim() || uploadedFiles.value.length > 0) return '待提交'
+    return '空闲'
+  })
+
+  const orchestrationSteps = computed<OrchestrationStep[]>(() => {
+    const analysis = currentTask.value?.agentAnalysis
+    const status = currentTask.value?.status?.toUpperCase()
+    const hasDraft = Boolean(userInput.value.trim() || uploadedFiles.value.length > 0)
+    const hasTask = Boolean(currentTask.value?.taskId)
+    const failed = status === 'FAILED'
+    const completed = status === 'COMPLETED' && Boolean(generationResult.value)
+
+    return [
+      {
+        label: '需求输入',
+        value: resolvePromptInputSummary(),
+        state: hasDraft || hasTask || generationResult.value ? 'done' : 'idle'
+      },
+      {
+        label: '意图识别',
+        value: analysis?.intent || resolveContentTypeHintSummary(),
+        state: analysis ? 'done' : hasDraft ? 'active' : 'idle'
+      },
+      {
+        label: 'Prompt 优化',
+        value: analysis?.optimizedPrompt
+          ? truncateText(analysis.optimizedPrompt, 42)
+          : analysis?.cleanPrompt
+            ? truncateText(analysis.cleanPrompt, 42)
+            : '等待 Agent 生成优化 Prompt',
+        state: analysis?.optimizedPrompt ? 'done' : hasTask ? 'active' : 'idle'
+      },
+      {
+        label: '模型路由',
+        value: analysis?.selectedModel || generationResult.value?.model || '自动选择 Provider',
+        state: analysis?.selectedModel || generationResult.value?.model ? 'done' : hasDraft ? 'active' : 'idle'
+      },
+      {
+        label: '参数配置',
+        value: resolveOrchestrationParamsSummary(),
+        state: hasDraft || hasTask || generationResult.value ? 'done' : 'idle'
+      },
+      {
+        label: '结果归档',
+        value: failed ? formatTaskError(currentTask.value as TaskStatusResponse) : currentTaskStatusText.value,
+        state: failed ? 'error' : completed ? 'done' : generating.value || hasTask ? 'active' : 'idle'
+      }
+    ]
+  })
+
   // ==================== 方法 ====================
+
+  const resolvePromptInputSummary = () => {
+    const analysis = currentTask.value?.agentAnalysis
+    const prompt = analysis?.originalPrompt || userInput.value.trim() || generationResult.value?.prompt
+    if (prompt) return truncateText(prompt, 42)
+    if (uploadedFiles.value.length > 0) return `${uploadedFiles.value.length} 个参考素材`
+    return '等待输入'
+  }
+
+  const resolveContentTypeHintSummary = () => {
+    if (contentTypeHint.value) return `${getContentTypeLabel(contentTypeHint.value)}模式`
+    return '自动识别内容类型'
+  }
+
+  const resolveOrchestrationParamsSummary = () => {
+    const analysis = currentTask.value?.agentAnalysis
+    const analyzedParams = formatAnalyzedIntentParams(analysis)
+    if (analyzedParams) return analyzedParams
+    const requestParams = formatParamEntries(normalizeGenerationParams(generationParams.value) || {})
+    return requestParams || '使用默认参数'
+  }
+
+  const formatAnalyzedIntentParams = (analysis?: TaskStatusResponse['agentAnalysis']) => {
+    const intent = analysis?.analyzedIntent
+    if (!analysis || !intent) return ''
+
+    if (analysis.contentType === 'IMAGE' && intent.imageParams) {
+      return formatParamEntries({
+        比例: intent.imageParams.aspectRatio,
+        尺寸: intent.imageParams.imageSize,
+        风格: intent.imageParams.style
+      })
+    }
+    if (analysis.contentType === 'VIDEO' && intent.videoParams) {
+      return formatParamEntries({
+        比例: intent.videoParams.aspectRatio,
+        分辨率: intent.videoParams.resolution,
+        时长: intent.videoParams.duration ? `${intent.videoParams.duration}s` : '',
+        质量: intent.videoParams.quality
+      })
+    }
+    if (analysis.contentType === 'AUDIO' && intent.audioParams) {
+      return formatParamEntries({
+        类型: intent.audioParams.type,
+        音色: intent.audioParams.voice,
+        情绪: intent.audioParams.mood
+      })
+    }
+    return ''
+  }
+
+  const formatParamEntries = (params: Record<string, string | number | boolean | undefined>) =>
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== '' && value !== null)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(' · ')
+
+  const truncateText = (value: string, maxLength = 42) => {
+    const text = value.trim()
+    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text
+  }
 
   const applyRoutePrompt = () => {
     if (normalizeQueryValue(route.query.taskId)) return
@@ -659,6 +813,110 @@
       white-space: nowrap;
     }
 
+    &__orchestration {
+      padding: 12px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__orchestration-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+
+      h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 5px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+        word-break: break-word;
+      }
+    }
+
+    &__orchestration-steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    &__orchestration-step {
+      display: flex;
+      gap: 8px;
+      min-width: 0;
+      min-height: 68px;
+      padding: 10px;
+      background: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 8px;
+
+      &--active {
+        border-color: var(--el-color-warning-light-5);
+        background: var(--el-color-warning-light-9);
+      }
+
+      &--done {
+        border-color: var(--el-color-success-light-7);
+        background: var(--el-color-success-light-9);
+      }
+
+      &--error {
+        border-color: var(--el-color-danger-light-7);
+        background: var(--el-color-danger-light-9);
+      }
+    }
+
+    &__orchestration-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      border-radius: 50%;
+      background: var(--el-bg-color);
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    &__orchestration-copy {
+      min-width: 0;
+
+      strong,
+      span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      strong {
+        margin-bottom: 5px;
+        color: var(--el-text-color-primary);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      span {
+        display: -webkit-box;
+        color: var(--el-text-color-secondary);
+        font-size: 12px;
+        line-height: 1.4;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        word-break: break-word;
+      }
+    }
+
     &__preview {
       flex: 1 1 320px;
       display: flex;
@@ -738,12 +996,21 @@
     }
   }
 
+  @media screen and (min-width: 1440px) {
+    .aigc-studio {
+      &__orchestration-steps {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+    }
+  }
+
   @media screen and (max-width: 768px) {
     .aigc-studio {
       padding: 12px;
 
       &__overview,
-      &__taskbar {
+      &__taskbar,
+      &__orchestration-header {
         align-items: stretch;
         flex-direction: column;
       }
@@ -751,6 +1018,10 @@
       &__stats {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         width: 100%;
+      }
+
+      &__orchestration-steps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       &__taskbar-right {
