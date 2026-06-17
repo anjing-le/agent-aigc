@@ -8,6 +8,7 @@
       </div>
       <div class="gallery-report__header-actions">
         <el-button :icon="DataAnalysis" @click="$router.push('/aigc/gallery')">灵感广场</el-button>
+        <el-button :icon="Download" :disabled="!report" @click="exportReportCsv">导出 CSV</el-button>
         <el-button type="primary" :icon="Refresh" :loading="loading" @click="loadReport">
           刷新
         </el-button>
@@ -44,6 +45,33 @@
           <strong>{{ item.value }}</strong>
         </div>
       </div>
+
+      <section class="gallery-report__panel gallery-report__panel--wide gallery-report__trend">
+        <div class="gallery-report__panel-header">
+          <h3>每日趋势</h3>
+          <el-tag size="small" effect="plain">{{ dailyMetrics.length }} 天</el-tag>
+        </div>
+        <div v-if="dailyMetrics.length" class="gallery-report__trend-scroll">
+          <div class="gallery-report__trend-bars">
+            <div
+              v-for="item in dailyMetrics"
+              :key="item.date"
+              class="gallery-report__trend-item"
+              :title="formatTrendTitle(item)"
+            >
+              <div class="gallery-report__trend-stack">
+                <span
+                  class="gallery-report__trend-bar"
+                  :style="{ height: getTrendHeight(item.totalEvents) }"
+                />
+              </div>
+              <span class="gallery-report__trend-value">{{ formatNumber(item.totalEvents) }}</span>
+              <span class="gallery-report__trend-date">{{ formatDateLabel(item.date) }}</span>
+            </div>
+          </div>
+        </div>
+        <el-empty v-else :image-size="72" description="暂无趋势数据" />
+      </section>
 
       <div class="gallery-report__tables">
         <section class="gallery-report__panel">
@@ -147,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-  import { DataAnalysis, Link, Refresh } from '@element-plus/icons-vue'
+  import { DataAnalysis, Download, Link, Refresh } from '@element-plus/icons-vue'
   import { ElMessage } from 'element-plus'
   import { fetchGetGalleryInteractionReport } from '@/api/aigc'
   import type {
@@ -155,6 +183,7 @@
     GalleryActionMetric,
     GalleryAssetMetric,
     GalleryContentTypeMetric,
+    GalleryDailyMetric,
     GalleryInteractionReportResponse
   } from '@/api/model/aigcModel'
 
@@ -172,6 +201,10 @@
     () => report.value?.contentTypeMetrics || []
   )
   const topAssets = computed<GalleryAssetMetric[]>(() => report.value?.topAssets || [])
+  const dailyMetrics = computed<GalleryDailyMetric[]>(() => report.value?.dailyMetrics || [])
+  const maxDailyEvents = computed(() =>
+    Math.max(0, ...dailyMetrics.value.map(item => Number(item.totalEvents || 0)))
+  )
 
   const statItems = computed(() => [
     { label: '总事件', value: formatNumber(report.value?.totalEvents) },
@@ -211,6 +244,22 @@
     if (Number.isNaN(date.getTime())) return value
     return date.toLocaleString('zh-CN', { hour12: false })
   }
+
+  const formatDateLabel = (value?: string) => {
+    if (!value) return '-'
+    const date = new Date(`${value}T00:00:00`)
+    if (Number.isNaN(date.getTime())) return value
+    return `${date.getMonth() + 1}/${date.getDate()}`
+  }
+
+  const getTrendHeight = (value?: number | null) => {
+    const total = Number(value || 0)
+    if (maxDailyEvents.value <= 0 || total <= 0) return '4px'
+    return `${Math.max(8, Math.round((total / maxDailyEvents.value) * 100))}%`
+  }
+
+  const formatTrendTitle = (item: GalleryDailyMetric) =>
+    `${item.date || '-'} | 总事件 ${formatNumber(item.totalEvents)} | 成功 ${formatNumber(item.successfulEvents)}`
 
   const formatAction = (action?: string) => {
     const labels: Record<string, string> = {
@@ -254,6 +303,40 @@
     if (!assetId) return
     const route = router.resolve({ path: `/share/gallery/${encodeURIComponent(assetId)}` })
     window.open(`${window.location.origin}${window.location.pathname}${route.href}`, '_blank')
+  }
+
+  const exportReportCsv = () => {
+    if (!report.value) {
+      ElMessage.warning('暂无可导出的报表')
+      return
+    }
+    const rows = [
+      ['date', 'totalEvents', 'successfulEvents', 'publishCount', 'likeCount', 'favoriteCount', 'downloadCount'],
+      ...dailyMetrics.value.map(item => [
+        item.date || '',
+        String(item.totalEvents || 0),
+        String(item.successfulEvents || 0),
+        String(item.publishCount || 0),
+        String(item.likeCount || 0),
+        String(item.favoriteCount || 0),
+        String(item.downloadCount || 0)
+      ])
+    ]
+    const csv = rows.map(row => row.map(escapeCsvCell).join(',')).join('\n')
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `aigc-gallery-report-${activeContentType.value || 'all'}-${days.value}d.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const escapeCsvCell = (value: string) => {
+    if (!/[",\n]/.test(value)) return value
+    return `"${value.replace(/"/g, '""')}"`
   }
 
   onMounted(() => {
@@ -392,6 +475,67 @@
         font-weight: 600;
         color: var(--el-text-color-primary);
       }
+    }
+
+    &__trend {
+      margin-bottom: 16px;
+    }
+
+    &__trend-scroll {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    &__trend-bars {
+      display: flex;
+      align-items: flex-end;
+      min-width: max-content;
+      height: 174px;
+      gap: 8px;
+      padding: 4px 2px 0;
+    }
+
+    &__trend-item {
+      display: grid;
+      grid-template-rows: 116px 20px 20px;
+      width: 34px;
+      min-width: 34px;
+      align-items: end;
+      justify-items: center;
+    }
+
+    &__trend-stack {
+      display: flex;
+      align-items: flex-end;
+      width: 100%;
+      height: 116px;
+      padding: 0 7px;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+
+    &__trend-bar {
+      display: block;
+      width: 100%;
+      min-height: 4px;
+      background: linear-gradient(180deg, var(--el-color-primary-light-3), var(--el-color-success));
+      border-radius: 4px 4px 0 0;
+      transition: height 0.2s ease;
+    }
+
+    &__trend-value,
+    &__trend-date {
+      max-width: 100%;
+      overflow: hidden;
+      font-size: 11px;
+      line-height: 20px;
+      color: var(--el-text-color-secondary);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__trend-value {
+      color: var(--el-text-color-primary);
     }
   }
 

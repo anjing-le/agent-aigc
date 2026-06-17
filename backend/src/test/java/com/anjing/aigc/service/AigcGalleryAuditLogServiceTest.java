@@ -117,6 +117,11 @@ class AigcGalleryAuditLogServiceTest {
                 eq(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD),
                 any(PageRequest.class)
         )).thenReturn(List.of(assetMetric("asset-1", ContentType.IMAGE, "mock-image-preview", 8L, 5L, 2L, 1L)));
+        when(repository.findVisibleForReport(nullable(String.class), nullable(String.class), eq(ContentType.IMAGE),
+                any(LocalDateTime.class))).thenReturn(List.of(
+                        reportLog(AigcGalleryAuditLogService.ACTION_LIKE, true, LocalDateTime.now().minusDays(1)),
+                        reportLog(AigcGalleryAuditLogService.ACTION_PUBLIC_DOWNLOAD, true, LocalDateTime.now())
+                ));
 
         var report = service.getInteractionReport(7, "image");
 
@@ -131,6 +136,18 @@ class AigcGalleryAuditLogServiceTest {
         assertEquals(4, report.getActionMetrics().size());
         assertEquals(1, report.getContentTypeMetrics().size());
         assertEquals("asset-1", report.getTopAssets().get(0).getAssetId());
+        assertEquals(7, report.getDailyMetrics().size());
+        assertEquals(2L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getTotalEvents()).sum());
+        assertEquals(1L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getLikeCount()).sum());
+        assertEquals(1L, report.getDailyMetrics().stream().mapToLong(metric -> metric.getDownloadCount()).sum());
+    }
+
+    private static AigcGalleryAuditLog reportLog(String action, boolean success, LocalDateTime createdAt) {
+        AigcGalleryAuditLog logEntry = new AigcGalleryAuditLog();
+        logEntry.setAction(action);
+        logEntry.setSuccess(success);
+        logEntry.setCreatedAt(createdAt);
+        return logEntry;
     }
 
     private static AigcGalleryAuditLogRepository.ActionMetricProjection actionMetric(

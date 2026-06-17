@@ -7,6 +7,7 @@ import com.anjing.aigc.model.response.GalleryActionMetricResponse;
 import com.anjing.aigc.model.response.GalleryAssetMetricResponse;
 import com.anjing.aigc.model.response.GalleryAuditLogResponse;
 import com.anjing.aigc.model.response.GalleryContentTypeMetricResponse;
+import com.anjing.aigc.model.response.GalleryDailyMetricResponse;
 import com.anjing.aigc.model.response.GalleryInteractionReportResponse;
 import com.anjing.aigc.repository.AigcGalleryAuditLogRepository;
 import com.anjing.context.GlobalRequestContextHolder;
@@ -26,9 +27,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * AIGC gallery publication and interaction audit logs.
@@ -83,7 +87,8 @@ public class AigcGalleryAuditLogService {
     public GalleryInteractionReportResponse getInteractionReport(Integer days, String contentType) {
         int normalizedDays = normalizeReportDays(days);
         LocalDateTime generatedAt = DateUtils.nowLocalDateTime();
-        LocalDateTime startAt = generatedAt.minusDays(normalizedDays);
+        LocalDate startDate = generatedAt.toLocalDate().minusDays(normalizedDays - 1L);
+        LocalDateTime startAt = startDate.atStartOfDay();
         ContentType parsedContentType = parseContentType(contentType);
         String ownerId = ownershipService.currentOwnerId();
         String tenantId = ownershipService.currentTenantId();
@@ -114,6 +119,11 @@ public class AigcGalleryAuditLogService {
                 .stream()
                 .map(this::toAssetMetric)
                 .toList();
+        List<GalleryDailyMetricResponse> dailyMetrics = buildDailyMetrics(
+                auditLogRepository.findVisibleForReport(ownerId, tenantId, parsedContentType, startAt),
+                startDate,
+                generatedAt.toLocalDate()
+        );
 
         return GalleryInteractionReportResponse.builder()
                 .days(normalizedDays)
@@ -132,6 +142,7 @@ public class AigcGalleryAuditLogService {
                 .actionMetrics(actionMetrics)
                 .contentTypeMetrics(contentTypeMetrics)
                 .topAssets(topAssets)
+                .dailyMetrics(dailyMetrics)
                 .build();
     }
 
@@ -235,6 +246,48 @@ public class AigcGalleryAuditLogService {
 
     private Long coalesce(Long value) {
         return value == null ? 0L : value;
+    }
+
+    private List<GalleryDailyMetricResponse> buildDailyMetrics(
+            List<AigcGalleryAuditLog> logs, LocalDate startDate, LocalDate endDate) {
+        Map<LocalDate, GalleryDailyMetricResponse> metricsByDate = new LinkedHashMap<>();
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            metricsByDate.put(date, GalleryDailyMetricResponse.builder()
+                    .date(date.toString())
+                    .totalEvents(0L)
+                    .successfulEvents(0L)
+                    .publishCount(0L)
+                    .likeCount(0L)
+                    .favoriteCount(0L)
+                    .downloadCount(0L)
+                    .build());
+        }
+        for (AigcGalleryAuditLog logEntry : logs) {
+            if (logEntry.getCreatedAt() == null) {
+                continue;
+            }
+            GalleryDailyMetricResponse metric = metricsByDate.get(logEntry.getCreatedAt().toLocalDate());
+            if (metric == null) {
+                continue;
+            }
+            metric.setTotalEvents(coalesce(metric.getTotalEvents()) + 1);
+            if (Boolean.TRUE.equals(logEntry.getSuccess())) {
+                metric.setSuccessfulEvents(coalesce(metric.getSuccessfulEvents()) + 1);
+                incrementSuccessfulAction(metric, logEntry.getAction());
+            }
+        }
+        return new ArrayList<>(metricsByDate.values());
+    }
+
+    private void incrementSuccessfulAction(GalleryDailyMetricResponse metric, String action) {
+        switch (action) {
+            case ACTION_PUBLISH -> metric.setPublishCount(coalesce(metric.getPublishCount()) + 1);
+            case ACTION_LIKE -> metric.setLikeCount(coalesce(metric.getLikeCount()) + 1);
+            case ACTION_FAVORITE -> metric.setFavoriteCount(coalesce(metric.getFavoriteCount()) + 1);
+            case ACTION_PUBLIC_DOWNLOAD -> metric.setDownloadCount(coalesce(metric.getDownloadCount()) + 1);
+            default -> {
+            }
+        }
     }
 
     private String truncate(String value, int maxLength) {

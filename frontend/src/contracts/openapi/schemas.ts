@@ -435,6 +435,16 @@ export interface GalleryContentTypeMetricResponse {
   totalEvents?: number
 }
 
+export interface GalleryDailyMetricResponse {
+  date?: string
+  downloadCount?: number
+  favoriteCount?: number
+  likeCount?: number
+  publishCount?: number
+  successfulEvents?: number
+  totalEvents?: number
+}
+
 export interface GalleryDTO {
   authorId?: string
   authorName?: string
@@ -458,6 +468,7 @@ export interface GalleryInteractionReportResponse {
   actionMetrics?: GalleryActionMetricResponse[]
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
   contentTypeMetrics?: GalleryContentTypeMetricResponse[]
+  dailyMetrics?: GalleryDailyMetricResponse[]
   days?: number
   downloadCount?: number
   favoriteCount?: number
@@ -1109,6 +1120,7 @@ export interface OpenApiSchemas {
   GalleryAuditLogResponse: GalleryAuditLogResponse
   GalleryAuthorProfileResponse: GalleryAuthorProfileResponse
   GalleryContentTypeMetricResponse: GalleryContentTypeMetricResponse
+  GalleryDailyMetricResponse: GalleryDailyMetricResponse
   GalleryDTO: GalleryDTO
   GalleryInteractionReportResponse: GalleryInteractionReportResponse
   GalleryShareResponse: GalleryShareResponse

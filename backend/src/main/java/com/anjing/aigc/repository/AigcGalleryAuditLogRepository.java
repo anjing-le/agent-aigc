@@ -107,6 +107,21 @@ public interface AigcGalleryAuditLogRepository extends JpaRepository<AigcGallery
             @Param("downloadAction") String downloadAction,
             Pageable pageable);
 
+    @Query("""
+            select log
+            from AigcGalleryAuditLog log
+            where (:ownerId is null or log.operatorId is null or log.operatorId = :ownerId)
+              and (:tenantId is null or log.tenantId is null or log.tenantId = :tenantId)
+              and (:contentType is null or log.contentType = :contentType)
+              and (:startAt is null or log.createdAt >= :startAt)
+            order by log.createdAt asc, log.id asc
+            """)
+    List<AigcGalleryAuditLog> findVisibleForReport(
+            @Param("ownerId") String ownerId,
+            @Param("tenantId") String tenantId,
+            @Param("contentType") ContentType contentType,
+            @Param("startAt") LocalDateTime startAt);
+
     interface ActionMetricProjection {
         String getAction();
 

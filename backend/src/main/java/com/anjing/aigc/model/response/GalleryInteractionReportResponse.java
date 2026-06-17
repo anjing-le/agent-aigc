@@ -64,4 +64,7 @@ public class GalleryInteractionReportResponse {
 
     /** 互动最高的作品 */
     private List<GalleryAssetMetricResponse> topAssets;
+
+    /** 每日趋势 */
+    private List<GalleryDailyMetricResponse> dailyMetrics;
 }

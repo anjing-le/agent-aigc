@@ -301,6 +301,9 @@ export type GalleryAssetMetric = Omit<Schemas.GalleryAssetMetricResponse, 'conte
   contentType?: ContentType
 }
 
+/** 灵感广场互动报表每日趋势指标 */
+export type GalleryDailyMetric = Schemas.GalleryDailyMetricResponse
+
 /** 灵感广场互动报表查询参数 */
 export type GalleryInteractionReportSearchParams =
   OpenApiOperationQuery<'getGalleryInteractionReport'> & {
@@ -313,7 +316,7 @@ export type GalleryInteractionReportSearchParams =
 /** 灵感广场互动报表响应 */
 export type GalleryInteractionReportResponse = Omit<
   OpenApiOperationData<'getGalleryInteractionReport'>,
-  'actionMetrics' | 'contentType' | 'contentTypeMetrics' | 'topAssets'
+  'actionMetrics' | 'contentType' | 'contentTypeMetrics' | 'dailyMetrics' | 'topAssets'
 > & {
   /** 内容类型筛选 */
   contentType?: ContentType
@@ -323,6 +326,8 @@ export type GalleryInteractionReportResponse = Omit<
   contentTypeMetrics?: GalleryContentTypeMetric[]
   /** 互动最高作品 */
   topAssets?: GalleryAssetMetric[]
+  /** 每日趋势 */
+  dailyMetrics?: GalleryDailyMetric[]
 }
 
 /** 资产列表响应 */
