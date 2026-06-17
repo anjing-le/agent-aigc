@@ -7,6 +7,7 @@
 ## 项目主线
 
 - `STATUS.md`：当前状态、已完成能力、风险和下一步
+- `ACCEPTANCE_CHECKLIST.md`：V1 教学演示验收清单
 - `ROADMAP.md`：V0.8 到 V1.2 的业务演进路线
 - `LOCAL_STARTUP_GUIDE.md`：本地启动和验证流程
 - `DEMO_EVIDENCE.md`：演示证据和验证记录
