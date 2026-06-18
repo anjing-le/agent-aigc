@@ -111,6 +111,14 @@ Provider 调用报表示例结果：
 - `prompt-reuse` 转化由 `aigc-demo-smoke` 调用 `/api/aigc/gallery/{assetId}/share/reuse` 验证；浏览器检查确认分享页 `复用 Prompt` 入口可见。
 - 浏览器临时截图保存到 `/tmp/agent-aigc-visual-evidence/`，当前仓库只保留截图索引和检查结论，不提交 PNG。
 
+2026-06-18 人工运营专题补充检查：
+
+- 使用 `SPRING_PROFILES_ACTIVE=dev SERVER_PORT=18187` 和 `VITE_API_PROXY_URL=http://127.0.0.1:18187 pnpm dev --host 127.0.0.1 --port 5177` 完成浏览器检查。
+- 检查前运行 `./scripts/aigc-demo-smoke.sh http://127.0.0.1:18187`，输出 `gallery topics=2 matched=course-cover`。
+- `/aigc/gallery` 桌面视口：`人工运营专题`、`课程封面专题`、`高复用传播位` 均可见，专题数量 `2`，`scrollWidth=clientWidth=1280`，console error 为 `0`。
+- `/aigc/gallery` 390x844 移动视口：专题区单列渲染，`gridTemplateColumns=294px`，`scrollWidth=clientWidth=382`，console error 为 `0`。
+- 详细索引见 `docs/evidence/2026-06-18/README.md`。
+
 ## 教学讲解顺序
 
 1. 先讲 `infra-dev-scaffolding` 继承点：目录、统一响应、OpenAPI、服务边界、请求上下文和质量门禁。
