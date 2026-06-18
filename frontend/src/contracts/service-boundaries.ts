@@ -419,6 +419,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryTopics",
+          "backendConstant": "GALLERY_TOPICS_FULL",
+          "frontendKey": "galleryTopics",
+          "path": "/api/aigc/gallery/topics",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "galleryAudits",
           "backendConstant": "GALLERY_AUDITS_FULL",
           "frontendKey": "galleryAudits",
@@ -637,6 +646,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "gallerySave": "/api/aigc/gallery/save",
     "galleryShare": "/api/aigc/gallery/{assetId}/share",
     "galleryShareReuse": "/api/aigc/gallery/{assetId}/share/reuse",
+    "galleryTopics": "/api/aigc/gallery/topics",
     "generate": "/api/aigc/generate",
     "materialDetail": "/api/aigc/materials/{materialId}",
     "materialDownload": "/api/aigc/materials/{materialId}/download",

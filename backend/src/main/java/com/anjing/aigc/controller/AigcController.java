@@ -16,6 +16,7 @@ import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryInteractionReportResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
+import com.anjing.aigc.model.response.GalleryTopicsResponse;
 import com.anjing.aigc.model.response.MaterialUploadResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.OwnershipBackfillResponse;
@@ -336,6 +337,16 @@ public class AigcController {
             @RequestParam(defaultValue = "4") Integer size) {
         GalleryCollectionsResponse collections = aigcService.getGalleryCollections(contentType, keyword, size);
         return APIResponse.success(collections);
+    }
+
+    @GetMapping(ApiConstants.Aigc.GALLERY_TOPICS)
+    @Operation(summary = "获取灵感广场人工运营专题")
+    public APIResponse<GalleryTopicsResponse> getGalleryTopics(
+            @RequestParam(required = false) String contentType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "4") Integer size) {
+        GalleryTopicsResponse topics = aigcService.getGalleryTopics(contentType, keyword, size);
+        return APIResponse.success(topics);
     }
 
     @GetMapping(ApiConstants.Aigc.GALLERY_FAVORITES)

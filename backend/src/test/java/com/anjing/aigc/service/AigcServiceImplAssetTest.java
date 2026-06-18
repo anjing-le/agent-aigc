@@ -280,6 +280,42 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void getGalleryTopicsBuildsEditorialTopicsFromPublishedAssets() {
+        AigcAsset courseCoverAsset = asset("asset-course-cover");
+        courseCoverAsset.setPrompt("course cover image for AIGC workshop");
+        courseCoverAsset.setIsPublished(true);
+        courseCoverAsset.setLikeCount(5);
+        courseCoverAsset.setFavoriteCount(2);
+        AigcAsset genericAsset = asset("asset-generic");
+        genericAsset.setPrompt("blue futuristic abstract landscape");
+        genericAsset.setIsPublished(true);
+        genericAsset.setLikeCount(1);
+        genericAsset.setFavoriteCount(1);
+
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("course"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0 && pageable.getPageSize() == 8)))
+                .thenReturn(new PageImpl<>(List.of(courseCoverAsset, genericAsset)));
+
+        var response = aigcService.getGalleryTopics("IMAGE", " course ", 2);
+
+        assertEquals(ContentType.IMAGE, response.getContentType());
+        assertEquals("course", response.getKeyword());
+        assertEquals(2, response.getTopicSize());
+        assertEquals(2, response.getTopics().size());
+        assertEquals("course-cover", response.getTopics().get(0).getId());
+        assertEquals(1, response.getTopics().get(0).getItemCount());
+        assertEquals("asset-course-cover", response.getTopics().get(0).getCoverAsset().getId());
+        assertEquals(9L, response.getTopics().get(0).getHeatScore());
+        assertEquals("share-ready", response.getTopics().get(1).getId());
+        assertEquals(ContentType.IMAGE, response.getTopics().get(1).getContentType());
+        assertEquals(2, response.getTopics().get(1).getItemCount());
+    }
+
+    @Test
     void probeProviderReportsMissingGoogleConfiguration() {
         givenImageProviders();
 

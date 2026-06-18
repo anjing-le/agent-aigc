@@ -109,6 +109,15 @@ export interface APIResponseGalleryShareResponse {
   timestamp?: number
 }
 
+export interface APIResponseGalleryTopicsResponse {
+  code?: string
+  data?: GalleryTopicsResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGenerateResponse {
   code?: string
   data?: GenerateResponse
@@ -634,6 +643,90 @@ export interface GalleryShareResponse {
   seoKeywords?: string
   seoTitle?: string
   sharePath?: string
+}
+
+/**
+ * AIGC gallery editorial topic
+ */
+export interface GalleryTopicResponse {
+  /**
+   * Topic assets
+   */
+  assets?: GalleryDTO[]
+  /**
+   * Optional content type scope
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Topic cover asset
+   */
+  coverAsset?: GalleryDTO
+  /**
+   * Editorial curation rule
+   */
+  curationRule?: string
+  /**
+   * Topic description
+   */
+  description?: string
+  /**
+   * Heat score: likes + favorites * 2
+   */
+  heatScore?: number
+  /**
+   * Stable topic id
+   */
+  id?: string
+  /**
+   * Topic item count
+   */
+  itemCount?: number
+  /**
+   * Suggested operation action
+   */
+  operationHint?: string
+  /**
+   * Topic operation scenario
+   */
+  scenario?: string
+  /**
+   * Topic title
+   */
+  title?: string
+  /**
+   * Total favorite count in this topic
+   */
+  totalFavoriteCount?: number
+  /**
+   * Total like count in this topic
+   */
+  totalLikeCount?: number
+}
+
+/**
+ * AIGC gallery editorial topics response
+ */
+export interface GalleryTopicsResponse {
+  /**
+   * Optional content type filter
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Response generation time
+   */
+  generatedAt?: string
+  /**
+   * Optional keyword filter
+   */
+  keyword?: string
+  /**
+   * Editorial topics
+   */
+  topics?: GalleryTopicResponse[]
+  /**
+   * Max assets in each topic
+   */
+  topicSize?: number
 }
 
 export interface GenerateRequest {
@@ -1366,6 +1459,7 @@ export interface OpenApiSchemas {
   APIResponseGalleryDTO: APIResponseGalleryDTO
   APIResponseGalleryInteractionReportResponse: APIResponseGalleryInteractionReportResponse
   APIResponseGalleryShareResponse: APIResponseGalleryShareResponse
+  APIResponseGalleryTopicsResponse: APIResponseGalleryTopicsResponse
   APIResponseGenerateResponse: APIResponseGenerateResponse
   APIResponseMapStringObject: APIResponseMapStringObject
   APIResponseMaterialUploadResponse: APIResponseMaterialUploadResponse
@@ -1408,6 +1502,8 @@ export interface OpenApiSchemas {
   GalleryInteractionReportResponse: GalleryInteractionReportResponse
   GalleryShareFunnelResponse: GalleryShareFunnelResponse
   GalleryShareResponse: GalleryShareResponse
+  GalleryTopicResponse: GalleryTopicResponse
+  GalleryTopicsResponse: GalleryTopicsResponse
   GenerateRequest: GenerateRequest
   GenerateResponse: GenerateResponse
   GenerationResult: GenerationResult

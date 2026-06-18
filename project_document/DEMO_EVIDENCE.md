@@ -18,7 +18,7 @@
 | `cd frontend && pnpm build` | passed | 前端类型检查和生产构建 |
 | `./scripts/check-contracts.sh` | passed | 脚手架契约、服务边界、OpenAPI、上下文和 AIGC 专属守卫 |
 | `./scripts/probe-backend-dev.sh 18181` | passed | dev profile runtime OpenAPI probe |
-| `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表、Provider 调用报表和灵感广场动态作品合集闭环 |
+| `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表、Provider 调用报表、动态作品合集和人工运营专题闭环 |
 | `./scripts/quality-gate.sh` | passed | 契约、后端 package、前端 build、后端 runtime probe 一次性通过 |
 
 ## 业务冒烟证据
@@ -40,6 +40,7 @@
 7. 查询 `/api/aigc/gallery/reports/interactions?days=1`，确认 `shareFunnel` 返回分享访问、公开下载、Prompt 复用和转化率。
 8. 查询 `/api/aigc/models/provider-execution-report?days=7&contentType=IMAGE`，确认当前用户上下文下 Provider/模型调用指标可见。
 9. 查询 `/api/aigc/gallery/collections?size=3`，确认 `trending`、`latest` 和内容类型合集从已发布作品动态聚合，并且新发布作品出现在合集资产里。
+10. 查询 `/api/aigc/gallery/topics?size=3`，确认人工运营专题返回场景、规则、运营建议，并且新发布作品出现在专题资产里。
 
 示例结果：
 
@@ -86,12 +87,23 @@ Provider 调用报表示例结果：
 }
 ```
 
+人工运营专题示例结果：
+
+```json
+{
+  "topicCount": 2,
+  "firstTopic": "course-cover",
+  "scenario": "教学增长",
+  "operationHint": "优先放在课程详情页、训练营海报和知识库封面"
+}
+```
+
 ## 浏览器检查证据
 
 - 2026-06-17 使用 `SPRING_PROFILES_ACTIVE=dev SERVER_PORT=18185` 和 `VITE_API_PROXY_URL=http://127.0.0.1:18185 pnpm dev --host 127.0.0.1 --port 5176` 完成浏览器检查。
-- 检查前运行 `./scripts/aigc-demo-smoke.sh http://127.0.0.1:18185` 生成公开作品，输出 `gallery collections=3 matched=trending`。
-- `/aigc/gallery` 桌面视口：动态精选合集、全局热门榜单和公开作品列表正常渲染，合集显示热门复用、最新发布、图片精选，无 console error。
-- `/aigc/gallery` 390px 移动视口：动态精选合集可见，`documentElement.scrollWidth === clientWidth`，无页面级横向溢出，无 console error。
+- 检查前运行 `./scripts/aigc-demo-smoke.sh http://127.0.0.1:18185` 生成公开作品，输出 `gallery collections=3 matched=trending`；新增人工运营专题后 smoke 会同时输出 `gallery topics=... matched=...`。
+- `/aigc/gallery` 桌面视口：动态精选合集、人工运营专题、全局热门榜单和公开作品列表正常渲染，合集显示热门复用、最新发布、图片精选，无 console error。
+- `/aigc/gallery` 390px 移动视口：动态精选合集和人工运营专题可见，`documentElement.scrollWidth === clientWidth`，无页面级横向溢出，无 console error。
 - `/aigc/gallery-report` 桌面视口：互动报表、分享转化和导出入口正常渲染，无 console error。
 - `/aigc/gallery-report` 390px 移动视口：互动报表和分享转化可见，`documentElement.scrollWidth === clientWidth`，无页面级横向溢出，无 console error。
 - `/aigc/models` 桌面视口：模型配置、Provider 信息和调用报表正常渲染，无 console error。
@@ -110,7 +122,7 @@ Provider 调用报表示例结果：
 
 - 按 `docs/evidence/2026-06-17/README.md` 录制一次完整演示视频或保存关键截图。
 - 在真实 Google Key 环境下补一次图片 Provider smoke test 证据。
-- 为作者主页、动态作品合集和榜单补产品化截图。
+- 为作者主页、动态作品合集、人工运营专题和榜单补产品化截图。
 
 ## 不提交内容
 

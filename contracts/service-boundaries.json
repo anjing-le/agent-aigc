@@ -99,6 +99,7 @@
         { "name": "gallery", "backendConstant": "GALLERY_FULL", "frontendKey": "gallery", "path": "/api/aigc/gallery", "methods": ["GET"] },
         { "name": "galleryRanking", "backendConstant": "GALLERY_RANKING_FULL", "frontendKey": "galleryRanking", "path": "/api/aigc/gallery/ranking", "methods": ["GET"] },
         { "name": "galleryCollections", "backendConstant": "GALLERY_COLLECTIONS_FULL", "frontendKey": "galleryCollections", "path": "/api/aigc/gallery/collections", "methods": ["GET"] },
+        { "name": "galleryTopics", "backendConstant": "GALLERY_TOPICS_FULL", "frontendKey": "galleryTopics", "path": "/api/aigc/gallery/topics", "methods": ["GET"] },
         { "name": "galleryAudits", "backendConstant": "GALLERY_AUDITS_FULL", "frontendKey": "galleryAudits", "path": "/api/aigc/gallery/audits", "methods": ["GET"] },
         { "name": "galleryInteractionReport", "backendConstant": "GALLERY_INTERACTION_REPORT_FULL", "frontendKey": "galleryInteractionReport", "path": "/api/aigc/gallery/reports/interactions", "methods": ["GET"] },
         { "name": "galleryFavorites", "backendConstant": "GALLERY_FAVORITES_FULL", "frontendKey": "galleryFavorites", "path": "/api/aigc/gallery/favorites", "methods": ["GET"] },

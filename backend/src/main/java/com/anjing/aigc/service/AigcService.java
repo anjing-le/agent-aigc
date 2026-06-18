@@ -12,6 +12,7 @@ import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
+import com.anjing.aigc.model.response.GalleryTopicsResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.ModelListResponse;
 import com.anjing.aigc.model.response.ProviderAuditLogResponse;
@@ -169,6 +170,16 @@ public interface AigcService {
      * @return 动态合集
      */
     GalleryCollectionsResponse getGalleryCollections(String contentType, String keyword, Integer size);
+
+    /**
+     * 获取灵感广场人工运营专题。
+     *
+     * @param contentType 内容类型
+     * @param keyword 关键词
+     * @param size 每个专题的作品数量
+     * @return 运营专题
+     */
+    GalleryTopicsResponse getGalleryTopics(String contentType, String keyword, Integer size);
 
     /**
      * 获取当前用户/会话收藏的灵感广场作品。

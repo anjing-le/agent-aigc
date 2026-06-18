@@ -97,6 +97,70 @@
       </div>
     </section>
 
+    <section v-if="galleryTopics.length" v-loading="topicsLoading" class="prompt-gallery__topics">
+      <div class="prompt-gallery__topics-header">
+        <div>
+          <h3>人工运营专题</h3>
+          <p>{{ topicsDescription }}</p>
+        </div>
+        <el-tag effect="plain">{{ galleryTopics.length }} 个专题</el-tag>
+      </div>
+
+      <div class="prompt-gallery__topics-grid">
+        <article v-for="topic in galleryTopics" :key="topic.id" class="prompt-gallery__topic">
+          <div class="prompt-gallery__topic-head">
+            <div>
+              <div class="prompt-gallery__topic-tags">
+                <el-tag size="small" effect="plain">{{ topic.scenario || '运营专题' }}</el-tag>
+                <el-tag size="small" type="success" effect="plain">
+                  {{ formatContentType(topic.contentType) }}
+                </el-tag>
+              </div>
+              <h3>{{ topic.title }}</h3>
+            </div>
+            <strong>{{ topic.heatScore || 0 }}</strong>
+          </div>
+
+          <p>{{ topic.description }}</p>
+          <div class="prompt-gallery__topic-rule">{{ topic.curationRule }}</div>
+          <div class="prompt-gallery__topic-hint">{{ topic.operationHint }}</div>
+
+          <div class="prompt-gallery__topic-assets">
+            <button
+              v-for="asset in (topic.assets || []).slice(0, 3)"
+              :key="asset.id"
+              type="button"
+              @click="handleUse(asset)"
+            >
+              {{ truncateText(asset.prompt, 34) }}
+            </button>
+          </div>
+
+          <div class="prompt-gallery__topic-actions">
+            <span>{{ topic.itemCount || 0 }} 个作品 · {{ topic.totalFavoriteCount || 0 }} 收藏</span>
+            <div>
+              <el-button
+                v-if="topic.coverAsset"
+                size="small"
+                :icon="MagicStick"
+                @click="handleUse(topic.coverAsset)"
+              >
+                复用主作品
+              </el-button>
+              <el-button
+                v-if="topic.coverAsset"
+                size="small"
+                :icon="Link"
+                @click="openPublicGalleryPage(topic.coverAsset)"
+              >
+                分享页
+              </el-button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <div class="prompt-gallery__filter">
       <div class="prompt-gallery__filter-left">
         <el-radio-group v-model="activeContentType" @change="handleFilterChange">
@@ -280,6 +344,7 @@
     fetchGetFavoriteGalleryList,
     fetchGetGalleryList,
     fetchGetGalleryRanking,
+    fetchGetGalleryTopics,
     fetchLikeGalleryAsset,
     fetchUnfavoriteGalleryAsset,
     fetchUnlikeGalleryAsset
@@ -288,7 +353,8 @@
     ContentType,
     GalleryAuditLogItem,
     GalleryCollection,
-    GalleryItem
+    GalleryItem,
+    GalleryTopic
   } from '@/api/model/aigcModel'
   import {
     downloadAigcGalleryAsset,
@@ -307,6 +373,8 @@
   const rankingTotal = ref(0)
   const galleryCollections = ref<GalleryCollection[]>([])
   const collectionsLoading = ref(false)
+  const galleryTopics = ref<GalleryTopic[]>([])
+  const topicsLoading = ref(false)
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(24)
@@ -409,6 +477,12 @@
       : '按热度、发布时间和内容类型自动组织公开作品'
   )
 
+  const topicsDescription = computed(() =>
+    activeContentType.value
+      ? `${formatContentType(activeContentType.value)}作品的运营专题建议`
+      : '按运营场景组织可分享、可下载、可复用的公开作品'
+  )
+
   const galleryAuditActionLabels: Record<string, string> = {
     publish: '发布',
     unpublish: '撤回',
@@ -439,6 +513,7 @@
       if (!append) {
         await loadRankingData()
         await loadCollectionsData()
+        await loadTopicsData()
       }
     } catch (error) {
       console.error('加载数据失败:', error)
@@ -555,6 +630,28 @@
     }
   }
 
+  const loadTopicsData = async () => {
+    if (dataSource.value !== 'api' || showOnlyFavorites.value) {
+      galleryTopics.value = []
+      return
+    }
+
+    try {
+      topicsLoading.value = true
+      const response = await fetchGetGalleryTopics({
+        size: 4,
+        keyword: searchKeyword.value || undefined,
+        contentType: activeContentType.value || undefined
+      })
+      galleryTopics.value = (response.topics || []).map(normalizeGalleryTopic)
+    } catch (error) {
+      console.warn('加载灵感广场运营专题失败:', error)
+      galleryTopics.value = []
+    } finally {
+      topicsLoading.value = false
+    }
+  }
+
   /** 加载静态提示词数据 */
   const loadStaticPrompts = async () => {
     if (staticPrompts.value.length > 0) return
@@ -593,6 +690,15 @@
       coverAsset: collection.coverAsset
         ? normalizeGalleryItem(collection.coverAsset)
         : assets[0]
+    }
+  }
+
+  const normalizeGalleryTopic = (topic: GalleryTopic): GalleryTopic => {
+    const assets = (topic.assets || []).map(normalizeGalleryItem)
+    return {
+      ...topic,
+      assets,
+      coverAsset: topic.coverAsset ? normalizeGalleryItem(topic.coverAsset) : assets[0]
     }
   }
 
@@ -745,6 +851,7 @@
       item.id === assetId ? { ...item, ...patch } : item
     )
     galleryCollections.value = patchGalleryCollections(assetId, patch)
+    galleryTopics.value = patchGalleryTopics(assetId, patch)
     if (patch.likedByCurrentUser) {
       likedAssetIds.value.add(assetId)
     } else {
@@ -795,6 +902,7 @@
       item.id === assetId ? { ...item, ...patch } : item
     )
     galleryCollections.value = patchGalleryCollections(assetId, patch)
+    galleryTopics.value = patchGalleryTopics(assetId, patch)
     if (patch.favoritedByCurrentUser) {
       favoritedAssetIds.value.add(assetId)
     } else {
@@ -822,6 +930,18 @@
           ? { ...collection.coverAsset, ...patch }
           : collection.coverAsset,
       assets: (collection.assets || []).map((asset) =>
+        asset.id === assetId ? { ...asset, ...patch } : asset
+      )
+    }))
+
+  const patchGalleryTopics = (assetId: string, patch: Partial<GalleryItem>) =>
+    galleryTopics.value.map((topic) => ({
+      ...topic,
+      coverAsset:
+        topic.coverAsset?.id === assetId
+          ? { ...topic.coverAsset, ...patch }
+          : topic.coverAsset,
+      assets: (topic.assets || []).map((asset) =>
         asset.id === assetId ? { ...asset, ...patch } : asset
       )
     }))
@@ -1104,6 +1224,158 @@
       min-width: 96px;
     }
 
+    &__topics {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__topics-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__topics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    &__topic {
+      min-width: 0;
+      padding: 14px;
+      background: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 8px;
+
+      > p {
+        display: -webkit-box;
+        margin: 10px 0 0;
+        overflow: hidden;
+        color: var(--el-text-color-secondary);
+        font-size: 12px;
+        line-height: 1.5;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+    }
+
+    &__topic-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+
+      h3 {
+        margin: 8px 0 0;
+        overflow: hidden;
+        color: var(--el-text-color-primary);
+        font-size: 15px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      strong {
+        flex-shrink: 0;
+        font-size: 22px;
+        line-height: 1;
+        color: var(--el-color-primary);
+      }
+    }
+
+    &__topic-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    &__topic-rule,
+    &__topic-hint {
+      margin-top: 10px;
+      padding: 8px 10px;
+      overflow: hidden;
+      font-size: 12px;
+      line-height: 1.5;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
+    }
+
+    &__topic-rule {
+      color: var(--el-text-color-secondary);
+    }
+
+    &__topic-hint {
+      color: var(--el-text-color-regular);
+    }
+
+    &__topic-assets {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      overflow: hidden;
+
+      button {
+        max-width: 168px;
+        height: 28px;
+        padding: 0 10px;
+        overflow: hidden;
+        cursor: pointer;
+        color: var(--el-text-color-regular);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        background: var(--el-bg-color);
+        border: 1px solid var(--el-border-color-light);
+        border-radius: 6px;
+      }
+    }
+
+    &__topic-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--el-text-color-secondary);
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      div {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+    }
+
     &__ranking {
       margin-bottom: 16px;
       padding: 16px;
@@ -1304,6 +1576,10 @@
         grid-template-columns: 1fr;
       }
 
+      &__topics-grid {
+        grid-template-columns: 1fr;
+      }
+
       &__ranking-item {
         grid-template-columns: 44px minmax(0, 1fr);
       }
@@ -1346,6 +1622,10 @@
         flex-direction: column;
       }
 
+      &__topics-header {
+        flex-direction: column;
+      }
+
       &__collection {
         grid-template-columns: 1fr;
       }
@@ -1366,6 +1646,24 @@
 
       &__collection-actions {
         justify-content: flex-start;
+      }
+
+      &__topic-assets {
+        flex-wrap: wrap;
+
+        button {
+          max-width: 100%;
+        }
+      }
+
+      &__topic-actions {
+        align-items: flex-start;
+        flex-direction: column;
+
+        div {
+          width: 100%;
+          justify-content: flex-start;
+        }
       }
 
       &__ranking-item {

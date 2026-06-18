@@ -117,6 +117,7 @@ DOWNLOAD_FILE="$TMP_DIR/gallery-download.bin"
 REPORT_FILE="$TMP_DIR/gallery-report.json"
 PROVIDER_FILE="$TMP_DIR/provider-report.json"
 COLLECTIONS_FILE="$TMP_DIR/gallery-collections.json"
+TOPICS_FILE="$TMP_DIR/gallery-topics.json"
 
 api GET "/api/test/health" > "$HEALTH_FILE"
 assert_api_success "$HEALTH_FILE" "health"
@@ -192,13 +193,17 @@ assert_api_success "$PROVIDER_FILE" "provider execution report"
 api GET "/api/aigc/gallery/collections?size=$COLLECTION_SIZE" > "$COLLECTIONS_FILE"
 assert_api_success "$COLLECTIONS_FILE" "gallery collections"
 
-node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" <<'NODE'
+api GET "/api/aigc/gallery/topics?size=$COLLECTION_SIZE" > "$TOPICS_FILE"
+assert_api_success "$TOPICS_FILE" "gallery topics"
+
+node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" "$TOPICS_FILE" <<'NODE'
 const fs = require('fs')
 
 const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
 const galleryResponse = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'))
 const providerResponse = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'))
 const collectionsResponse = JSON.parse(fs.readFileSync(process.argv[5], 'utf8'))
+const topicsResponse = JSON.parse(fs.readFileSync(process.argv[6], 'utf8'))
 
 function number(value) {
   const parsed = Number(value ?? 0)
@@ -248,10 +253,25 @@ assert(collectionWithCreatedAsset, 'gallery collections must include the generat
 assert(collectionWithCreatedAsset.coverAsset?.id, 'gallery collection coverAsset is required')
 assert(number(collectionWithCreatedAsset.itemCount) >= 1, 'gallery collection itemCount must be positive')
 
+const topicsData = topicsResponse.data || {}
+const topics = topicsData.topics || []
+assert(Array.isArray(topics), 'gallery topics must be an array')
+assert(topics.length >= 1, 'gallery topics must include at least one topic')
+assert(number(topicsData.topicSize) >= 1, 'gallery topicSize must be positive')
+
+const topicWithCreatedAsset = topics.find((topic) => {
+  return Array.isArray(topic.assets)
+    && topic.assets.some((asset) => asset.id === createdAssetId)
+})
+assert(topicWithCreatedAsset, 'gallery topics must include the generated published asset')
+assert(topicWithCreatedAsset.coverAsset?.id, 'gallery topic coverAsset is required')
+assert(topicWithCreatedAsset.operationHint, 'gallery topic operationHint is required')
+
 console.log('aigc-demo-smoke: ok')
 console.log(`aigc-demo-smoke: taskId=${task.taskId}`)
 console.log(`aigc-demo-smoke: assetId=${result.assetId}`)
 console.log(`aigc-demo-smoke: gallery shareView=${shareViewCount} download=${downloadCount} promptReuse=${promptReuseCount}`)
 console.log(`aigc-demo-smoke: provider totalTasks=${provider.totalTasks} completedTasks=${provider.completedTasks} successRate=${provider.successRate}`)
 console.log(`aigc-demo-smoke: gallery collections=${collections.length} matched=${collectionWithCreatedAsset.id}`)
+console.log(`aigc-demo-smoke: gallery topics=${topics.length} matched=${topicWithCreatedAsset.id}`)
 NODE

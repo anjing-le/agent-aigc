@@ -24,6 +24,8 @@ import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryCollectionResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
+import com.anjing.aigc.model.response.GalleryTopicResponse;
+import com.anjing.aigc.model.response.GalleryTopicsResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
 import com.anjing.aigc.model.response.GenerationResult;
 import com.anjing.aigc.model.response.ModelListResponse;
@@ -82,6 +84,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -106,6 +109,7 @@ public class AigcServiceImpl implements AigcService {
     private static final int AUTHOR_TOP_ASSET_LIMIT = 5;
     private static final int GALLERY_COLLECTION_DEFAULT_SIZE = 4;
     private static final int GALLERY_COLLECTION_MAX_SIZE = 8;
+    private static final int GALLERY_TOPIC_CANDIDATE_MULTIPLIER = 4;
 
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
@@ -1276,6 +1280,43 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public GalleryTopicsResponse getGalleryTopics(String contentType, String keyword, Integer size) {
+        ContentType parsedContentType = parseContentType(contentType);
+        String normalizedKeyword = normalizeFilter(keyword);
+        int topicSize = size != null && size > 0
+                ? Math.min(size, GALLERY_COLLECTION_MAX_SIZE)
+                : GALLERY_COLLECTION_DEFAULT_SIZE;
+        List<GalleryTopicResponse> topics = new ArrayList<>();
+
+        for (GalleryTopicDefinition definition : galleryTopicDefinitions()) {
+            if (parsedContentType != null
+                    && definition.contentType() != null
+                    && parsedContentType != definition.contentType()) {
+                continue;
+            }
+
+            ContentType topicContentType = definition.contentType() != null
+                    ? definition.contentType()
+                    : parsedContentType;
+            List<AigcAsset> candidates = loadGalleryRankingAssets(
+                    topicContentType,
+                    normalizedKeyword,
+                    Math.min(topicSize * GALLERY_TOPIC_CANDIDATE_MULTIPLIER, GALLERY_COLLECTION_MAX_SIZE * 4)
+            );
+            List<AigcAsset> assets = selectTopicAssets(candidates, definition.promptTokens(), topicSize);
+            addGalleryTopic(topics, definition, topicContentType, assets);
+        }
+
+        return GalleryTopicsResponse.builder()
+                .contentType(parsedContentType)
+                .keyword(normalizedKeyword)
+                .topicSize(topicSize)
+                .generatedAt(DateUtils.nowIso())
+                .topics(topics)
+                .build();
+    }
+
+    @Override
     public PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size) {
         PageRequest pageRequest = PageRequest.of(
                 current != null && current > 0 ? current - 1 : 0,
@@ -1559,6 +1600,119 @@ public class AigcServiceImpl implements AigcService {
                 .coverAsset(items.get(0))
                 .assets(items)
                 .build());
+    }
+
+    private List<GalleryTopicDefinition> galleryTopicDefinitions() {
+        return List.of(
+                new GalleryTopicDefinition(
+                        "course-cover",
+                        "课程封面专题",
+                        "适合课程首屏、封面海报和教学物料的图片作品",
+                        "教学增长",
+                        "manual-topic:content-type=image,prompt=course|workshop|cover",
+                        ContentType.IMAGE,
+                        List.of("course", "workshop", "cover", "poster", "课程", "课堂", "封面", "海报", "教学"),
+                        "优先放在课程详情页、训练营海报和知识库封面"
+                ),
+                new GalleryTopicDefinition(
+                        "video-storyboard",
+                        "短视频样片专题",
+                        "适合短视频开场、分镜脚本和产品介绍的公开视频作品",
+                        "内容传播",
+                        "manual-topic:content-type=video,prompt=storyboard|trailer|short-video",
+                        ContentType.VIDEO,
+                        List.of("video", "storyboard", "trailer", "scene", "短视频", "视频", "分镜", "片头", "预告"),
+                        "适合作为运营活动页、短视频脚本和产品发布素材"
+                ),
+                new GalleryTopicDefinition(
+                        "audio-narration",
+                        "音频旁白专题",
+                        "适合播客、课程旁白和品牌声音记忆点的公开音频作品",
+                        "声音资产",
+                        "manual-topic:content-type=audio,prompt=voice|podcast|narration",
+                        ContentType.AUDIO,
+                        List.of("audio", "voice", "podcast", "narration", "音频", "声音", "播客", "旁白", "配音"),
+                        "适合沉淀为课程开场、作品介绍和品牌音色参考"
+                ),
+                new GalleryTopicDefinition(
+                        "share-ready",
+                        "高复用传播位",
+                        "按公开互动热度挑出的可分享、可下载、可复用 Prompt 作品",
+                        "分享转化",
+                        "manual-topic:ranking=likes+favorites*2",
+                        null,
+                        List.of(),
+                        "优先用于广场首屏、社群分享和 Prompt 复用教学"
+                )
+        );
+    }
+
+    private List<AigcAsset> selectTopicAssets(List<AigcAsset> candidates, List<String> promptTokens, int topicSize) {
+        if (candidates == null || candidates.isEmpty()) {
+            return List.of();
+        }
+        List<AigcAsset> matched = candidates.stream()
+                .filter(asset -> matchesPromptTokens(asset, promptTokens))
+                .limit(topicSize)
+                .toList();
+        if (!matched.isEmpty()) {
+            return matched;
+        }
+        return candidates.stream()
+                .limit(topicSize)
+                .toList();
+    }
+
+    private boolean matchesPromptTokens(AigcAsset asset, List<String> promptTokens) {
+        if (promptTokens == null || promptTokens.isEmpty()) {
+            return true;
+        }
+        String prompt = asset.getPrompt();
+        if (prompt == null || prompt.isBlank()) {
+            return false;
+        }
+        String normalizedPrompt = prompt.toLowerCase(Locale.ROOT);
+        return promptTokens.stream()
+                .map(token -> token.toLowerCase(Locale.ROOT))
+                .anyMatch(normalizedPrompt::contains);
+    }
+
+    private void addGalleryTopic(List<GalleryTopicResponse> topics, GalleryTopicDefinition definition,
+            ContentType contentType, List<AigcAsset> assets) {
+        if (assets == null || assets.isEmpty()) {
+            return;
+        }
+        List<GalleryDTO> items = assets.stream()
+                .map(this::toGalleryDTO)
+                .toList();
+        long totalLikeCount = assets.stream().mapToLong(this::resolveLikeCount).sum();
+        long totalFavoriteCount = assets.stream().mapToLong(this::resolveFavoriteCount).sum();
+        topics.add(GalleryTopicResponse.builder()
+                .id(definition.id())
+                .title(definition.title())
+                .description(definition.description())
+                .scenario(definition.scenario())
+                .curationRule(definition.curationRule())
+                .contentType(contentType)
+                .itemCount(items.size())
+                .totalLikeCount(totalLikeCount)
+                .totalFavoriteCount(totalFavoriteCount)
+                .heatScore(totalLikeCount + totalFavoriteCount * 2)
+                .operationHint(definition.operationHint())
+                .coverAsset(items.get(0))
+                .assets(items)
+                .build());
+    }
+
+    private record GalleryTopicDefinition(
+            String id,
+            String title,
+            String description,
+            String scenario,
+            String curationRule,
+            ContentType contentType,
+            List<String> promptTokens,
+            String operationHint) {
     }
 
     private void deleteAssetFiles(AigcAsset asset) {

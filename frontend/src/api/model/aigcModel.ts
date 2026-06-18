@@ -288,6 +288,52 @@ export type GalleryCollectionsResponse = Omit<
   collections?: GalleryCollection[]
 }
 
+/** 灵感广场人工运营专题查询参数 */
+export type GalleryTopicsSearchParams = OpenApiOperationQuery<'getGalleryTopics'> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 关键词搜索 */
+  keyword?: string
+  /** 每个专题的作品数量 */
+  size?: number
+}
+
+/** 灵感广场人工运营专题 */
+export type GalleryTopic = Omit<
+  Schemas.GalleryTopicResponse,
+  'assets' | 'contentType' | 'coverAsset'
+> & {
+  /** 专题 ID */
+  id?: string
+  /** 专题标题 */
+  title?: string
+  /** 专题描述 */
+  description?: string
+  /** 运营场景 */
+  scenario?: string
+  /** 规则说明 */
+  curationRule?: string
+  /** 内容类型范围 */
+  contentType?: ContentType
+  /** 运营建议 */
+  operationHint?: string
+  /** 封面作品 */
+  coverAsset?: GalleryItem
+  /** 专题作品 */
+  assets?: GalleryItem[]
+}
+
+/** 灵感广场人工运营专题响应 */
+export type GalleryTopicsResponse = Omit<
+  OpenApiOperationData<'getGalleryTopics'>,
+  'contentType' | 'topics'
+> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 人工运营专题 */
+  topics?: GalleryTopic[]
+}
+
 /** 灵感广场公开分享页响应 */
 export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>, 'asset'> & {
   /** 已发布作品 */

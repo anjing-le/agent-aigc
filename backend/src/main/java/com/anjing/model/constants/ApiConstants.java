@@ -273,6 +273,7 @@ public class ApiConstants {
         public static final String GALLERY = "/gallery";
         public static final String GALLERY_RANKING = "/gallery/ranking";
         public static final String GALLERY_COLLECTIONS = "/gallery/collections";
+        public static final String GALLERY_TOPICS = "/gallery/topics";
         public static final String GALLERY_AUDITS = "/gallery/audits";
         public static final String GALLERY_INTERACTION_REPORT = "/gallery/reports/interactions";
         public static final String GALLERY_FAVORITES = "/gallery/favorites";
@@ -313,6 +314,7 @@ public class ApiConstants {
         public static final String GALLERY_FULL = BASE + GALLERY;
         public static final String GALLERY_RANKING_FULL = BASE + GALLERY_RANKING;
         public static final String GALLERY_COLLECTIONS_FULL = BASE + GALLERY_COLLECTIONS;
+        public static final String GALLERY_TOPICS_FULL = BASE + GALLERY_TOPICS;
         public static final String GALLERY_AUDITS_FULL = BASE + GALLERY_AUDITS;
         public static final String GALLERY_INTERACTION_REPORT_FULL = BASE + GALLERY_INTERACTION_REPORT;
         public static final String GALLERY_FAVORITES_FULL = BASE + GALLERY_FAVORITES;
