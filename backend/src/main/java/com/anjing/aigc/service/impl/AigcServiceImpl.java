@@ -12,6 +12,7 @@ import com.anjing.aigc.model.entity.AigcMaterial;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.aigc.model.request.GalleryCurationRuleUpdateRequest;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
@@ -51,6 +52,7 @@ import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcTaskRepository;
+import com.anjing.aigc.service.AigcGalleryCurationConfigService;
 import com.anjing.aigc.service.AigcProviderCredentialConfigService;
 import com.anjing.aigc.service.AigcGalleryAuditLogService;
 import com.anjing.aigc.service.AigcGalleryReactionService;
@@ -125,6 +127,7 @@ public class AigcServiceImpl implements AigcService {
     private final AigcProviderAuditLogService auditLogService;
     private final AigcGalleryAuditLogService galleryAuditLogService;
     private final AigcGalleryReactionService galleryReactionService;
+    private final AigcGalleryCurationConfigService galleryCurationConfigService;
     private final AigcProviderCostEstimator costEstimator;
     private final AigcProviderManagementPermissionService permissionService;
     private final AigcProviderCredentialConfigService credentialConfigService;
@@ -1183,8 +1186,25 @@ public class AigcServiceImpl implements AigcService {
         );
     }
 
+    private void recordAigcManagementAudit(String action, ContentType contentType, String resourceKey,
+            Map<String, Object> beforeSummary, Map<String, Object> afterSummary) {
+        auditLogService.record(
+                action,
+                contentType == null ? ContentType.IMAGE : contentType,
+                resourceKey,
+                resourceKey,
+                "AIGC",
+                beforeSummary,
+                afterSummary
+        );
+    }
+
     private void assertProviderManagementPermission(String action, ContentType contentType, String providerKey) {
         permissionService.assertCanManageProvider(action, contentType, providerKey);
+    }
+
+    private void assertAigcManagementPermission(String action, String resourceKey) {
+        permissionService.assertCanManageAigc(action, resourceKey);
     }
 
     private Map<String, Object> auditSummary(Object... values) {
@@ -1350,6 +1370,57 @@ public class AigcServiceImpl implements AigcService {
 
     @Override
     public GalleryCurationRulesResponse getGalleryCurationRules() {
+        List<GalleryCurationRuleResponse> rules = galleryCurationConfigService.applyConfigs(baseGalleryCurationRules());
+        return toGalleryCurationRulesResponse(rules);
+    }
+
+    @Override
+    public GalleryCurationRulesResponse updateGalleryCurationRule(GalleryCurationRuleUpdateRequest request) {
+        String ruleId = normalizeCurationRuleId(request.getRuleId());
+        GalleryCurationRuleResponse baseRule = findCurationRule(baseGalleryCurationRules(), ruleId)
+                .orElseThrow(() -> new AigcException(
+                        AigcErrorCode.GENERATION_PARAM_INVALID, "不支持的运营规则: " + request.getRuleId()));
+        validateGalleryCurationRuleUpdate(request, baseRule);
+
+        assertAigcManagementPermission(AigcProviderAuditLogService.ACTION_GALLERY_CURATION_RULE, ruleId);
+        GalleryCurationRuleResponse beforeRule = findCurationRule(
+                galleryCurationConfigService.applyConfigs(baseGalleryCurationRules()), ruleId)
+                .orElse(baseRule);
+
+        galleryCurationConfigService.saveConfig(
+                ruleId,
+                request.getEnabled(),
+                request.getDefaultSize(),
+                request.getMaxSize(),
+                request.getOperationHint()
+        );
+
+        List<GalleryCurationRuleResponse> updatedRules =
+                galleryCurationConfigService.applyConfigs(baseGalleryCurationRules());
+        GalleryCurationRuleResponse afterRule = findCurationRule(updatedRules, ruleId).orElse(baseRule);
+        recordAigcManagementAudit(
+                AigcProviderAuditLogService.ACTION_GALLERY_CURATION_RULE,
+                baseRule.getContentType(),
+                ruleId,
+                curationAuditSummary(beforeRule),
+                curationAuditSummary(afterRule)
+        );
+        return toGalleryCurationRulesResponse(updatedRules);
+    }
+
+    private GalleryCurationRulesResponse toGalleryCurationRulesResponse(List<GalleryCurationRuleResponse> rules) {
+        return GalleryCurationRulesResponse.builder()
+                .version(GALLERY_CURATION_RULE_VERSION)
+                .generatedAt(DateUtils.nowIso())
+                .defaultCollectionSize(GALLERY_COLLECTION_DEFAULT_SIZE)
+                .maxCollectionSize(GALLERY_COLLECTION_MAX_SIZE)
+                .defaultCreatorRankingSize(GALLERY_CREATOR_RANKING_DEFAULT_SIZE)
+                .maxCreatorRankingSize(GALLERY_CREATOR_RANKING_MAX_SIZE)
+                .rules(rules)
+                .build();
+    }
+
+    private List<GalleryCurationRuleResponse> baseGalleryCurationRules() {
         List<GalleryCurationRuleResponse> rules = new ArrayList<>();
         rules.add(galleryCurationRule(
                 "trending",
@@ -1424,16 +1495,59 @@ public class AigcServiceImpl implements AigcService {
         galleryTopicDefinitions().stream()
                 .map(this::toGalleryTopicCurationRule)
                 .forEach(rules::add);
+        return rules;
+    }
 
-        return GalleryCurationRulesResponse.builder()
-                .version(GALLERY_CURATION_RULE_VERSION)
-                .generatedAt(DateUtils.nowIso())
-                .defaultCollectionSize(GALLERY_COLLECTION_DEFAULT_SIZE)
-                .maxCollectionSize(GALLERY_COLLECTION_MAX_SIZE)
-                .defaultCreatorRankingSize(GALLERY_CREATOR_RANKING_DEFAULT_SIZE)
-                .maxCreatorRankingSize(GALLERY_CREATOR_RANKING_MAX_SIZE)
-                .rules(rules)
-                .build();
+    private void validateGalleryCurationRuleUpdate(
+            GalleryCurationRuleUpdateRequest request, GalleryCurationRuleResponse baseRule) {
+        int baseDefaultSize = baseRule.getDefaultSize() == null ? 1 : baseRule.getDefaultSize();
+        int baseMaxSize = baseRule.getMaxSize() == null ? Math.max(baseDefaultSize, 1) : baseRule.getMaxSize();
+        Integer requestedMaxSize = request.getMaxSize();
+        if (requestedMaxSize != null && (requestedMaxSize < 1 || requestedMaxSize > 50)) {
+            throw new AigcException(AigcErrorCode.GENERATION_PARAM_INVALID, "maxSize 必须在 1 到 50 之间");
+        }
+
+        int effectiveMaxSize = requestedMaxSize == null ? baseMaxSize : requestedMaxSize;
+        Integer requestedDefaultSize = request.getDefaultSize();
+        if (requestedDefaultSize != null
+                && (requestedDefaultSize < 1 || requestedDefaultSize > effectiveMaxSize)) {
+            throw new AigcException(AigcErrorCode.GENERATION_PARAM_INVALID, "defaultSize 必须在 1 到 maxSize 之间");
+        }
+        if (requestedDefaultSize == null && requestedMaxSize != null && baseDefaultSize > requestedMaxSize) {
+            throw new AigcException(AigcErrorCode.GENERATION_PARAM_INVALID, "maxSize 不能小于当前默认数量");
+        }
+
+        String operationHint = normalizeFilter(request.getOperationHint());
+        if (operationHint != null && operationHint.length() > 200) {
+            throw new AigcException(AigcErrorCode.GENERATION_PARAM_INVALID, "operationHint 不能超过 200 个字符");
+        }
+    }
+
+    private Optional<GalleryCurationRuleResponse> findCurationRule(
+            List<GalleryCurationRuleResponse> rules, String ruleId) {
+        return rules.stream()
+                .filter(rule -> ruleId.equals(rule.getId()))
+                .findFirst();
+    }
+
+    private String normalizeCurationRuleId(String ruleId) {
+        String normalized = normalizeFilter(ruleId);
+        if (normalized == null) {
+            throw new AigcException(AigcErrorCode.GENERATION_PARAM_INVALID, "ruleId 不能为空");
+        }
+        return normalized.toLowerCase(Locale.ROOT);
+    }
+
+    private Map<String, Object> curationAuditSummary(GalleryCurationRuleResponse rule) {
+        return auditSummary(
+                "ruleId", rule.getId(),
+                "ruleType", rule.getRuleType(),
+                "enabled", rule.getEnabled(),
+                "defaultSize", rule.getDefaultSize(),
+                "maxSize", rule.getMaxSize(),
+                "operationHint", rule.getOperationHint(),
+                "configSource", rule.getConfigSource()
+        );
     }
 
     @Override
@@ -1801,6 +1915,7 @@ public class AigcServiceImpl implements AigcService {
                 .maxSize(maxSize)
                 .operationHint(operationHint)
                 .enabled(true)
+                .configSource(AigcGalleryCurationConfigService.CONFIG_SOURCE_BUILT_IN)
                 .build();
     }
 

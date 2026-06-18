@@ -102,6 +102,7 @@
         { "name": "galleryTopics", "backendConstant": "GALLERY_TOPICS_FULL", "frontendKey": "galleryTopics", "path": "/api/aigc/gallery/topics", "methods": ["GET"] },
         { "name": "galleryCreatorRanking", "backendConstant": "GALLERY_CREATOR_RANKING_FULL", "frontendKey": "galleryCreatorRanking", "path": "/api/aigc/gallery/creators/ranking", "methods": ["GET"] },
         { "name": "galleryCurationRules", "backendConstant": "GALLERY_CURATION_RULES_FULL", "frontendKey": "galleryCurationRules", "path": "/api/aigc/gallery/curation/rules", "methods": ["GET"] },
+        { "name": "galleryCurationRuleConfig", "backendConstant": "GALLERY_CURATION_RULE_CONFIG_FULL", "frontendKey": "galleryCurationRuleConfig", "path": "/api/aigc/gallery/curation/rules/config", "methods": ["POST"] },
         { "name": "galleryAudits", "backendConstant": "GALLERY_AUDITS_FULL", "frontendKey": "galleryAudits", "path": "/api/aigc/gallery/audits", "methods": ["GET"] },
         { "name": "galleryInteractionReport", "backendConstant": "GALLERY_INTERACTION_REPORT_FULL", "frontendKey": "galleryInteractionReport", "path": "/api/aigc/gallery/reports/interactions", "methods": ["GET"] },
         { "name": "galleryFavorites", "backendConstant": "GALLERY_FAVORITES_FULL", "frontendKey": "galleryFavorites", "path": "/api/aigc/gallery/favorites", "methods": ["GET"] },

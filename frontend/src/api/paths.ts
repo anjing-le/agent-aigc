@@ -85,6 +85,7 @@ export const ApiPaths = {
     galleryTopics: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryTopics,
     galleryCreatorRanking: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryCreatorRanking,
     galleryCurationRules: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryCurationRules,
+    galleryCurationRuleConfig: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryCurationRuleConfig,
     galleryAudits: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryAudits,
     galleryInteractionReport: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryInteractionReport,
     galleryFavorites: SERVICE_BOUNDARY_ROUTE_PATHS.aigc.galleryFavorites,

@@ -43,15 +43,40 @@
           v-for="rule in curationRules.slice(0, 6)"
           :key="rule.id"
           class="prompt-gallery__curation-rule"
+          :class="{ 'is-disabled': rule.enabled === false }"
         >
           <div class="prompt-gallery__curation-tags">
             <el-tag size="small" effect="plain">{{ formatRuleType(rule.ruleType) }}</el-tag>
             <el-tag v-if="rule.contentType" size="small" type="success" effect="plain">
               {{ formatContentType(rule.contentType) }}
             </el-tag>
+            <el-tag size="small" :type="rule.enabled === false ? 'warning' : 'success'" effect="plain">
+              {{ formatRuleStatus(rule.enabled) }}
+            </el-tag>
+            <el-tag size="small" type="info" effect="plain">
+              {{ formatConfigSource(rule.configSource) }}
+            </el-tag>
           </div>
-          <h3>{{ rule.title }}</h3>
+          <div class="prompt-gallery__curation-title">
+            <h3>{{ rule.title }}</h3>
+            <el-tooltip content="配置规则" placement="top">
+              <el-button
+                :icon="Edit"
+                circle
+                text
+                size="small"
+                @click="openCurationRuleEditor(rule)"
+              />
+            </el-tooltip>
+          </div>
           <p>{{ rule.description }}</p>
+          <div class="prompt-gallery__curation-meta">
+            <span>默认 {{ rule.defaultSize || '-' }}</span>
+            <span>最大 {{ rule.maxSize || '-' }}</span>
+          </div>
+          <div class="prompt-gallery__curation-hint">
+            {{ rule.operationHint || '暂无运营建议' }}
+          </div>
           <div class="prompt-gallery__curation-code">{{ rule.curationRule }}</div>
         </article>
       </div>
@@ -434,11 +459,60 @@
         <div v-if="showCopyTip" class="copy-tip">已复制到剪贴板</div>
       </Transition>
     </Teleport>
+
+    <el-dialog v-model="curationRuleDialogVisible" title="运营规则配置" width="520px">
+      <el-form label-position="top" class="prompt-gallery__curation-form">
+        <el-form-item label="规则">
+          <el-input :model-value="editingCurationRule?.title || '-'" disabled />
+        </el-form-item>
+        <div class="prompt-gallery__curation-form-grid">
+          <el-form-item label="启用">
+            <el-switch v-model="curationRuleForm.enabled" />
+          </el-form-item>
+          <el-form-item label="默认数量">
+            <el-input-number
+              v-model="curationRuleForm.defaultSize"
+              :min="1"
+              :max="curationRuleForm.maxSize || 50"
+              controls-position="right"
+            />
+          </el-form-item>
+          <el-form-item label="最大数量">
+            <el-input-number
+              v-model="curationRuleForm.maxSize"
+              :min="1"
+              :max="50"
+              controls-position="right"
+            />
+          </el-form-item>
+        </div>
+        <el-form-item label="运营建议">
+          <el-input
+            v-model="curationRuleForm.operationHint"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="curationRuleDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="curationRuleSaving"
+          :icon="Edit"
+          @click="saveCurationRuleConfig"
+        >
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { DataAnalysis, Link, MagicStick, Refresh, Search, User } from '@element-plus/icons-vue'
+  import { DataAnalysis, Edit, Link, MagicStick, Refresh, Search, User } from '@element-plus/icons-vue'
   import { useDebounceFn, useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import PromptCard from './components/PromptCard.vue'
@@ -454,6 +528,7 @@
     fetchGetGalleryTopics,
     fetchLikeGalleryAsset,
     fetchUnfavoriteGalleryAsset,
+    fetchUpdateGalleryCurationRule,
     fetchUnlikeGalleryAsset
   } from '@/api/aigc'
   import type {
@@ -462,6 +537,7 @@
     GalleryCollection,
     GalleryCreatorRankingItem,
     GalleryCurationRule,
+    GalleryCurationRuleUpdateRequest,
     GalleryItem,
     GalleryTopic
   } from '@/api/model/aigcModel'
@@ -489,6 +565,16 @@
   const curationRules = ref<GalleryCurationRule[]>([])
   const curationRulesLoading = ref(false)
   const curationRulesVersion = ref('rules v1')
+  const curationRuleDialogVisible = ref(false)
+  const curationRuleSaving = ref(false)
+  const editingCurationRule = ref<GalleryCurationRule | null>(null)
+  const curationRuleForm = reactive<GalleryCurationRuleUpdateRequest>({
+    ruleId: '',
+    enabled: true,
+    defaultSize: 4,
+    maxSize: 8,
+    operationHint: ''
+  })
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(24)
@@ -818,6 +904,48 @@
       curationRulesVersion.value = 'rules v1'
     } finally {
       curationRulesLoading.value = false
+    }
+  }
+
+  const openCurationRuleEditor = (rule: GalleryCurationRule) => {
+    editingCurationRule.value = rule
+    curationRuleForm.ruleId = rule.id || ''
+    curationRuleForm.enabled = rule.enabled !== false
+    curationRuleForm.defaultSize = rule.defaultSize || 1
+    curationRuleForm.maxSize = rule.maxSize || Math.max(curationRuleForm.defaultSize || 1, 1)
+    curationRuleForm.operationHint = rule.operationHint || ''
+    curationRuleDialogVisible.value = true
+  }
+
+  const saveCurationRuleConfig = async () => {
+    const defaultSize = Number(curationRuleForm.defaultSize || 0)
+    const maxSize = Number(curationRuleForm.maxSize || 0)
+    if (!curationRuleForm.ruleId) {
+      ElMessage.error('规则不存在')
+      return
+    }
+    if (defaultSize < 1 || maxSize < 1 || defaultSize > maxSize) {
+      ElMessage.error('默认数量必须在 1 到最大数量之间')
+      return
+    }
+
+    try {
+      curationRuleSaving.value = true
+      const response = await fetchUpdateGalleryCurationRule({
+        ruleId: curationRuleForm.ruleId,
+        enabled: curationRuleForm.enabled,
+        defaultSize,
+        maxSize,
+        operationHint: curationRuleForm.operationHint?.trim()
+      })
+      curationRules.value = response.rules || []
+      curationRulesVersion.value = response.version ? `rules ${response.version}` : 'rules v1'
+      curationRuleDialogVisible.value = false
+      ElMessage.success('运营规则配置已保存')
+    } catch (error) {
+      console.error('保存运营规则配置失败:', error)
+    } finally {
+      curationRuleSaving.value = false
     }
   }
 
@@ -1205,6 +1333,16 @@
     return ruleType ? labels[ruleType] || ruleType : '规则'
   }
 
+  const formatRuleStatus = (enabled?: boolean) => (enabled === false ? '停用' : '启用')
+
+  const formatConfigSource = (source?: string) => {
+    const labels: Record<string, string> = {
+      'built-in': '内置',
+      database: '页面配置'
+    }
+    return source ? labels[source] || source : '内置'
+  }
+
   const formatAuditTime = (value?: string) => {
     if (!value) return '-'
     const date = new Date(value)
@@ -1332,8 +1470,13 @@
       border: 1px solid var(--el-border-color-lighter);
       border-radius: 8px;
 
+      &.is-disabled {
+        opacity: 0.72;
+      }
+
       h3 {
-        margin: 8px 0 0;
+        min-width: 0;
+        margin: 0;
         overflow: hidden;
         color: var(--el-text-color-primary);
         font-size: 14px;
@@ -1354,10 +1497,39 @@
       }
     }
 
+    &__curation-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
     &__curation-tags {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
+    }
+
+    &__curation-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+
+    &__curation-hint {
+      display: -webkit-box;
+      min-height: 36px;
+      margin-top: 8px;
+      overflow: hidden;
+      color: var(--el-text-color-regular);
+      font-size: 12px;
+      line-height: 18px;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
     }
 
     &__curation-code {
@@ -1374,6 +1546,12 @@
       background: var(--el-bg-color);
       border: 1px solid var(--el-border-color-light);
       border-radius: 6px;
+    }
+
+    &__curation-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
     }
 
     &__collections {
@@ -2062,6 +2240,10 @@
       }
 
       &__curation-grid {
+        grid-template-columns: 1fr;
+      }
+
+      &__curation-form-grid {
         grid-template-columns: 1fr;
       }
 

@@ -3,6 +3,7 @@ package com.anjing.aigc.service;
 import com.anjing.aigc.model.dto.AssetDTO;
 import com.anjing.aigc.model.dto.GalleryDTO;
 import com.anjing.aigc.model.request.GenerateRequest;
+import com.anjing.aigc.model.request.GalleryCurationRuleUpdateRequest;
 import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
@@ -199,6 +200,14 @@ public interface AigcService {
      * @return 运营规则列表
      */
     GalleryCurationRulesResponse getGalleryCurationRules();
+
+    /**
+     * 更新灵感广场运营规则配置。
+     *
+     * @param request 运营规则配置请求
+     * @return 更新后的运营规则列表
+     */
+    GalleryCurationRulesResponse updateGalleryCurationRule(GalleryCurationRuleUpdateRequest request);
 
     /**
      * 获取当前用户/会话收藏的灵感广场作品。

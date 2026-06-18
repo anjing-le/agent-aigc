@@ -9,6 +9,7 @@ import type {
   GalleryCollectionsSearchParams,
   GalleryCreatorRankingResponse,
   GalleryCreatorRankingSearchParams,
+  GalleryCurationRuleUpdateRequest,
   GalleryCurationRulesResponse,
   GalleryListResponse,
   GalleryRankingResponse,
@@ -141,6 +142,17 @@ export function fetchGetGalleryCreatorRanking(params: GalleryCreatorRankingSearc
  */
 export function fetchGetGalleryCurationRules() {
   return openApiRequest('getGalleryCurationRules') as Promise<GalleryCurationRulesResponse>
+}
+
+/**
+ * 更新灵感广场运营规则配置
+ * @param data 规则配置
+ */
+export function fetchUpdateGalleryCurationRule(data: GalleryCurationRuleUpdateRequest) {
+  return openApiRequest('updateGalleryCurationRule', {
+    body: data,
+    showSuccessMessage: true
+  }) as Promise<GalleryCurationRulesResponse>
 }
 
 /**

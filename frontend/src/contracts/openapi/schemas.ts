@@ -667,6 +667,10 @@ export interface GalleryCreatorRankingResponse {
  */
 export interface GalleryCurationRuleResponse {
   /**
+   * Rule config source, such as built-in or database
+   */
+  configSource?: string
+  /**
    * Optional content type scope
    */
   contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
@@ -718,6 +722,14 @@ export interface GalleryCurationRuleResponse {
    * Rule title
    */
   title?: string
+  /**
+   * Last config update time
+   */
+  updatedAt?: string
+  /**
+   * Last config updater
+   */
+  updatedBy?: string
 }
 
 /**
@@ -752,6 +764,32 @@ export interface GalleryCurationRulesResponse {
    * Rule version
    */
   version?: string
+}
+
+/**
+ * 灵感广场运营规则配置更新请求
+ */
+export interface GalleryCurationRuleUpdateRequest {
+  /**
+   * 默认返回数量
+   */
+  defaultSize?: number
+  /**
+   * 是否启用
+   */
+  enabled?: boolean
+  /**
+   * 最大返回数量
+   */
+  maxSize?: number
+  /**
+   * 页面可见运营建议
+   */
+  operationHint?: string
+  /**
+   * 规则 id
+   */
+  ruleId: string
 }
 
 export interface GalleryDailyMetricResponse {
@@ -1689,6 +1727,7 @@ export interface OpenApiSchemas {
   GalleryCreatorRankingResponse: GalleryCreatorRankingResponse
   GalleryCurationRuleResponse: GalleryCurationRuleResponse
   GalleryCurationRulesResponse: GalleryCurationRulesResponse
+  GalleryCurationRuleUpdateRequest: GalleryCurationRuleUpdateRequest
   GalleryDailyMetricResponse: GalleryDailyMetricResponse
   GalleryDTO: GalleryDTO
   GalleryInteractionReportResponse: GalleryInteractionReportResponse

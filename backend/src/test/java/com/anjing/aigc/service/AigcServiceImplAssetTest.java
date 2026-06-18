@@ -4,9 +4,11 @@ import com.anjing.aigc.agent.RoutingAgent;
 import com.anjing.aigc.config.AigcProperties;
 import com.anjing.aigc.exception.AigcException;
 import com.anjing.aigc.model.entity.AigcAsset;
+import com.anjing.aigc.model.entity.AigcGalleryCurationConfig;
 import com.anjing.aigc.model.entity.AigcTask;
 import com.anjing.aigc.model.enums.ContentType;
 import com.anjing.aigc.model.enums.TaskStatus;
+import com.anjing.aigc.model.request.GalleryCurationRuleUpdateRequest;
 import com.anjing.aigc.model.request.ProviderProbeRequest;
 import com.anjing.aigc.model.request.ProviderRouteUpdateRequest;
 import com.anjing.aigc.model.request.ProviderSmokeTestRequest;
@@ -23,6 +25,7 @@ import com.anjing.aigc.provider.ContentProvider;
 import com.anjing.aigc.provider.ImageGenerationProvider;
 import com.anjing.aigc.provider.ProviderRouter;
 import com.anjing.aigc.repository.AigcAssetRepository;
+import com.anjing.aigc.repository.AigcGalleryCurationConfigRepository;
 import com.anjing.aigc.repository.AigcMaterialRepository;
 import com.anjing.aigc.repository.AigcProviderCredentialConfigRepository;
 import com.anjing.aigc.repository.AigcProviderParamConfigRepository;
@@ -31,6 +34,7 @@ import com.anjing.aigc.repository.AigcTaskRepository;
 import com.anjing.aigc.service.impl.AigcServiceImpl;
 import com.anjing.aigc.service.storage.AigcStorageService;
 import com.anjing.model.errorcode.AigcErrorCode;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -40,9 +44,11 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,6 +63,10 @@ class AigcServiceImplAssetTest {
     private final AigcProviderAuditLogService auditLogService = mock(AigcProviderAuditLogService.class);
     private final AigcGalleryAuditLogService galleryAuditLogService = mock(AigcGalleryAuditLogService.class);
     private final AigcGalleryReactionService galleryReactionService = mock(AigcGalleryReactionService.class);
+    private final AigcGalleryCurationConfigRepository curationConfigRepository =
+            mock(AigcGalleryCurationConfigRepository.class);
+    private final AigcGalleryCurationConfigService galleryCurationConfigService =
+            new AigcGalleryCurationConfigService(curationConfigRepository);
     private final AigcProviderCostEstimator costEstimator = new AigcProviderCostEstimator(aigcProperties);
     private final AigcProviderManagementPermissionService permissionService =
             mock(AigcProviderManagementPermissionService.class);
@@ -88,6 +98,7 @@ class AigcServiceImplAssetTest {
             auditLogService,
             galleryAuditLogService,
             galleryReactionService,
+            galleryCurationConfigService,
             costEstimator,
             permissionService,
             credentialConfigService,
@@ -100,6 +111,11 @@ class AigcServiceImplAssetTest {
             storageService,
             ownershipService
     );
+
+    @BeforeEach
+    void setUp() {
+        when(curationConfigRepository.findByRuleIdIn(any())).thenReturn(List.of());
+    }
 
     @Test
     void deleteAssetRemovesLocalFilesAndRecord() throws Exception {
@@ -380,6 +396,7 @@ class AigcServiceImplAssetTest {
         assertEquals(20, response.getMaxCreatorRankingSize());
         assertEquals(9, response.getRules().size());
         assertEquals(true, response.getRules().stream().allMatch(rule -> Boolean.TRUE.equals(rule.getEnabled())));
+        assertEquals(true, response.getRules().stream().allMatch(rule -> "built-in".equals(rule.getConfigSource())));
         assertEquals(true, response.getRules().stream().anyMatch(rule ->
                 "creator-ranking".equals(rule.getId())
                         && "creator-ranking".equals(rule.getRuleType())
@@ -388,6 +405,58 @@ class AigcServiceImplAssetTest {
                 "course-cover".equals(rule.getId())
                         && ContentType.IMAGE.equals(rule.getContentType())
                         && rule.getPromptTokens().contains("course")));
+    }
+
+    @Test
+    void updateGalleryCurationRulePersistsConfigAndReturnsDatabaseSource() {
+        AtomicReference<AigcGalleryCurationConfig> savedConfig = new AtomicReference<>();
+        when(curationConfigRepository.findByRuleId("trending")).thenReturn(Optional.empty());
+        when(curationConfigRepository.findByRuleIdIn(any())).thenAnswer(invocation ->
+                savedConfig.get() == null ? List.of() : List.of(savedConfig.get()));
+        when(curationConfigRepository.save(any(AigcGalleryCurationConfig.class))).thenAnswer(invocation -> {
+            AigcGalleryCurationConfig config = invocation.getArgument(0);
+            config.setUpdatedAt(LocalDateTime.of(2026, 6, 18, 18, 30));
+            savedConfig.set(config);
+            return config;
+        });
+
+        GalleryCurationRuleUpdateRequest request = new GalleryCurationRuleUpdateRequest();
+        request.setRuleId(" trending ");
+        request.setEnabled(false);
+        request.setDefaultSize(2);
+        request.setMaxSize(6);
+        request.setOperationHint("  临时下线首屏热榜，观察教学专题转化  ");
+
+        var response = aigcService.updateGalleryCurationRule(request);
+
+        var trending = response.getRules().stream()
+                .filter(rule -> "trending".equals(rule.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(false, trending.getEnabled());
+        assertEquals(2, trending.getDefaultSize());
+        assertEquals(6, trending.getMaxSize());
+        assertEquals("临时下线首屏热榜，观察教学专题转化", trending.getOperationHint());
+        assertEquals("database", trending.getConfigSource());
+        assertEquals("2026-06-18T18:30", trending.getUpdatedAt());
+        verify(permissionService).assertCanManageAigc("gallery-curation-rule", "trending");
+        verify(curationConfigRepository).save(org.mockito.ArgumentMatchers.argThat(config ->
+                "trending".equals(config.getRuleId())
+                        && Boolean.FALSE.equals(config.getEnabled())
+                        && Integer.valueOf(2).equals(config.getDefaultSize())
+                        && Integer.valueOf(6).equals(config.getMaxSize())
+                        && "临时下线首屏热榜，观察教学专题转化".equals(config.getOperationHint())));
+        verify(auditLogService).record(
+                org.mockito.ArgumentMatchers.eq("gallery-curation-rule"),
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.eq("trending"),
+                org.mockito.ArgumentMatchers.eq("trending"),
+                org.mockito.ArgumentMatchers.eq("AIGC"),
+                org.mockito.ArgumentMatchers.anyMap(),
+                org.mockito.ArgumentMatchers.argThat(summary ->
+                        "database".equals(summary.get("configSource"))
+                                && Boolean.FALSE.equals(summary.get("enabled"))
+                                && Integer.valueOf(2).equals(summary.get("defaultSize"))));
     }
 
     @Test

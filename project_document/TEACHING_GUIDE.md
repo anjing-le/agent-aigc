@@ -11,7 +11,7 @@
 - 新增接口为什么必须经过 `ApiConstants`、`service-boundaries.json`、OpenAPI 类型和前端 API 模块。
 - 为什么页面只关心体验，底层请求、响应、上下文、错误和时间都交给脚手架。
 - 如何用测试、构建、契约脚本和 runtime probe 证明改动没有破坏工程底座。
-- 为什么当前项目已经达到约 93% 的 V1 教学演示候选完成度，剩余工作主要是生产化增强。
+- 为什么当前项目已经达到约 94% 的 V1 教学演示候选完成度，剩余工作主要是生产化增强。
 
 ## 推荐课时
 
@@ -59,16 +59,16 @@
 
 ### 3. 讲一条接口如何生长
 
-以公开分享转化漏斗为例：
+以灵感广场运营规则配置为例：
 
-1. 后端在 `ApiConstants.Aigc` 声明 `/gallery/{assetId}/share/reuse`。
-2. 在 `contracts/service-boundaries.json` 声明 `galleryShareReuse`。
-3. Controller 暴露 `recordGallerySharePromptReuse`，返回 `APIResponse<Void>`。
-4. Service 查已发布资产，并写入 `prompt-reuse` 审计。
+1. 后端在 `ApiConstants.Aigc` 声明 `/gallery/curation/rules/config`。
+2. 在 `contracts/service-boundaries.json` 声明 `galleryCurationRuleConfig`。
+3. Controller 暴露 `updateGalleryCurationRule`，返回 `APIResponse<GalleryCurationRulesResponse>`。
+4. Service 校验规则、走管理角色边界、保存配置并写入管理审计。
 5. OpenAPI 生成前端 operation 和 schema。
-6. `frontend/src/api/aigc.ts` 封装 `fetchRecordGallerySharePromptReuse`。
-7. 分享页点击“复用 Prompt”时调用 API，再跳转创作台。
-8. 报表页读取 `shareFunnel`，展示分享访问、下载和复用转化。
+6. `frontend/src/api/aigc.ts` 封装 `fetchUpdateGalleryCurationRule`。
+7. 灵感广场页面打开配置弹窗并调用 typed API。
+8. 页面刷新后展示 `configSource=database`，用于讲清楚规则从内置说明升级成页面配置。
 
 这条线最适合讲“业务功能不是孤立页面按钮，而是从契约、服务、数据、前端和报表一起长出来”。
 
@@ -131,7 +131,7 @@
 
 第三段：
 
-> 最后看分享转化漏斗。它不是单独做一张图，而是分享页访问、Prompt 复用、公开下载都进入审计，再由报表聚合出来。
+> 最后看运营规则配置。它不是页面里改几个字段，而是从 ApiConstants、service-boundary、OpenAPI、角色边界、审计和页面状态一起长出来。
 
 收尾：
 
@@ -145,7 +145,7 @@
 - 截图时避开本地个人路径、Cookie、Token。
 - 每完成一段功能讲解，都回到脚手架继承点说明它为什么可复制。
 - 结尾运行 `./scripts/quality-gate.sh` 或展示 `project_document/DEMO_EVIDENCE.md` 的最新结果。
-- 收尾时明确当前完成度约 93%，V1 已可教学演示，生产级计费/KMS/可编辑运营后台配置化仍是后续增强。
+- 收尾时明确当前完成度约 94%，V1 已可教学演示，生产级计费/KMS/规则权重投放仍是后续增强。
 
 ## 学员常见问题
 

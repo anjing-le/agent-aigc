@@ -54,4 +54,13 @@ public class GalleryCurationRuleResponse {
 
     @Schema(description = "Whether this rule is enabled")
     private Boolean enabled;
+
+    @Schema(description = "Rule config source, such as built-in or database")
+    private String configSource;
+
+    @Schema(description = "Last config updater")
+    private String updatedBy;
+
+    @Schema(description = "Last config update time")
+    private String updatedAt;
 }

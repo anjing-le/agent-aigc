@@ -400,6 +400,9 @@ export type GalleryCurationRulesResponse = Omit<
   rules?: GalleryCurationRule[]
 }
 
+/** 灵感广场运营规则配置更新请求 */
+export type GalleryCurationRuleUpdateRequest = OpenApiOperationRequest<'updateGalleryCurationRule'>
+
 /** 灵感广场公开分享页响应 */
 export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>, 'asset'> & {
   /** 已发布作品 */

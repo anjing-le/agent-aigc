@@ -1,6 +1,7 @@
 package com.anjing.aigc.controller;
 
 import com.anjing.aigc.model.dto.MaterialDTO;
+import com.anjing.aigc.model.request.GalleryCurationRuleUpdateRequest;
 import com.anjing.aigc.model.request.GenerateRequest;
 import com.anjing.aigc.model.request.ProviderCredentialUpdateRequest;
 import com.anjing.aigc.model.request.ProviderParamUpdateRequest;
@@ -366,6 +367,14 @@ public class AigcController {
     @Operation(summary = "获取灵感广场运营规则说明")
     public APIResponse<GalleryCurationRulesResponse> getGalleryCurationRules() {
         GalleryCurationRulesResponse rules = aigcService.getGalleryCurationRules();
+        return APIResponse.success(rules);
+    }
+
+    @PostMapping(ApiConstants.Aigc.GALLERY_CURATION_RULE_CONFIG)
+    @Operation(summary = "更新灵感广场运营规则配置")
+    public APIResponse<GalleryCurationRulesResponse> updateGalleryCurationRule(
+            @Valid @RequestBody GalleryCurationRuleUpdateRequest request) {
+        GalleryCurationRulesResponse rules = aigcService.updateGalleryCurationRule(request);
         return APIResponse.success(rules);
     }
 

@@ -31,6 +31,7 @@ public class AigcProviderAuditLogService {
     public static final String ACTION_SMOKE_TEST = "smoke-test";
     public static final String ACTION_PERMISSION_DENIED = "permission-denied";
     public static final String ACTION_OWNERSHIP_BACKFILL = "ownership-backfill";
+    public static final String ACTION_GALLERY_CURATION_RULE = "gallery-curation-rule";
 
     private final AigcProviderAuditLogRepository auditLogRepository;
 

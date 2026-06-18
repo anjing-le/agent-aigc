@@ -288,6 +288,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/models/active-provider",
     operationId: "updateActiveProvider"
   },
+  updateGalleryCurationRule: {
+    method: "POST",
+    path: "/api/aigc/gallery/curation/rules/config",
+    operationId: "updateGalleryCurationRule"
+  },
   updateItem: {
     method: "PUT",
     path: "/api/test/items/{id}",
@@ -697,6 +702,13 @@ export interface OpenApiOperationTypes {
     request: Schemas.ProviderRouteUpdateRequest
     response: Schemas.APIResponseProviderRouteUpdateResponse
     data: NonNullable<Schemas.APIResponseProviderRouteUpdateResponse['data']>
+  }
+  updateGalleryCurationRule: {
+    pathParams: undefined
+    query: undefined
+    request: Schemas.GalleryCurationRuleUpdateRequest
+    response: Schemas.APIResponseGalleryCurationRulesResponse
+    data: NonNullable<Schemas.APIResponseGalleryCurationRulesResponse['data']>
   }
   updateItem: {
     pathParams: { id: number }
