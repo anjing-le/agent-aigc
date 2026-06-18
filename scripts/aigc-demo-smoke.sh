@@ -118,6 +118,7 @@ REPORT_FILE="$TMP_DIR/gallery-report.json"
 PROVIDER_FILE="$TMP_DIR/provider-report.json"
 COLLECTIONS_FILE="$TMP_DIR/gallery-collections.json"
 TOPICS_FILE="$TMP_DIR/gallery-topics.json"
+CREATOR_RANKING_FILE="$TMP_DIR/gallery-creator-ranking.json"
 
 api GET "/api/test/health" > "$HEALTH_FILE"
 assert_api_success "$HEALTH_FILE" "health"
@@ -196,7 +197,10 @@ assert_api_success "$COLLECTIONS_FILE" "gallery collections"
 api GET "/api/aigc/gallery/topics?size=$COLLECTION_SIZE" > "$TOPICS_FILE"
 assert_api_success "$TOPICS_FILE" "gallery topics"
 
-node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" "$TOPICS_FILE" <<'NODE'
+api GET "/api/aigc/gallery/creators/ranking?size=5" > "$CREATOR_RANKING_FILE"
+assert_api_success "$CREATOR_RANKING_FILE" "gallery creator ranking"
+
+node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" "$TOPICS_FILE" "$CREATOR_RANKING_FILE" "$USER_ID" <<'NODE'
 const fs = require('fs')
 
 const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
@@ -204,6 +208,8 @@ const galleryResponse = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'))
 const providerResponse = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'))
 const collectionsResponse = JSON.parse(fs.readFileSync(process.argv[5], 'utf8'))
 const topicsResponse = JSON.parse(fs.readFileSync(process.argv[6], 'utf8'))
+const creatorRankingResponse = JSON.parse(fs.readFileSync(process.argv[7], 'utf8'))
+const expectedUserId = process.argv[8]
 
 function number(value) {
   const parsed = Number(value ?? 0)
@@ -267,6 +273,17 @@ assert(topicWithCreatedAsset, 'gallery topics must include the generated publish
 assert(topicWithCreatedAsset.coverAsset?.id, 'gallery topic coverAsset is required')
 assert(topicWithCreatedAsset.operationHint, 'gallery topic operationHint is required')
 
+const creatorRankingData = creatorRankingResponse.data || {}
+const creators = creatorRankingData.creators || []
+assert(Array.isArray(creators), 'gallery creator ranking must be an array')
+assert(creators.length >= 1, 'gallery creator ranking must include at least one creator')
+assert(number(creatorRankingData.size) >= 1, 'gallery creator ranking size must be positive')
+const smokeCreator = creators.find((creator) => creator.authorId === expectedUserId)
+assert(smokeCreator, `gallery creator ranking must include ${expectedUserId}`)
+assert(number(smokeCreator.publishedCount) >= 1, 'gallery creator ranking publishedCount must be positive')
+assert(number(smokeCreator.heatScore) >= 0, 'gallery creator ranking heatScore must be numeric')
+assert(smokeCreator.topAsset?.id, 'gallery creator ranking topAsset is required')
+
 console.log('aigc-demo-smoke: ok')
 console.log(`aigc-demo-smoke: taskId=${task.taskId}`)
 console.log(`aigc-demo-smoke: assetId=${result.assetId}`)
@@ -274,4 +291,5 @@ console.log(`aigc-demo-smoke: gallery shareView=${shareViewCount} download=${dow
 console.log(`aigc-demo-smoke: provider totalTasks=${provider.totalTasks} completedTasks=${provider.completedTasks} successRate=${provider.successRate}`)
 console.log(`aigc-demo-smoke: gallery collections=${collections.length} matched=${collectionWithCreatedAsset.id}`)
 console.log(`aigc-demo-smoke: gallery topics=${topics.length} matched=${topicWithCreatedAsset.id}`)
+console.log(`aigc-demo-smoke: gallery creators=${creators.length} matched=${smokeCreator.authorId}`)
 NODE

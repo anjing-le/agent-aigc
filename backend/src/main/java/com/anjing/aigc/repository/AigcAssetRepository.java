@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -125,6 +126,30 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
             Pageable pageable);
 
     @Query("""
+            select case
+                    when a.ownerId is null or a.ownerId = '' then 'anonymous'
+                    else a.ownerId
+                end as authorId,
+                count(a) as publishedCount,
+                coalesce(sum(a.likeCount), 0) as totalLikeCount,
+                coalesce(sum(a.favoriteCount), 0) as totalFavoriteCount
+            from AigcAsset a
+            where a.isPublished = true
+              and (:contentType is null or a.contentType = :contentType)
+              and (:keyword is null or lower(a.prompt) like lower(concat('%', :keyword, '%')))
+            group by case
+                    when a.ownerId is null or a.ownerId = '' then 'anonymous'
+                    else a.ownerId
+                end
+            order by (coalesce(sum(a.likeCount), 0) + coalesce(sum(a.favoriteCount), 0) * 2) desc,
+                     count(a) desc
+            """)
+    List<PublishedAuthorRankingProjection> rankPublishedAuthors(
+            @Param("contentType") ContentType contentType,
+            @Param("keyword") String keyword,
+            Pageable pageable);
+
+    @Query("""
             select a from AigcAsset a
             where a.isPublished = true
               and (
@@ -176,4 +201,15 @@ public interface AigcAssetRepository extends JpaRepository<AigcAsset, Long> {
     long sumPublishedFavoriteCountByOwner(
             @Param("ownerId") String ownerId,
             @Param("anonymousOwner") boolean anonymousOwner);
+
+    interface PublishedAuthorRankingProjection {
+
+        String getAuthorId();
+
+        Long getPublishedCount();
+
+        Long getTotalLikeCount();
+
+        Long getTotalFavoriteCount();
+    }
 }

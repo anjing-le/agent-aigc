@@ -82,6 +82,15 @@ export interface APIResponseGalleryCollectionsResponse {
   timestamp?: number
 }
 
+export interface APIResponseGalleryCreatorRankingResponse {
+  code?: string
+  data?: GalleryCreatorRankingResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGalleryDTO {
   code?: string
   data?: GalleryDTO
@@ -566,6 +575,82 @@ export interface GalleryCreatorMetricResponse {
   likeCount?: number
   successfulEvents?: number
   totalEvents?: number
+}
+
+/**
+ * AIGC gallery public creator ranking item
+ */
+export interface GalleryCreatorRankingItemResponse {
+  /**
+   * Published audio count
+   */
+  audioCount?: number
+  /**
+   * Public author id
+   */
+  authorId?: string
+  /**
+   * Public author display name
+   */
+  authorName?: string
+  /**
+   * Creator dominant content type
+   */
+  dominantContentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Heat score: likes + favorites * 2
+   */
+  heatScore?: number
+  /**
+   * Published image count
+   */
+  imageCount?: number
+  /**
+   * Published asset count in current ranking scope
+   */
+  publishedCount?: number
+  /**
+   * Representative high-interaction asset
+   */
+  topAsset?: GalleryDTO
+  /**
+   * Total favorite count in current ranking scope
+   */
+  totalFavoriteCount?: number
+  /**
+   * Total like count in current ranking scope
+   */
+  totalLikeCount?: number
+  /**
+   * Published video count
+   */
+  videoCount?: number
+}
+
+/**
+ * AIGC gallery public creator ranking
+ */
+export interface GalleryCreatorRankingResponse {
+  /**
+   * Optional content type scope
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Ranked public creators
+   */
+  creators?: GalleryCreatorRankingItemResponse[]
+  /**
+   * Generated timestamp
+   */
+  generatedAt?: string
+  /**
+   * Optional keyword scope
+   */
+  keyword?: string
+  /**
+   * Ranking size
+   */
+  size?: number
 }
 
 export interface GalleryDailyMetricResponse {
@@ -1456,6 +1541,7 @@ export interface OpenApiSchemas {
   APIResponseCurrentUserResponse: APIResponseCurrentUserResponse
   APIResponseGalleryAuthorProfileResponse: APIResponseGalleryAuthorProfileResponse
   APIResponseGalleryCollectionsResponse: APIResponseGalleryCollectionsResponse
+  APIResponseGalleryCreatorRankingResponse: APIResponseGalleryCreatorRankingResponse
   APIResponseGalleryDTO: APIResponseGalleryDTO
   APIResponseGalleryInteractionReportResponse: APIResponseGalleryInteractionReportResponse
   APIResponseGalleryShareResponse: APIResponseGalleryShareResponse
@@ -1497,6 +1583,8 @@ export interface OpenApiSchemas {
   GalleryCollectionsResponse: GalleryCollectionsResponse
   GalleryContentTypeMetricResponse: GalleryContentTypeMetricResponse
   GalleryCreatorMetricResponse: GalleryCreatorMetricResponse
+  GalleryCreatorRankingItemResponse: GalleryCreatorRankingItemResponse
+  GalleryCreatorRankingResponse: GalleryCreatorRankingResponse
   GalleryDailyMetricResponse: GalleryDailyMetricResponse
   GalleryDTO: GalleryDTO
   GalleryInteractionReportResponse: GalleryInteractionReportResponse

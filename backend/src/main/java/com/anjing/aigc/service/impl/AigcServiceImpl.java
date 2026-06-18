@@ -23,6 +23,8 @@ import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryCollectionResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
+import com.anjing.aigc.model.response.GalleryCreatorRankingItemResponse;
+import com.anjing.aigc.model.response.GalleryCreatorRankingResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GalleryTopicResponse;
 import com.anjing.aigc.model.response.GalleryTopicsResponse;
@@ -110,6 +112,8 @@ public class AigcServiceImpl implements AigcService {
     private static final int GALLERY_COLLECTION_DEFAULT_SIZE = 4;
     private static final int GALLERY_COLLECTION_MAX_SIZE = 8;
     private static final int GALLERY_TOPIC_CANDIDATE_MULTIPLIER = 4;
+    private static final int GALLERY_CREATOR_RANKING_DEFAULT_SIZE = 5;
+    private static final int GALLERY_CREATOR_RANKING_MAX_SIZE = 20;
 
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
@@ -1317,6 +1321,31 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public GalleryCreatorRankingResponse getGalleryCreatorRanking(String contentType, String keyword, Integer size) {
+        ContentType parsedContentType = parseContentType(contentType);
+        String normalizedKeyword = normalizeFilter(keyword);
+        int rankingSize = size != null && size > 0
+                ? Math.min(size, GALLERY_CREATOR_RANKING_MAX_SIZE)
+                : GALLERY_CREATOR_RANKING_DEFAULT_SIZE;
+        PageRequest pageRequest = PageRequest.of(0, rankingSize);
+        List<GalleryCreatorRankingItemResponse> creators = assetRepository.rankPublishedAuthors(
+                        parsedContentType,
+                        normalizedKeyword,
+                        pageRequest)
+                .stream()
+                .map(this::toGalleryCreatorRankingItem)
+                .collect(Collectors.toList());
+
+        return GalleryCreatorRankingResponse.builder()
+                .contentType(parsedContentType)
+                .keyword(normalizedKeyword)
+                .size(rankingSize)
+                .generatedAt(DateUtils.nowIso())
+                .creators(creators)
+                .build();
+    }
+
+    @Override
     public PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size) {
         PageRequest pageRequest = PageRequest.of(
                 current != null && current > 0 ? current - 1 : 0,
@@ -1937,6 +1966,31 @@ public class AigcServiceImpl implements AigcService {
                 .collect(Collectors.toList());
     }
 
+    private GalleryCreatorRankingItemResponse toGalleryCreatorRankingItem(
+            AigcAssetRepository.PublishedAuthorRankingProjection projection) {
+        String authorId = normalizeAuthorId(projection.getAuthorId());
+        boolean anonymousOwner = ANONYMOUS_AUTHOR_ID.equals(authorId);
+        long imageCount = assetRepository.countPublishedByOwner(authorId, anonymousOwner, ContentType.IMAGE);
+        long videoCount = assetRepository.countPublishedByOwner(authorId, anonymousOwner, ContentType.VIDEO);
+        long audioCount = assetRepository.countPublishedByOwner(authorId, anonymousOwner, ContentType.AUDIO);
+        long totalLikeCount = safeLong(projection.getTotalLikeCount());
+        long totalFavoriteCount = safeLong(projection.getTotalFavoriteCount());
+
+        return GalleryCreatorRankingItemResponse.builder()
+                .authorId(authorId)
+                .authorName(resolveAuthorName(authorId))
+                .publishedCount(safeLong(projection.getPublishedCount()))
+                .imageCount(imageCount)
+                .videoCount(videoCount)
+                .audioCount(audioCount)
+                .totalLikeCount(totalLikeCount)
+                .totalFavoriteCount(totalFavoriteCount)
+                .heatScore(heatScore(totalLikeCount, totalFavoriteCount))
+                .dominantContentType(resolveDominantContentType(imageCount, videoCount, audioCount))
+                .topAsset(resolveTopAuthorAssets(authorId, anonymousOwner).stream().findFirst().orElse(null))
+                .build();
+    }
+
     private int compareAuthorAssetInteraction(AigcAsset left, AigcAsset right) {
         int scoreCompare = Integer.compare(authorAssetInteractionScore(right), authorAssetInteractionScore(left));
         if (scoreCompare != 0) {
@@ -1958,6 +2012,14 @@ public class AigcServiceImpl implements AigcService {
 
     private int authorAssetInteractionScore(AigcAsset asset) {
         return resolveLikeCount(asset) + resolveFavoriteCount(asset);
+    }
+
+    private long heatScore(long likeCount, long favoriteCount) {
+        return likeCount + favoriteCount * 2;
+    }
+
+    private long safeLong(Long value) {
+        return value == null ? 0 : value;
     }
 
     private ContentType resolveDominantContentType(long imageCount, long videoCount, long audioCount) {

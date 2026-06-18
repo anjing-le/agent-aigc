@@ -161,6 +161,79 @@
       </div>
     </section>
 
+    <section
+      v-if="creatorRanking.length"
+      v-loading="creatorRankingLoading"
+      class="prompt-gallery__creators"
+    >
+      <div class="prompt-gallery__creators-header">
+        <div>
+          <h3>创作者榜单</h3>
+          <p>{{ creatorRankingDescription }}</p>
+        </div>
+        <el-tag effect="plain">Top {{ creatorRanking.length }}</el-tag>
+      </div>
+
+      <div class="prompt-gallery__creator-list">
+        <article
+          v-for="(creator, index) in creatorRanking"
+          :key="creator.authorId || index"
+          class="prompt-gallery__creator"
+        >
+          <span class="prompt-gallery__creator-rank">#{{ index + 1 }}</span>
+          <button
+            type="button"
+            class="prompt-gallery__creator-preview"
+            @click="creator.topAsset && openPublicGalleryPage(creator.topAsset)"
+          >
+            <img
+              v-if="creator.topAsset"
+              :src="resolveAigcGalleryPreviewUrl(creator.topAsset)"
+              alt=""
+            />
+            <User v-else />
+          </button>
+
+          <div class="prompt-gallery__creator-main">
+            <div class="prompt-gallery__creator-title">
+              <strong>{{ creator.authorName || creator.authorId || '匿名创作者' }}</strong>
+              <el-tag size="small" effect="plain">
+                {{ formatContentType(creator.dominantContentType) }}
+              </el-tag>
+            </div>
+            <div class="prompt-gallery__creator-meta">
+              <span>{{ creator.publishedCount || 0 }} 个作品</span>
+              <span>{{ creator.heatScore || 0 }} 热度</span>
+              <span>{{ creator.totalLikeCount || 0 }} 赞</span>
+              <span>{{ creator.totalFavoriteCount || 0 }} 收藏</span>
+            </div>
+            <button
+              v-if="creator.topAsset"
+              type="button"
+              class="prompt-gallery__creator-work"
+              @click="handleUse(creator.topAsset)"
+            >
+              {{ truncateText(creator.topAsset.prompt, 52) }}
+            </button>
+          </div>
+
+          <div class="prompt-gallery__creator-actions">
+            <el-button size="small" :icon="User" @click="openAuthorPage(creator.authorId)">
+              主页
+            </el-button>
+            <el-button
+              v-if="creator.topAsset"
+              size="small"
+              :icon="MagicStick"
+              @click="handleUse(creator.topAsset)"
+            >
+              复用
+            </el-button>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <div class="prompt-gallery__filter">
       <div class="prompt-gallery__filter-left">
         <el-radio-group v-model="activeContentType" @change="handleFilterChange">
@@ -333,7 +406,7 @@
 </template>
 
 <script setup lang="ts">
-  import { DataAnalysis, Link, MagicStick, Refresh, Search } from '@element-plus/icons-vue'
+  import { DataAnalysis, Link, MagicStick, Refresh, Search, User } from '@element-plus/icons-vue'
   import { useDebounceFn, useClipboard } from '@vueuse/core'
   import { ElMessage } from 'element-plus'
   import PromptCard from './components/PromptCard.vue'
@@ -341,6 +414,7 @@
     fetchFavoriteGalleryAsset,
     fetchGetGalleryAuditLogs,
     fetchGetGalleryCollections,
+    fetchGetGalleryCreatorRanking,
     fetchGetFavoriteGalleryList,
     fetchGetGalleryList,
     fetchGetGalleryRanking,
@@ -353,6 +427,7 @@
     ContentType,
     GalleryAuditLogItem,
     GalleryCollection,
+    GalleryCreatorRankingItem,
     GalleryItem,
     GalleryTopic
   } from '@/api/model/aigcModel'
@@ -375,6 +450,8 @@
   const collectionsLoading = ref(false)
   const galleryTopics = ref<GalleryTopic[]>([])
   const topicsLoading = ref(false)
+  const creatorRanking = ref<GalleryCreatorRankingItem[]>([])
+  const creatorRankingLoading = ref(false)
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(24)
@@ -483,6 +560,12 @@
       : '按运营场景组织可分享、可下载、可复用的公开作品'
   )
 
+  const creatorRankingDescription = computed(() =>
+    activeContentType.value
+      ? `${formatContentType(activeContentType.value)}作品下的高互动创作者`
+      : '按已发布作品的点赞、收藏和代表作热度聚合公开创作者'
+  )
+
   const galleryAuditActionLabels: Record<string, string> = {
     publish: '发布',
     unpublish: '撤回',
@@ -514,6 +597,7 @@
         await loadRankingData()
         await loadCollectionsData()
         await loadTopicsData()
+        await loadCreatorRankingData()
       }
     } catch (error) {
       console.error('加载数据失败:', error)
@@ -652,6 +736,28 @@
     }
   }
 
+  const loadCreatorRankingData = async () => {
+    if (dataSource.value !== 'api' || showOnlyFavorites.value) {
+      creatorRanking.value = []
+      return
+    }
+
+    try {
+      creatorRankingLoading.value = true
+      const response = await fetchGetGalleryCreatorRanking({
+        size: 5,
+        keyword: searchKeyword.value || undefined,
+        contentType: activeContentType.value || undefined
+      })
+      creatorRanking.value = (response.creators || []).map(normalizeGalleryCreator)
+    } catch (error) {
+      console.warn('加载灵感广场创作者榜单失败:', error)
+      creatorRanking.value = []
+    } finally {
+      creatorRankingLoading.value = false
+    }
+  }
+
   /** 加载静态提示词数据 */
   const loadStaticPrompts = async () => {
     if (staticPrompts.value.length > 0) return
@@ -701,6 +807,13 @@
       coverAsset: topic.coverAsset ? normalizeGalleryItem(topic.coverAsset) : assets[0]
     }
   }
+
+  const normalizeGalleryCreator = (
+    creator: GalleryCreatorRankingItem
+  ): GalleryCreatorRankingItem => ({
+    ...creator,
+    topAsset: creator.topAsset ? normalizeGalleryItem(creator.topAsset) : undefined
+  })
 
   /** 筛选静态数据 */
   const filterStaticPrompts = () => {
@@ -815,6 +928,18 @@
     window.open(resolvePublicGalleryUrl(item), '_blank', 'noopener,noreferrer')
   }
 
+  const openAuthorPage = (authorId?: string) => {
+    if (!authorId) return
+    const route = router.resolve({
+      path: `/share/creators/${encodeURIComponent(authorId)}`
+    })
+    window.open(
+      `${window.location.origin}${window.location.pathname}${route.href}`,
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }
+
   const handleLike = async (item: GalleryItem) => {
     if (dataSource.value === 'static') {
       updateGalleryLikeState(item.id, {
@@ -852,6 +977,7 @@
     )
     galleryCollections.value = patchGalleryCollections(assetId, patch)
     galleryTopics.value = patchGalleryTopics(assetId, patch)
+    creatorRanking.value = patchCreatorRanking(assetId, patch)
     if (patch.likedByCurrentUser) {
       likedAssetIds.value.add(assetId)
     } else {
@@ -903,6 +1029,7 @@
     )
     galleryCollections.value = patchGalleryCollections(assetId, patch)
     galleryTopics.value = patchGalleryTopics(assetId, patch)
+    creatorRanking.value = patchCreatorRanking(assetId, patch)
     if (patch.favoritedByCurrentUser) {
       favoritedAssetIds.value.add(assetId)
     } else {
@@ -944,6 +1071,13 @@
       assets: (topic.assets || []).map((asset) =>
         asset.id === assetId ? { ...asset, ...patch } : asset
       )
+    }))
+
+  const patchCreatorRanking = (assetId: string, patch: Partial<GalleryItem>) =>
+    creatorRanking.value.map((creator) => ({
+      ...creator,
+      topAsset:
+        creator.topAsset?.id === assetId ? { ...creator.topAsset, ...patch } : creator.topAsset
     }))
 
   const loadGalleryAuditLogs = async () => {
@@ -1376,6 +1510,139 @@
       }
     }
 
+    &__creators {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__creators-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__creator-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    &__creator {
+      display: grid;
+      grid-template-columns: 48px 72px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 92px;
+      padding: 12px;
+      background: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 8px;
+    }
+
+    &__creator-rank {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--el-color-primary);
+    }
+
+    &__creator-preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px;
+      height: 72px;
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+      color: var(--el-text-color-secondary);
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      svg {
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    &__creator-main {
+      min-width: 0;
+    }
+
+    &__creator-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+
+      strong {
+        overflow: hidden;
+        color: var(--el-text-color-primary);
+        font-size: 14px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    &__creator-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+    }
+
+    &__creator-work {
+      max-width: 100%;
+      height: 28px;
+      margin-top: 8px;
+      padding: 0 10px;
+      overflow: hidden;
+      cursor: pointer;
+      color: var(--el-text-color-regular);
+      text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
+    }
+
+    &__creator-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 132px;
+      flex-wrap: wrap;
+    }
+
     &__ranking {
       margin-bottom: 16px;
       padding: 16px;
@@ -1580,6 +1847,15 @@
         grid-template-columns: 1fr;
       }
 
+      &__creator {
+        grid-template-columns: 44px 72px minmax(0, 1fr);
+      }
+
+      &__creator-actions {
+        grid-column: 3;
+        justify-content: flex-start;
+      }
+
       &__ranking-item {
         grid-template-columns: 44px minmax(0, 1fr);
       }
@@ -1626,6 +1902,10 @@
         flex-direction: column;
       }
 
+      &__creators-header {
+        flex-direction: column;
+      }
+
       &__collection {
         grid-template-columns: 1fr;
       }
@@ -1664,6 +1944,26 @@
           width: 100%;
           justify-content: flex-start;
         }
+      }
+
+      &__creator {
+        grid-template-columns: 1fr;
+      }
+
+      &__creator-preview {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+
+      &__creator-actions {
+        grid-column: auto;
+        justify-content: flex-start;
+        min-width: 0;
+      }
+
+      &__creator-actions .el-button {
+        flex: 1 1 110px;
       }
 
       &__ranking-item {

@@ -334,6 +334,57 @@ export type GalleryTopicsResponse = Omit<
   topics?: GalleryTopic[]
 }
 
+/** 灵感广场公开创作者榜单查询参数 */
+export type GalleryCreatorRankingSearchParams =
+  OpenApiOperationQuery<'getGalleryCreatorRanking'> & {
+    /** 内容类型筛选 */
+    contentType?: ContentType
+    /** 关键词搜索 */
+    keyword?: string
+    /** 榜单数量 */
+    size?: number
+  }
+
+/** 灵感广场公开创作者榜单项 */
+export type GalleryCreatorRankingItem = Omit<
+  Schemas.GalleryCreatorRankingItemResponse,
+  'dominantContentType' | 'topAsset'
+> & {
+  /** 公开作者标识 */
+  authorId?: string
+  /** 公开作者名称 */
+  authorName?: string
+  /** 当前榜单范围内的发布作品数 */
+  publishedCount?: number
+  /** 图片作品数 */
+  imageCount?: number
+  /** 视频作品数 */
+  videoCount?: number
+  /** 音频作品数 */
+  audioCount?: number
+  /** 点赞数 */
+  totalLikeCount?: number
+  /** 收藏数 */
+  totalFavoriteCount?: number
+  /** 热度 */
+  heatScore?: number
+  /** 主创作类型 */
+  dominantContentType?: ContentType
+  /** 代表作品 */
+  topAsset?: GalleryItem
+}
+
+/** 灵感广场公开创作者榜单响应 */
+export type GalleryCreatorRankingResponse = Omit<
+  OpenApiOperationData<'getGalleryCreatorRanking'>,
+  'contentType' | 'creators'
+> & {
+  /** 内容类型筛选 */
+  contentType?: ContentType
+  /** 公开创作者榜单 */
+  creators?: GalleryCreatorRankingItem[]
+}
+
 /** 灵感广场公开分享页响应 */
 export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>, 'asset'> & {
   /** 已发布作品 */

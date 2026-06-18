@@ -316,6 +316,60 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void getGalleryCreatorRankingBuildsPublicCreatorRanking() {
+        AigcAsset topAsset = asset("asset-creator-top");
+        topAsset.setOwnerId("creator-1");
+        topAsset.setPrompt("course cover image for agent lesson");
+        topAsset.setIsPublished(true);
+        topAsset.setLikeCount(6);
+        topAsset.setFavoriteCount(2);
+        topAsset.setCreatedAt(LocalDateTime.now());
+
+        AigcAssetRepository.PublishedAuthorRankingProjection projection =
+                mock(AigcAssetRepository.PublishedAuthorRankingProjection.class);
+        when(projection.getAuthorId()).thenReturn("creator-1");
+        when(projection.getPublishedCount()).thenReturn(2L);
+        when(projection.getTotalLikeCount()).thenReturn(8L);
+        when(projection.getTotalFavoriteCount()).thenReturn(3L);
+
+        when(assetRepository.rankPublishedAuthors(
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.eq("course"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0
+                                && pageable.getPageSize() == 5
+                                && pageable.getSort().isUnsorted())))
+                .thenReturn(List.of(projection));
+        when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.IMAGE)).thenReturn(2L);
+        when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.VIDEO)).thenReturn(0L);
+        when(assetRepository.countPublishedByOwner("creator-1", false, ContentType.AUDIO)).thenReturn(0L);
+        when(assetRepository.searchPublishedByOwner(
+                org.mockito.ArgumentMatchers.eq("creator-1"),
+                org.mockito.ArgumentMatchers.eq(false),
+                org.mockito.ArgumentMatchers.<ContentType>isNull(),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0
+                                && pageable.getPageSize() == 50
+                                && pageable.getSort().getOrderFor("createdAt") != null)))
+                .thenReturn(new PageImpl<>(List.of(topAsset)));
+
+        var response = aigcService.getGalleryCreatorRanking("IMAGE", " course ", 5);
+
+        assertEquals(ContentType.IMAGE, response.getContentType());
+        assertEquals("course", response.getKeyword());
+        assertEquals(5, response.getSize());
+        assertEquals(1, response.getCreators().size());
+        assertEquals("creator-1", response.getCreators().get(0).getAuthorId());
+        assertEquals("creator-1", response.getCreators().get(0).getAuthorName());
+        assertEquals(2L, response.getCreators().get(0).getPublishedCount());
+        assertEquals(8L, response.getCreators().get(0).getTotalLikeCount());
+        assertEquals(3L, response.getCreators().get(0).getTotalFavoriteCount());
+        assertEquals(14L, response.getCreators().get(0).getHeatScore());
+        assertEquals(ContentType.IMAGE, response.getCreators().get(0).getDominantContentType());
+        assertEquals("asset-creator-top", response.getCreators().get(0).getTopAsset().getId());
+    }
+
+    @Test
     void probeProviderReportsMissingGoogleConfiguration() {
         givenImageProviders();
 

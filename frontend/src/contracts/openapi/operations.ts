@@ -103,6 +103,11 @@ export const OPENAPI_OPERATIONS = {
     path: "/api/aigc/gallery/collections",
     operationId: "getGalleryCollections"
   },
+  getGalleryCreatorRanking: {
+    method: "GET",
+    path: "/api/aigc/gallery/creators/ranking",
+    operationId: "getGalleryCreatorRanking"
+  },
   getGalleryInteractionReport: {
     method: "GET",
     path: "/api/aigc/gallery/reports/interactions",
@@ -428,6 +433,13 @@ export interface OpenApiOperationTypes {
     request: undefined
     response: Schemas.APIResponseGalleryCollectionsResponse
     data: NonNullable<Schemas.APIResponseGalleryCollectionsResponse['data']>
+  }
+  getGalleryCreatorRanking: {
+    pathParams: undefined
+    query: { contentType?: string; keyword?: string; size?: number }
+    request: undefined
+    response: Schemas.APIResponseGalleryCreatorRankingResponse
+    data: NonNullable<Schemas.APIResponseGalleryCreatorRankingResponse['data']>
   }
   getGalleryInteractionReport: {
     pathParams: undefined

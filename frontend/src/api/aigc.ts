@@ -7,6 +7,8 @@ import type {
   GalleryAuthorProfileResponse,
   GalleryCollectionsResponse,
   GalleryCollectionsSearchParams,
+  GalleryCreatorRankingResponse,
+  GalleryCreatorRankingSearchParams,
   GalleryListResponse,
   GalleryRankingResponse,
   GalleryRankingSearchParams,
@@ -121,6 +123,16 @@ export function fetchGetGalleryTopics(params: GalleryTopicsSearchParams) {
   return openApiRequest('getGalleryTopics', {
     query: params
   }) as Promise<GalleryTopicsResponse>
+}
+
+/**
+ * 获取灵感广场公开创作者榜单
+ * @param params 查询参数
+ */
+export function fetchGetGalleryCreatorRanking(params: GalleryCreatorRankingSearchParams) {
+  return openApiRequest('getGalleryCreatorRanking', {
+    query: params
+  }) as Promise<GalleryCreatorRankingResponse>
 }
 
 /**

@@ -14,6 +14,7 @@ import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuditLogResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
+import com.anjing.aigc.model.response.GalleryCreatorRankingResponse;
 import com.anjing.aigc.model.response.GalleryInteractionReportResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GalleryTopicsResponse;
@@ -347,6 +348,17 @@ public class AigcController {
             @RequestParam(defaultValue = "4") Integer size) {
         GalleryTopicsResponse topics = aigcService.getGalleryTopics(contentType, keyword, size);
         return APIResponse.success(topics);
+    }
+
+    @GetMapping(ApiConstants.Aigc.GALLERY_CREATOR_RANKING)
+    @Operation(summary = "获取灵感广场公开创作者榜单")
+    public APIResponse<GalleryCreatorRankingResponse> getGalleryCreatorRanking(
+            @RequestParam(required = false) String contentType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "5") Integer size) {
+        GalleryCreatorRankingResponse ranking = aigcService.getGalleryCreatorRanking(
+                contentType, keyword, size);
+        return APIResponse.success(ranking);
     }
 
     @GetMapping(ApiConstants.Aigc.GALLERY_FAVORITES)

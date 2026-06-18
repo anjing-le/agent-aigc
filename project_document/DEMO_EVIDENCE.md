@@ -7,7 +7,7 @@
 - 日期：2026-06-18
 - 功能基线：以 `main` 最新提交为准，本轮提交可通过 `git log -1 --pretty=fuller` 查看
 - Git author：`安静 <245548353+anjing-le@users.noreply.github.com>`
-- 结论：通过 V1 教学交付总验收，当前已具备创作、资产、灵感广场动态合集、人工运营专题、公开分享、互动报表和 Provider 调用报表的教学闭环。
+- 结论：通过 V1 教学交付总验收，当前已具备创作、资产、灵感广场动态合集、人工运营专题、创作者榜单、公开分享、互动报表和 Provider 调用报表的教学闭环。
 
 ## 命令证据
 
@@ -18,7 +18,7 @@
 | `cd frontend && pnpm build` | passed | 前端类型检查和生产构建 |
 | `./scripts/check-contracts.sh` | passed | 脚手架契约、服务边界、OpenAPI、上下文和 AIGC 专属守卫 |
 | `./scripts/probe-backend-dev.sh 18181` | passed | dev profile runtime OpenAPI probe |
-| `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表、Provider 调用报表、动态作品合集和人工运营专题闭环 |
+| `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表、Provider 调用报表、动态作品合集、人工运营专题和创作者榜单闭环 |
 | `./scripts/quality-gate.sh` | passed | 契约、后端 package、前端 build、后端 runtime probe 一次性通过 |
 | `./scripts/v1-teaching-acceptance.sh` | passed | 先跑 `quality-gate`，再临时启动 dev 后端并跑 AIGC smoke |
 
@@ -29,6 +29,7 @@ v1-teaching-acceptance: ok
 v1-teaching-acceptance: verified=scaffold-contracts,backend-build,frontend-build,runtime-openapi,aigc-smoke
 aigc-demo-smoke: gallery collections=3 matched=trending
 aigc-demo-smoke: gallery topics=2 matched=course-cover
+aigc-demo-smoke: gallery creators=1 matched=demo-smoke
 ```
 
 ## 业务冒烟证据
@@ -51,6 +52,7 @@ aigc-demo-smoke: gallery topics=2 matched=course-cover
 8. 查询 `/api/aigc/models/provider-execution-report?days=7&contentType=IMAGE`，确认当前用户上下文下 Provider/模型调用指标可见。
 9. 查询 `/api/aigc/gallery/collections?size=3`，确认 `trending`、`latest` 和内容类型合集从已发布作品动态聚合，并且新发布作品出现在合集资产里。
 10. 查询 `/api/aigc/gallery/topics?size=3`，确认人工运营专题返回场景、规则、运营建议，并且新发布作品出现在专题资产里。
+11. 查询 `/api/aigc/gallery/creators/ranking?size=5`，确认当前发布者进入创作者榜单，并返回代表作、作品数和热度。
 
 示例结果：
 
@@ -108,6 +110,17 @@ Provider 调用报表示例结果：
 }
 ```
 
+创作者榜单示例结果：
+
+```json
+{
+  "creatorCount": 1,
+  "firstCreator": "demo-smoke",
+  "publishedCount": 1,
+  "topAsset": "asset-id"
+}
+```
+
 ## 浏览器检查证据
 
 - 2026-06-17 使用 `SPRING_PROFILES_ACTIVE=dev SERVER_PORT=18185` 和 `VITE_API_PROXY_URL=http://127.0.0.1:18185 pnpm dev --host 127.0.0.1 --port 5176` 完成浏览器检查。
@@ -124,9 +137,10 @@ Provider 调用报表示例结果：
 2026-06-18 人工运营专题补充检查：
 
 - 使用 `SPRING_PROFILES_ACTIVE=dev SERVER_PORT=18187` 和 `VITE_API_PROXY_URL=http://127.0.0.1:18187 pnpm dev --host 127.0.0.1 --port 5177` 完成浏览器检查。
-- 检查前运行 `./scripts/aigc-demo-smoke.sh http://127.0.0.1:18187`，输出 `gallery topics=2 matched=course-cover`。
+- 检查前运行 `./scripts/aigc-demo-smoke.sh http://127.0.0.1:18187`，输出 `gallery topics=2 matched=course-cover`；新增创作者榜单后 smoke 会同时输出 `gallery creators=... matched=demo-smoke`。
 - `/aigc/gallery` 桌面视口：`人工运营专题`、`课程封面专题`、`高复用传播位` 均可见，专题数量 `2`，`scrollWidth=clientWidth=1280`，console error 为 `0`。
 - `/aigc/gallery` 390x844 移动视口：专题区单列渲染，`gridTemplateColumns=294px`，`scrollWidth=clientWidth=382`，console error 为 `0`。
+- 创作者榜单补充浏览器检查：`/aigc/gallery` 桌面 `1280x900` 和移动 `390x844` 均可见 `创作者榜单` 与 `demo-smoke`；桌面 `scrollWidth=clientWidth=1280`，移动 `scrollWidth=clientWidth=382`，console error 为 `0`。
 - 详细索引见 `docs/evidence/2026-06-18/README.md`。
 
 ## 教学讲解顺序
@@ -140,7 +154,7 @@ Provider 调用报表示例结果：
 
 - 按 `docs/evidence/2026-06-17/README.md` 录制一次完整演示视频或保存关键截图。
 - 在真实 Google Key 环境下补一次图片 Provider smoke test 证据。
-- 为作者主页、动态作品合集、人工运营专题和榜单补产品化截图。
+- 为作者主页、动态作品合集、人工运营专题和创作者榜单补产品化截图。
 
 ## 不提交内容
 
