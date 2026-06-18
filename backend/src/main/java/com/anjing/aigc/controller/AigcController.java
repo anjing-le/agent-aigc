@@ -15,6 +15,7 @@ import com.anjing.aigc.model.response.GalleryAuditLogResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryCreatorRankingResponse;
+import com.anjing.aigc.model.response.GalleryCurationRulesResponse;
 import com.anjing.aigc.model.response.GalleryInteractionReportResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GalleryTopicsResponse;
@@ -359,6 +360,13 @@ public class AigcController {
         GalleryCreatorRankingResponse ranking = aigcService.getGalleryCreatorRanking(
                 contentType, keyword, size);
         return APIResponse.success(ranking);
+    }
+
+    @GetMapping(ApiConstants.Aigc.GALLERY_CURATION_RULES)
+    @Operation(summary = "获取灵感广场运营规则说明")
+    public APIResponse<GalleryCurationRulesResponse> getGalleryCurationRules() {
+        GalleryCurationRulesResponse rules = aigcService.getGalleryCurationRules();
+        return APIResponse.success(rules);
     }
 
     @GetMapping(ApiConstants.Aigc.GALLERY_FAVORITES)

@@ -385,6 +385,21 @@ export type GalleryCreatorRankingResponse = Omit<
   creators?: GalleryCreatorRankingItem[]
 }
 
+/** 灵感广场运营规则 */
+export type GalleryCurationRule = Omit<Schemas.GalleryCurationRuleResponse, 'contentType'> & {
+  /** 内容类型范围 */
+  contentType?: ContentType
+}
+
+/** 灵感广场运营规则响应 */
+export type GalleryCurationRulesResponse = Omit<
+  OpenApiOperationData<'getGalleryCurationRules'>,
+  'rules'
+> & {
+  /** 运营规则 */
+  rules?: GalleryCurationRule[]
+}
+
 /** 灵感广场公开分享页响应 */
 export type GalleryShareResponse = Omit<OpenApiOperationData<'getGalleryShare'>, 'asset'> & {
   /** 已发布作品 */

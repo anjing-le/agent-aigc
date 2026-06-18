@@ -119,6 +119,7 @@ PROVIDER_FILE="$TMP_DIR/provider-report.json"
 COLLECTIONS_FILE="$TMP_DIR/gallery-collections.json"
 TOPICS_FILE="$TMP_DIR/gallery-topics.json"
 CREATOR_RANKING_FILE="$TMP_DIR/gallery-creator-ranking.json"
+CURATION_RULES_FILE="$TMP_DIR/gallery-curation-rules.json"
 
 api GET "/api/test/health" > "$HEALTH_FILE"
 assert_api_success "$HEALTH_FILE" "health"
@@ -200,7 +201,10 @@ assert_api_success "$TOPICS_FILE" "gallery topics"
 api GET "/api/aigc/gallery/creators/ranking?size=5" > "$CREATOR_RANKING_FILE"
 assert_api_success "$CREATOR_RANKING_FILE" "gallery creator ranking"
 
-node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" "$TOPICS_FILE" "$CREATOR_RANKING_FILE" "$USER_ID" <<'NODE'
+api GET "/api/aigc/gallery/curation/rules" > "$CURATION_RULES_FILE"
+assert_api_success "$CURATION_RULES_FILE" "gallery curation rules"
+
+node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" "$TOPICS_FILE" "$CREATOR_RANKING_FILE" "$CURATION_RULES_FILE" "$USER_ID" <<'NODE'
 const fs = require('fs')
 
 const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
@@ -209,7 +213,8 @@ const providerResponse = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'))
 const collectionsResponse = JSON.parse(fs.readFileSync(process.argv[5], 'utf8'))
 const topicsResponse = JSON.parse(fs.readFileSync(process.argv[6], 'utf8'))
 const creatorRankingResponse = JSON.parse(fs.readFileSync(process.argv[7], 'utf8'))
-const expectedUserId = process.argv[8]
+const curationRulesResponse = JSON.parse(fs.readFileSync(process.argv[8], 'utf8'))
+const expectedUserId = process.argv[9]
 
 function number(value) {
   const parsed = Number(value ?? 0)
@@ -284,6 +289,15 @@ assert(number(smokeCreator.publishedCount) >= 1, 'gallery creator ranking publis
 assert(number(smokeCreator.heatScore) >= 0, 'gallery creator ranking heatScore must be numeric')
 assert(smokeCreator.topAsset?.id, 'gallery creator ranking topAsset is required')
 
+const curationData = curationRulesResponse.data || {}
+const curationRules = curationData.rules || []
+assert(Array.isArray(curationRules), 'gallery curation rules must be an array')
+assert(curationRules.length >= 5, 'gallery curation rules must include core operation rules')
+assert(curationData.version === 'v1', 'gallery curation rules version must be v1')
+for (const ruleId of ['trending', 'course-cover', 'creator-ranking']) {
+  assert(curationRules.some((rule) => rule.id === ruleId), `gallery curation rules must include ${ruleId}`)
+}
+
 console.log('aigc-demo-smoke: ok')
 console.log(`aigc-demo-smoke: taskId=${task.taskId}`)
 console.log(`aigc-demo-smoke: assetId=${result.assetId}`)
@@ -292,4 +306,5 @@ console.log(`aigc-demo-smoke: provider totalTasks=${provider.totalTasks} complet
 console.log(`aigc-demo-smoke: gallery collections=${collections.length} matched=${collectionWithCreatedAsset.id}`)
 console.log(`aigc-demo-smoke: gallery topics=${topics.length} matched=${topicWithCreatedAsset.id}`)
 console.log(`aigc-demo-smoke: gallery creators=${creators.length} matched=${smokeCreator.authorId}`)
+console.log(`aigc-demo-smoke: gallery curationRules=${curationRules.length} version=${curationData.version}`)
 NODE

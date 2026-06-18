@@ -437,6 +437,15 @@ export const SERVICE_BOUNDARY_CONTRACT = {
           ]
         },
         {
+          "name": "galleryCurationRules",
+          "backendConstant": "GALLERY_CURATION_RULES_FULL",
+          "frontendKey": "galleryCurationRules",
+          "path": "/api/aigc/gallery/curation/rules",
+          "methods": [
+            "GET"
+          ]
+        },
+        {
           "name": "galleryAudits",
           "backendConstant": "GALLERY_AUDITS_FULL",
           "frontendKey": "galleryAudits",
@@ -647,6 +656,7 @@ export const SERVICE_BOUNDARY_ROUTE_PATHS = {
     "galleryAuthorProfile": "/api/aigc/gallery/authors/{authorId}",
     "galleryCollections": "/api/aigc/gallery/collections",
     "galleryCreatorRanking": "/api/aigc/gallery/creators/ranking",
+    "galleryCurationRules": "/api/aigc/gallery/curation/rules",
     "galleryFavorite": "/api/aigc/gallery/{assetId}/favorite",
     "galleryFavorites": "/api/aigc/gallery/favorites",
     "galleryInteractionReport": "/api/aigc/gallery/reports/interactions",

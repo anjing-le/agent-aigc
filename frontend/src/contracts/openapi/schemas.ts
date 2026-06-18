@@ -91,6 +91,15 @@ export interface APIResponseGalleryCreatorRankingResponse {
   timestamp?: number
 }
 
+export interface APIResponseGalleryCurationRulesResponse {
+  code?: string
+  data?: GalleryCurationRulesResponse
+  message?: string
+  requestId?: string
+  success?: boolean
+  timestamp?: number
+}
+
 export interface APIResponseGalleryDTO {
   code?: string
   data?: GalleryDTO
@@ -651,6 +660,98 @@ export interface GalleryCreatorRankingResponse {
    * Ranking size
    */
   size?: number
+}
+
+/**
+ * AIGC gallery curation rule
+ */
+export interface GalleryCurationRuleResponse {
+  /**
+   * Optional content type scope
+   */
+  contentType?: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO"
+  /**
+   * Machine-readable curation rule
+   */
+  curationRule?: string
+  /**
+   * Default returned item size
+   */
+  defaultSize?: number
+  /**
+   * Rule description
+   */
+  description?: string
+  /**
+   * Whether this rule is enabled
+   */
+  enabled?: boolean
+  /**
+   * Stable rule id
+   */
+  id?: string
+  /**
+   * Maximum returned item size
+   */
+  maxSize?: number
+  /**
+   * Suggested operation action
+   */
+  operationHint?: string
+  /**
+   * Prompt tokens used by manual topics
+   */
+  promptTokens?: string[]
+  /**
+   * Rule type, such as collection, topic, asset-ranking, or creator-ranking
+   */
+  ruleType?: string
+  /**
+   * Operation scenario
+   */
+  scenario?: string
+  /**
+   * Collection or ranking strategy
+   */
+  strategy?: string
+  /**
+   * Rule title
+   */
+  title?: string
+}
+
+/**
+ * AIGC gallery curation rules
+ */
+export interface GalleryCurationRulesResponse {
+  /**
+   * Default collection or topic size
+   */
+  defaultCollectionSize?: number
+  /**
+   * Default creator ranking size
+   */
+  defaultCreatorRankingSize?: number
+  /**
+   * Generated timestamp
+   */
+  generatedAt?: string
+  /**
+   * Maximum collection or topic size
+   */
+  maxCollectionSize?: number
+  /**
+   * Maximum creator ranking size
+   */
+  maxCreatorRankingSize?: number
+  /**
+   * Curation rules
+   */
+  rules?: GalleryCurationRuleResponse[]
+  /**
+   * Rule version
+   */
+  version?: string
 }
 
 export interface GalleryDailyMetricResponse {
@@ -1542,6 +1643,7 @@ export interface OpenApiSchemas {
   APIResponseGalleryAuthorProfileResponse: APIResponseGalleryAuthorProfileResponse
   APIResponseGalleryCollectionsResponse: APIResponseGalleryCollectionsResponse
   APIResponseGalleryCreatorRankingResponse: APIResponseGalleryCreatorRankingResponse
+  APIResponseGalleryCurationRulesResponse: APIResponseGalleryCurationRulesResponse
   APIResponseGalleryDTO: APIResponseGalleryDTO
   APIResponseGalleryInteractionReportResponse: APIResponseGalleryInteractionReportResponse
   APIResponseGalleryShareResponse: APIResponseGalleryShareResponse
@@ -1585,6 +1687,8 @@ export interface OpenApiSchemas {
   GalleryCreatorMetricResponse: GalleryCreatorMetricResponse
   GalleryCreatorRankingItemResponse: GalleryCreatorRankingItemResponse
   GalleryCreatorRankingResponse: GalleryCreatorRankingResponse
+  GalleryCurationRuleResponse: GalleryCurationRuleResponse
+  GalleryCurationRulesResponse: GalleryCurationRulesResponse
   GalleryDailyMetricResponse: GalleryDailyMetricResponse
   GalleryDTO: GalleryDTO
   GalleryInteractionReportResponse: GalleryInteractionReportResponse

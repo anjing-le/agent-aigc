@@ -26,6 +26,38 @@
     </div>
 
     <section
+      v-if="curationRules.length"
+      v-loading="curationRulesLoading"
+      class="prompt-gallery__curation"
+    >
+      <div class="prompt-gallery__curation-header">
+        <div>
+          <h3>运营规则</h3>
+          <p>{{ curationRulesDescription }}</p>
+        </div>
+        <el-tag effect="plain">{{ curationRulesVersion }}</el-tag>
+      </div>
+
+      <div class="prompt-gallery__curation-grid">
+        <article
+          v-for="rule in curationRules.slice(0, 6)"
+          :key="rule.id"
+          class="prompt-gallery__curation-rule"
+        >
+          <div class="prompt-gallery__curation-tags">
+            <el-tag size="small" effect="plain">{{ formatRuleType(rule.ruleType) }}</el-tag>
+            <el-tag v-if="rule.contentType" size="small" type="success" effect="plain">
+              {{ formatContentType(rule.contentType) }}
+            </el-tag>
+          </div>
+          <h3>{{ rule.title }}</h3>
+          <p>{{ rule.description }}</p>
+          <div class="prompt-gallery__curation-code">{{ rule.curationRule }}</div>
+        </article>
+      </div>
+    </section>
+
+    <section
       v-if="galleryCollections.length"
       v-loading="collectionsLoading"
       class="prompt-gallery__collections"
@@ -415,6 +447,7 @@
     fetchGetGalleryAuditLogs,
     fetchGetGalleryCollections,
     fetchGetGalleryCreatorRanking,
+    fetchGetGalleryCurationRules,
     fetchGetFavoriteGalleryList,
     fetchGetGalleryList,
     fetchGetGalleryRanking,
@@ -428,6 +461,7 @@
     GalleryAuditLogItem,
     GalleryCollection,
     GalleryCreatorRankingItem,
+    GalleryCurationRule,
     GalleryItem,
     GalleryTopic
   } from '@/api/model/aigcModel'
@@ -452,6 +486,9 @@
   const topicsLoading = ref(false)
   const creatorRanking = ref<GalleryCreatorRankingItem[]>([])
   const creatorRankingLoading = ref(false)
+  const curationRules = ref<GalleryCurationRule[]>([])
+  const curationRulesLoading = ref(false)
+  const curationRulesVersion = ref('rules v1')
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(24)
@@ -566,6 +603,10 @@
       : '按已发布作品的点赞、收藏和代表作热度聚合公开创作者'
   )
 
+  const curationRulesDescription = computed(() =>
+    `后端返回 ${curationRules.value.length} 条合集、专题、作品榜单和创作者榜单规则`
+  )
+
   const galleryAuditActionLabels: Record<string, string> = {
     publish: '发布',
     unpublish: '撤回',
@@ -595,6 +636,7 @@
       }
       if (!append) {
         await loadRankingData()
+        await loadCurationRulesData()
         await loadCollectionsData()
         await loadTopicsData()
         await loadCreatorRankingData()
@@ -755,6 +797,27 @@
       creatorRanking.value = []
     } finally {
       creatorRankingLoading.value = false
+    }
+  }
+
+  const loadCurationRulesData = async () => {
+    if (dataSource.value !== 'api' || showOnlyFavorites.value) {
+      curationRules.value = []
+      curationRulesVersion.value = 'rules v1'
+      return
+    }
+
+    try {
+      curationRulesLoading.value = true
+      const response = await fetchGetGalleryCurationRules()
+      curationRules.value = response.rules || []
+      curationRulesVersion.value = response.version ? `rules ${response.version}` : 'rules v1'
+    } catch (error) {
+      console.warn('加载灵感广场运营规则失败:', error)
+      curationRules.value = []
+      curationRulesVersion.value = 'rules v1'
+    } finally {
+      curationRulesLoading.value = false
     }
   }
 
@@ -1132,6 +1195,16 @@
     return strategy ? labels[strategy] || strategy : '合集'
   }
 
+  const formatRuleType = (ruleType?: string) => {
+    const labels: Record<string, string> = {
+      collection: '合集',
+      topic: '专题',
+      'asset-ranking': '作品榜',
+      'creator-ranking': '作者榜'
+    }
+    return ruleType ? labels[ruleType] || ruleType : '规则'
+  }
+
   const formatAuditTime = (value?: string) => {
     if (!value) return '-'
     const date = new Date(value)
@@ -1215,6 +1288,92 @@
         line-height: 1;
         color: var(--el-text-color-primary);
       }
+    }
+
+    &__curation {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 8px;
+    }
+
+    &__curation-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+
+      h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--el-text-color-primary);
+      }
+
+      p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--el-text-color-secondary);
+      }
+    }
+
+    &__curation-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    &__curation-rule {
+      min-width: 0;
+      padding: 12px;
+      background: var(--el-fill-color-lighter);
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: 8px;
+
+      h3 {
+        margin: 8px 0 0;
+        overflow: hidden;
+        color: var(--el-text-color-primary);
+        font-size: 14px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      p {
+        display: -webkit-box;
+        margin: 8px 0 0;
+        overflow: hidden;
+        color: var(--el-text-color-secondary);
+        font-size: 12px;
+        line-height: 1.5;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+    }
+
+    &__curation-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    &__curation-code {
+      height: 28px;
+      margin-top: 10px;
+      padding: 6px 8px;
+      overflow: hidden;
+      color: var(--el-text-color-regular);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 16px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: 6px;
     }
 
     &__collections {
@@ -1847,6 +2006,10 @@
         grid-template-columns: 1fr;
       }
 
+      &__curation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       &__creator {
         grid-template-columns: 44px 72px minmax(0, 1fr);
       }
@@ -1891,6 +2054,14 @@
       }
 
       &__stats {
+        grid-template-columns: 1fr;
+      }
+
+      &__curation-header {
+        flex-direction: column;
+      }
+
+      &__curation-grid {
         grid-template-columns: 1fr;
       }
 

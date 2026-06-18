@@ -25,6 +25,8 @@ import com.anjing.aigc.model.response.GalleryCollectionResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryCreatorRankingItemResponse;
 import com.anjing.aigc.model.response.GalleryCreatorRankingResponse;
+import com.anjing.aigc.model.response.GalleryCurationRuleResponse;
+import com.anjing.aigc.model.response.GalleryCurationRulesResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GalleryTopicResponse;
 import com.anjing.aigc.model.response.GalleryTopicsResponse;
@@ -114,6 +116,7 @@ public class AigcServiceImpl implements AigcService {
     private static final int GALLERY_TOPIC_CANDIDATE_MULTIPLIER = 4;
     private static final int GALLERY_CREATOR_RANKING_DEFAULT_SIZE = 5;
     private static final int GALLERY_CREATOR_RANKING_MAX_SIZE = 20;
+    private static final String GALLERY_CURATION_RULE_VERSION = "v1";
 
     private final RoutingAgent routingAgent;
     private final AigcTaskExecutor taskExecutor;
@@ -1346,6 +1349,94 @@ public class AigcServiceImpl implements AigcService {
     }
 
     @Override
+    public GalleryCurationRulesResponse getGalleryCurationRules() {
+        List<GalleryCurationRuleResponse> rules = new ArrayList<>();
+        rules.add(galleryCurationRule(
+                "trending",
+                "collection",
+                "热门复用",
+                "按点赞和收藏热度聚合的高反馈作品",
+                "作品发现",
+                null,
+                "trending",
+                "collection:ranking=likes+favorites*2",
+                List.of(),
+                "用于灵感广场首屏精选合集",
+                GALLERY_COLLECTION_DEFAULT_SIZE,
+                GALLERY_COLLECTION_MAX_SIZE
+        ));
+        rules.add(galleryCurationRule(
+                "latest",
+                "collection",
+                "最新发布",
+                "最近发布到灵感广场的创作结果",
+                "新作发现",
+                null,
+                "latest",
+                "collection:order=createdAt:desc",
+                List.of(),
+                "用于帮助学习者看到创作沉淀速度",
+                GALLERY_COLLECTION_DEFAULT_SIZE,
+                GALLERY_COLLECTION_MAX_SIZE
+        ));
+        rules.add(galleryCurationRule(
+                "content-type",
+                "collection",
+                "内容类型精选",
+                "按图片、视频和音频分别聚合高互动作品",
+                "多模态分发",
+                null,
+                "content-type",
+                "collection:content-type=IMAGE|VIDEO|AUDIO,ranking=likes+favorites*2",
+                List.of(),
+                "用于讲解多模态内容如何共享同一广场底座",
+                GALLERY_COLLECTION_DEFAULT_SIZE,
+                GALLERY_COLLECTION_MAX_SIZE
+        ));
+        rules.add(galleryCurationRule(
+                "asset-ranking",
+                "asset-ranking",
+                "全局作品榜单",
+                "按公开作品互动热度排序",
+                "作品复用",
+                null,
+                "ranking",
+                "ranking:asset=likes+favorites*2",
+                List.of(),
+                "用于快速发现可复用 Prompt",
+                5,
+                50
+        ));
+        rules.add(galleryCurationRule(
+                "creator-ranking",
+                "creator-ranking",
+                "创作者榜单",
+                "按已发布作品聚合公开创作者、代表作和热度",
+                "创作者发现",
+                null,
+                "creator-ranking",
+                "ranking:creator=likes+favorites*2",
+                List.of(),
+                "用于从作品运营延伸到创作者主页",
+                GALLERY_CREATOR_RANKING_DEFAULT_SIZE,
+                GALLERY_CREATOR_RANKING_MAX_SIZE
+        ));
+        galleryTopicDefinitions().stream()
+                .map(this::toGalleryTopicCurationRule)
+                .forEach(rules::add);
+
+        return GalleryCurationRulesResponse.builder()
+                .version(GALLERY_CURATION_RULE_VERSION)
+                .generatedAt(DateUtils.nowIso())
+                .defaultCollectionSize(GALLERY_COLLECTION_DEFAULT_SIZE)
+                .maxCollectionSize(GALLERY_COLLECTION_MAX_SIZE)
+                .defaultCreatorRankingSize(GALLERY_CREATOR_RANKING_DEFAULT_SIZE)
+                .maxCreatorRankingSize(GALLERY_CREATOR_RANKING_MAX_SIZE)
+                .rules(rules)
+                .build();
+    }
+
+    @Override
     public PageResult<GalleryDTO> getMyFavoriteGalleryList(Integer current, Integer size) {
         PageRequest pageRequest = PageRequest.of(
                 current != null && current > 0 ? current - 1 : 0,
@@ -1674,6 +1765,43 @@ public class AigcServiceImpl implements AigcService {
                         "优先用于广场首屏、社群分享和 Prompt 复用教学"
                 )
         );
+    }
+
+    private GalleryCurationRuleResponse toGalleryTopicCurationRule(GalleryTopicDefinition definition) {
+        return galleryCurationRule(
+                definition.id(),
+                "topic",
+                definition.title(),
+                definition.description(),
+                definition.scenario(),
+                definition.contentType(),
+                "manual-topic",
+                definition.curationRule(),
+                definition.promptTokens(),
+                definition.operationHint(),
+                GALLERY_COLLECTION_DEFAULT_SIZE,
+                GALLERY_COLLECTION_MAX_SIZE
+        );
+    }
+
+    private GalleryCurationRuleResponse galleryCurationRule(String id, String ruleType, String title,
+            String description, String scenario, ContentType contentType, String strategy, String curationRule,
+            List<String> promptTokens, String operationHint, Integer defaultSize, Integer maxSize) {
+        return GalleryCurationRuleResponse.builder()
+                .id(id)
+                .ruleType(ruleType)
+                .title(title)
+                .description(description)
+                .scenario(scenario)
+                .contentType(contentType)
+                .strategy(strategy)
+                .curationRule(curationRule)
+                .promptTokens(promptTokens)
+                .defaultSize(defaultSize)
+                .maxSize(maxSize)
+                .operationHint(operationHint)
+                .enabled(true)
+                .build();
     }
 
     private List<AigcAsset> selectTopicAssets(List<AigcAsset> candidates, List<String> promptTokens, int topicSize) {

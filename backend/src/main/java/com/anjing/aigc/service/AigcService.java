@@ -12,6 +12,7 @@ import com.anjing.aigc.model.response.AssetDetailResponse;
 import com.anjing.aigc.model.response.GalleryAuthorProfileResponse;
 import com.anjing.aigc.model.response.GalleryCollectionsResponse;
 import com.anjing.aigc.model.response.GalleryCreatorRankingResponse;
+import com.anjing.aigc.model.response.GalleryCurationRulesResponse;
 import com.anjing.aigc.model.response.GalleryShareResponse;
 import com.anjing.aigc.model.response.GalleryTopicsResponse;
 import com.anjing.aigc.model.response.GenerateResponse;
@@ -191,6 +192,13 @@ public interface AigcService {
      * @return 创作者榜单
      */
     GalleryCreatorRankingResponse getGalleryCreatorRanking(String contentType, String keyword, Integer size);
+
+    /**
+     * 获取灵感广场运营规则说明。
+     *
+     * @return 运营规则列表
+     */
+    GalleryCurationRulesResponse getGalleryCurationRules();
 
     /**
      * 获取当前用户/会话收藏的灵感广场作品。

@@ -48,7 +48,7 @@ AIGC 页面只聚焦创作体验：
 - `frontend/src/views/aigc/studio`：一句话创作、任务状态、Agent 决策、结果预览。
 - `frontend/src/views/aigc/materials`：参考素材上传、筛选、引用任务反查。
 - `frontend/src/views/aigc/assets`：个人资产、下载、删除、发布、Prompt 复用和存储状态诊断。
-- `frontend/src/views/aigc/gallery`：已发布作品、筛选、动态合集、人工专题、创作者榜单和 Prompt 复用到工作台。
+- `frontend/src/views/aigc/gallery`：已发布作品、筛选、运营规则、动态合集、人工专题、创作者榜单和 Prompt 复用到工作台。
 - `frontend/src/views/aigc/models`：Provider 配置、模型能力、运行前探测、诊断检查项和显式 smoke test。
 
 ## API 生长方式
@@ -70,7 +70,7 @@ AIGC 文件访问也必须先经过业务边界：资产和素材下载分别进
 
 灵感广场属于公开发布边界，不复用个人资产授权入口，也不返回原始存储 URL。已发布作品通过 `/api/aigc/gallery/{assetId}/preview` 进入 `AigcDownloadService.previewPublishedAsset`，后端只查询 `isPublished=true` 的资产，再交给 storage adapter 返回本地文件或 OSS 授权 URL；Gallery DTO 返回 `previewUrl` 和 `publicAccessMode=published-preview`，前端卡片通过 `resolveAigcGalleryPreviewUrl` 解析公开预览或静态后备外链。这样可以在教学里区分“我的资产是上下文授权资源，灵感广场是发布后的公开资源”。
 
-广场运营能力也沿同一条路径生长：作品榜单、动态合集、人工专题和创作者榜单分别进入 `/api/aigc/gallery/ranking`、`/api/aigc/gallery/collections`、`/api/aigc/gallery/topics`、`/api/aigc/gallery/creators/ranking`，都先声明在 `ApiConstants.Aigc` 和 `contracts/service-boundaries.json`，再由 OpenAPI 类型、`frontend/src/api/aigc.ts` 和广场页面消费。这样教学时可以直接对比“同一个脚手架路径，长出不同 AIGC 业务视角”。
+广场运营能力也沿同一条路径生长：作品榜单、动态合集、人工专题、创作者榜单和运营规则说明分别进入 `/api/aigc/gallery/ranking`、`/api/aigc/gallery/collections`、`/api/aigc/gallery/topics`、`/api/aigc/gallery/creators/ranking`、`/api/aigc/gallery/curation/rules`，都先声明在 `ApiConstants.Aigc` 和 `contracts/service-boundaries.json`，再由 OpenAPI 类型、`frontend/src/api/aigc.ts` 和广场页面消费。这样教学时可以直接对比“同一个脚手架路径，长出不同 AIGC 业务视角”。
 
 Provider 管理还必须遵守密钥和权限边界：配置页只能展示配置状态、缺失说明、默认参数、来源和存储模式，不能返回或渲染 `apiKey`、`accessKey`、`secretKey`、`accessKeySecret` 等明文字段；日志也只能记录密钥存在性和长度，不能打印前缀或后缀。Provider 凭证写入通过 `/api/aigc/models/provider-credential` 进入 AIGC service-boundary，前端只能调用 `frontend/src/api/aigc.ts`，后端由 `AigcProviderCredentialConfigService` 统一处理“页面保存优先、环境配置兜底”的来源规则，由 `AigcProviderCredentialCodec` 统一处理 AES-GCM 静态加密和旧明文兼容；后续 KMS 替换也只能发生在这个 codec 边界。Provider 路由、凭证和默认参数模板写操作必须先经过 `AigcProviderManagementPermissionService`，从 `GlobalRequestContextHolder` 读取 `userRoles`，默认要求 `R_SUPER` 或 `R_ADMIN`；前端只能在统一 HTTP client 中通过平台 `REQUEST_HEADERS` 透传 userId、userName 和 userRoles，页面不允许手写请求头。Provider 默认参数写入同样通过 service-boundary 和 OpenAPI 类型进入页面，不允许在前端页面手写 URL 或绕过 API 模块。Provider 管理审计继承脚手架 `GlobalRequestContextHolder`，审计 requestId、traceId、tenantId、userId、callerId 和客户端 IP，但凭证审计只记录来源变化、存储模式和配置状态，不记录明文；权限拒绝写入 `permission-denied` 审计。
 

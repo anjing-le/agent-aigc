@@ -370,6 +370,27 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void getGalleryCurationRulesReturnsVisibleOperationRules() {
+        var response = aigcService.getGalleryCurationRules();
+
+        assertEquals("v1", response.getVersion());
+        assertEquals(4, response.getDefaultCollectionSize());
+        assertEquals(8, response.getMaxCollectionSize());
+        assertEquals(5, response.getDefaultCreatorRankingSize());
+        assertEquals(20, response.getMaxCreatorRankingSize());
+        assertEquals(9, response.getRules().size());
+        assertEquals(true, response.getRules().stream().allMatch(rule -> Boolean.TRUE.equals(rule.getEnabled())));
+        assertEquals(true, response.getRules().stream().anyMatch(rule ->
+                "creator-ranking".equals(rule.getId())
+                        && "creator-ranking".equals(rule.getRuleType())
+                        && "ranking:creator=likes+favorites*2".equals(rule.getCurationRule())));
+        assertEquals(true, response.getRules().stream().anyMatch(rule ->
+                "course-cover".equals(rule.getId())
+                        && ContentType.IMAGE.equals(rule.getContentType())
+                        && rule.getPromptTokens().contains("course")));
+    }
+
+    @Test
     void probeProviderReportsMissingGoogleConfiguration() {
         givenImageProviders();
 
