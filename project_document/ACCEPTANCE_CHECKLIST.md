@@ -2,6 +2,14 @@
 
 用于确认 `agent-aigc` 已经作为“从 `infra-dev-scaffolding` 生长出来的 AIGC 业务项目”达到 V1 教学演示标准。
 
+## 当前验收状态
+
+截至 2026-06-18，项目完成度约 **88%**，满足 V1 教学演示候选标准。
+
+- 已满足：脚手架技术栈对齐、前后端契约、AIGC 创作闭环、素材/资产/广场/分享/报表、Provider 管理、存储治理和质量门禁。
+- 仍可增强：真实 Provider 生产级计费、KMS 托管、人工运营专题、更多真实模型演示证据。
+- 当前必跑总门禁：`./scripts/quality-gate.sh`。
+
 ## 1. 脚手架继承验收
 
 - 后端仍是 Spring Boot 3、JPA、OpenAPI、统一异常、统一响应和 `APIResponse/PageResult`。
@@ -95,7 +103,14 @@ pnpm build
 7. 回到模型配置，确认 Provider 调用报表出现任务数、成功率和模型指标。
 8. 运行质量门禁，说明业务是沿脚手架契约生长出来的。
 
-## 8. V1 非目标
+## 8. 交付判断
+
+- 能讲清楚“脚手架给底座，agent-aigc 只做 AIGC 业务设计”。
+- 能从一个 AIGC API 反查到 `ApiConstants`、`service-boundaries.json`、OpenAPI 类型和前端 API 模块。
+- 能通过 mock provider 演示完整创作链路，不依赖外部 Key。
+- 能通过 `quality-gate` 证明构建、契约、OpenAPI 运行探针和前端构建没有退化。
+
+## 9. V1 非目标
 
 - 不做复杂工作流编排。
 - 不做团队协作、套餐计费和模型市场。

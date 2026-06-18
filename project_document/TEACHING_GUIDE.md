@@ -11,6 +11,7 @@
 - 新增接口为什么必须经过 `ApiConstants`、`service-boundaries.json`、OpenAPI 类型和前端 API 模块。
 - 为什么页面只关心体验，底层请求、响应、上下文、错误和时间都交给脚手架。
 - 如何用测试、构建、契约脚本和 runtime probe 证明改动没有破坏工程底座。
+- 为什么当前项目已经达到约 88% 的 V1 教学演示候选完成度，剩余工作主要是生产化增强。
 
 ## 推荐课时
 
@@ -101,7 +102,7 @@
 
 ### 任务 C：设计一个新业务能力
 
-建议题目：给灵感广场增加“作品合集”。
+建议题目：给灵感广场增加“人工运营专题”。
 
 要求只写设计，不急着编码：
 
@@ -143,7 +144,8 @@
 - 演示时不要展示真实 Provider Key。
 - 截图时避开本地个人路径、Cookie、Token。
 - 每完成一段功能讲解，都回到脚手架继承点说明它为什么可复制。
-- 结尾运行 `./scripts/check-contracts.sh` 或展示 `project_document/DEMO_EVIDENCE.md` 的最新结果。
+- 结尾运行 `./scripts/quality-gate.sh` 或展示 `project_document/DEMO_EVIDENCE.md` 的最新结果。
+- 收尾时明确当前完成度约 88%，V1 已可教学演示，生产级计费/KMS/人工专题仍是后续增强。
 
 ## 学员常见问题
 
