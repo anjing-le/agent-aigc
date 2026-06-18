@@ -4,11 +4,12 @@
 
 ## 当前验收状态
 
-截至 2026-06-18，项目完成度约 **90%**，满足 V1 教学演示候选标准。
+截至 2026-06-18，项目完成度约 **91%**，满足 V1 教学演示候选标准。
 
 - 已满足：脚手架技术栈对齐、前后端契约、AIGC 创作闭环、素材/资产/广场/分享/报表、Provider 管理、存储治理、人工运营专题和质量门禁。
 - 仍可增强：真实 Provider 生产级计费、KMS 托管、运营后台配置化、更多真实模型演示证据。
 - 当前必跑总门禁：`./scripts/quality-gate.sh`。
+- 教学交付总验收：`./scripts/v1-teaching-acceptance.sh`。
 
 ## 1. 脚手架继承验收
 
@@ -90,6 +91,12 @@ pnpm build
 
 ```bash
 ./scripts/quality-gate.sh
+```
+
+教学交付冻结前再跑：
+
+```bash
+./scripts/v1-teaching-acceptance.sh
 ```
 
 ## 7. 演示路径

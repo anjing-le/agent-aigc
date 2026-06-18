@@ -4,10 +4,10 @@
 
 ## 最新验收记录
 
-- 日期：2026-06-17
+- 日期：2026-06-18
 - 功能基线：以 `main` 最新提交为准，本轮提交可通过 `git log -1 --pretty=fuller` 查看
 - Git author：`安静 <245548353+anjing-le@users.noreply.github.com>`
-- 结论：通过 V1 教学演示验收，当前已具备创作、资产、灵感广场动态合集、公开分享、互动报表和 Provider 调用报表的教学闭环。
+- 结论：通过 V1 教学交付总验收，当前已具备创作、资产、灵感广场动态合集、人工运营专题、公开分享、互动报表和 Provider 调用报表的教学闭环。
 
 ## 命令证据
 
@@ -20,6 +20,16 @@
 | `./scripts/probe-backend-dev.sh 18181` | passed | dev profile runtime OpenAPI probe |
 | `./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003` | passed | 生成、发布、分享、下载、Prompt 复用、互动报表、Provider 调用报表、动态作品合集和人工运营专题闭环 |
 | `./scripts/quality-gate.sh` | passed | 契约、后端 package、前端 build、后端 runtime probe 一次性通过 |
+| `./scripts/v1-teaching-acceptance.sh` | passed | 先跑 `quality-gate`，再临时启动 dev 后端并跑 AIGC smoke |
+
+V1 教学交付总验收最近输出：
+
+```text
+v1-teaching-acceptance: ok
+v1-teaching-acceptance: verified=scaffold-contracts,backend-build,frontend-build,runtime-openapi,aigc-smoke
+aigc-demo-smoke: gallery collections=3 matched=trending
+aigc-demo-smoke: gallery topics=2 matched=course-cover
+```
 
 ## 业务冒烟证据
 

@@ -33,6 +33,7 @@ pnpm dev
 ./scripts/check-contracts.sh
 ./scripts/aigc-demo-smoke.sh http://127.0.0.1:10003
 ./scripts/quality-gate.sh
+./scripts/v1-teaching-acceptance.sh
 ```
 
 ## 文档

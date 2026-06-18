@@ -10,6 +10,12 @@
 ./scripts/quality-gate.sh
 ```
 
+V1 教学交付总验收：
+
+```bash
+./scripts/v1-teaching-acceptance.sh
+```
+
 母版自检：
 
 ```bash
