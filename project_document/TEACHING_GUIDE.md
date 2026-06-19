@@ -69,6 +69,7 @@
 6. `frontend/src/api/aigc.ts` 封装 `fetchUpdateGalleryCurationRule`。
 7. 灵感广场页面打开配置弹窗并调用 typed API。
 8. 页面刷新后展示 `configSource=database`，用于讲清楚规则从内置说明升级成页面配置。
+9. 作品榜单、合集、专题和创作者榜单读取配置后的 enabled/defaultSize/maxSize，让规则配置影响查询结果。
 
 这条线最适合讲“业务功能不是孤立页面按钮，而是从契约、服务、数据、前端和报表一起长出来”。
 

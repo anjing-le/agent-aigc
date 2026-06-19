@@ -122,6 +122,7 @@ CREATOR_RANKING_FILE="$TMP_DIR/gallery-creator-ranking.json"
 CURATION_RULES_FILE="$TMP_DIR/gallery-curation-rules.json"
 CURATION_RULE_CONFIG_BODY_FILE="$TMP_DIR/gallery-curation-rule-config-body.json"
 CURATION_RULE_CONFIG_FILE="$TMP_DIR/gallery-curation-rule-config.json"
+CURATION_CONFIGURED_COLLECTIONS_FILE="$TMP_DIR/gallery-curation-configured-collections.json"
 
 api GET "/api/test/health" > "$HEALTH_FILE"
 assert_api_success "$HEALTH_FILE" "health"
@@ -210,8 +211,8 @@ node > "$CURATION_RULE_CONFIG_BODY_FILE" <<'NODE'
 process.stdout.write(JSON.stringify({
   ruleId: 'trending',
   enabled: true,
-  defaultSize: 4,
-  maxSize: 8,
+  defaultSize: 2,
+  maxSize: 2,
   operationHint: 'Smoke test verified runtime curation config'
 }))
 NODE
@@ -219,7 +220,10 @@ NODE
 api_body POST "/api/aigc/gallery/curation/rules/config" "$CURATION_RULE_CONFIG_BODY_FILE" > "$CURATION_RULE_CONFIG_FILE"
 assert_api_success "$CURATION_RULE_CONFIG_FILE" "gallery curation rule config"
 
-node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" "$TOPICS_FILE" "$CREATOR_RANKING_FILE" "$CURATION_RULES_FILE" "$CURATION_RULE_CONFIG_FILE" "$USER_ID" <<'NODE'
+api GET "/api/aigc/gallery/collections?size=8" > "$CURATION_CONFIGURED_COLLECTIONS_FILE"
+assert_api_success "$CURATION_CONFIGURED_COLLECTIONS_FILE" "gallery curation configured collections"
+
+node - "$TASK_FILE" "$REPORT_FILE" "$PROVIDER_FILE" "$COLLECTIONS_FILE" "$TOPICS_FILE" "$CREATOR_RANKING_FILE" "$CURATION_RULES_FILE" "$CURATION_RULE_CONFIG_FILE" "$CURATION_CONFIGURED_COLLECTIONS_FILE" "$USER_ID" <<'NODE'
 const fs = require('fs')
 
 const taskResponse = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))
@@ -230,7 +234,8 @@ const topicsResponse = JSON.parse(fs.readFileSync(process.argv[6], 'utf8'))
 const creatorRankingResponse = JSON.parse(fs.readFileSync(process.argv[7], 'utf8'))
 const curationRulesResponse = JSON.parse(fs.readFileSync(process.argv[8], 'utf8'))
 const curationRuleConfigResponse = JSON.parse(fs.readFileSync(process.argv[9], 'utf8'))
-const expectedUserId = process.argv[10]
+const curationConfiguredCollectionsResponse = JSON.parse(fs.readFileSync(process.argv[10], 'utf8'))
+const expectedUserId = process.argv[11]
 
 function number(value) {
   const parsed = Number(value ?? 0)
@@ -319,8 +324,17 @@ const configuredRules = configuredCurationData.rules || []
 const configuredTrendingRule = configuredRules.find((rule) => rule.id === 'trending')
 assert(configuredTrendingRule, 'gallery curation rule config must return trending rule')
 assert(configuredTrendingRule.configSource === 'database', 'gallery curation rule config source must be database')
+assert(number(configuredTrendingRule.defaultSize) === 2, 'gallery curation rule config defaultSize must be persisted')
+assert(number(configuredTrendingRule.maxSize) === 2, 'gallery curation rule config maxSize must be persisted')
 assert(configuredTrendingRule.operationHint === 'Smoke test verified runtime curation config',
   'gallery curation rule config operationHint must be persisted')
+
+const configuredCollectionsData = curationConfiguredCollectionsResponse.data || {}
+const configuredCollections = configuredCollectionsData.collections || []
+const configuredTrendingCollection = configuredCollections.find((collection) => collection.id === 'trending')
+assert(configuredTrendingCollection, 'gallery curation data plane must include configured trending collection')
+assert(number(configuredTrendingCollection.itemCount) <= 2,
+  'gallery curation data plane must honor configured maxSize')
 
 console.log('aigc-demo-smoke: ok')
 console.log(`aigc-demo-smoke: taskId=${task.taskId}`)
@@ -331,5 +345,6 @@ console.log(`aigc-demo-smoke: gallery collections=${collections.length} matched=
 console.log(`aigc-demo-smoke: gallery topics=${topics.length} matched=${topicWithCreatedAsset.id}`)
 console.log(`aigc-demo-smoke: gallery creators=${creators.length} matched=${smokeCreator.authorId}`)
 console.log(`aigc-demo-smoke: gallery curationRules=${curationRules.length} version=${curationData.version}`)
-console.log(`aigc-demo-smoke: gallery curationConfig=${configuredTrendingRule.configSource} rule=${configuredTrendingRule.id}`)
+console.log(`aigc-demo-smoke: gallery curationConfig=${configuredTrendingRule.configSource} rule=${configuredTrendingRule.id} maxSize=${configuredTrendingRule.maxSize}`)
+console.log(`aigc-demo-smoke: gallery curationDataPlane=trending itemCount=${configuredTrendingCollection.itemCount}`)
 NODE

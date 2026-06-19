@@ -1,14 +1,14 @@
 # Status
 
-更新时间：2026-06-18
+更新时间：2026-06-19
 
 `agent-aigc` 当前定位为 AIGC 创作平台。工程骨架已对齐 `infra-dev-scaffolding`，业务主线围绕“用户一句话输入 -> Agent 意图分析 -> Prompt 优化 -> Provider 路由 -> 异步生成任务 -> 创作资产沉淀”展开。
 
 ## 当前完成度
 
-当前完成度约 **94%**，已经达到 V1 教学演示候选状态。
+当前完成度约 **95%**，已经达到 V1 教学演示候选状态。
 
-已完成的主体能力包括：脚手架技术栈对齐、AIGC 创作主链路、素材库、资产库、灵感广场、公开分享页、作者主页、运营规则说明/配置、动态合集、人工运营专题、创作者榜单、互动审计/报表、Provider 配置治理、存储治理、权限隔离、质量门禁和 V1 教学交付总验收入口。剩余工作主要是生产级运营能力、真实 Provider 计费/KMS、运营规则权重/投放策略引擎和更完整的真实模型演示证据。
+已完成的主体能力包括：脚手架技术栈对齐、AIGC 创作主链路、素材库、资产库、灵感广场、公开分享页、作者主页、运营规则说明/配置、规则配置影响数据返回、动态合集、人工运营专题、创作者榜单、互动审计/报表、Provider 配置治理、存储治理、权限隔离、质量门禁和 V1 教学交付总验收入口。剩余工作主要是生产级运营能力、真实 Provider 计费/KMS、运营规则权重/投放策略引擎和更完整的真实模型演示证据。
 
 ## 当前阶段
 
@@ -75,6 +75,7 @@
 - AIGC 广场人工运营专题 V1 已接入：新增 `/api/aigc/gallery/topics`，按课程封面、短视频样片、音频旁白和高复用传播位生成规则化运营专题，继续通过 ApiConstants、service-boundary、OpenAPI 生成类型和 `openApiRequest` 贯通；前端灵感广场展示专题场景、规则、运营建议、热度和 Prompt 快捷复用。
 - AIGC 广场创作者榜单 V1 已接入：新增 `/api/aigc/gallery/creators/ranking`，从已发布作品聚合公开创作者、作品数、点赞收藏、热度、主创作类型和代表作；前端灵感广场展示创作者榜单，并可跳转公开作者主页或复用代表作 Prompt。
 - AIGC 广场运营规则 V1 已接入：新增 `/api/aigc/gallery/curation/rules`，返回合集、人工专题、作品榜单和创作者榜单的规则说明、策略、内容类型、Prompt token、默认数量和配置来源；新增 `/api/aigc/gallery/curation/rules/config`，可保存规则启用状态、默认数量、最大数量和运营建议，继承脚手架 request context、角色边界、管理审计、service-boundary、OpenAPI 类型和 `openApiRequest` 链路；前端灵感广场展示规则来源并提供轻量配置弹窗。
+- AIGC 广场规则配置数据面 V1 已接入：作品榜单、动态合集、人工运营专题和创作者榜单会读取运营规则的 enabled/defaultSize/maxSize/operationHint；管理面仍返回全部规则，数据面按启停和数量配置控制返回内容，方便教学中演示“规则说明 -> 页面配置 -> 查询结果”的完整闭环。
 - AIGC 广场审计 V1 已接入：新增 `/api/aigc/gallery/audits`，按 service-boundary、ApiConstants、OpenAPI 派生类型和 `openApiRequest` 贯通前后端；发布、撤回、点赞、取消点赞、收藏、取消收藏和公开下载会写入 `aigc_gallery_audit_log`，审计继承脚手架 requestId、traceId、tenantId、operator、callerId 和 clientIp，广场页展示最近互动审计。
 - AIGC 广场互动报表 V1 已接入：新增 `/api/aigc/gallery/reports/interactions`，按当前脚手架 user/tenant 上下文聚合可见审计数据，返回动作分布、内容类型分布、每日趋势、核心互动计数、高互动作品、创作者对比和作品互动结构对比；前端新增 `/aigc/gallery-report` 后台报表页，支持趋势查看、作者/作品对比、CSV 导出，并从灵感广场提供入口。
 - AIGC 广场公开分享转化漏斗 V1 已接入：分享页访问会写入 `share-view` 审计，分享页点击“复用 Prompt”会写入 `prompt-reuse` 审计；互动报表新增分享访问数、Prompt 复用数、公开下载/Prompt 复用转化率、每日分享/复用趋势和 CSV 导出字段，形成“分享访问 -> 公开下载 / Prompt 复用”的轻量运营闭环。

@@ -1239,13 +1239,21 @@ public class AigcServiceImpl implements AigcService {
     public PageResult<GalleryDTO> getGalleryRanking(
             Integer current, Integer size, String contentType, String model, String keyword) {
         int safeCurrent = current != null && current > 0 ? current : 1;
-        int safeSize = size != null && size > 0 ? Math.min(size, 50) : 10;
+        ContentType parsedContentType = parseContentType(contentType);
+        String normalizedModel = normalizeFilter(model);
+        String normalizedKeyword = normalizeFilter(keyword);
+        Map<String, GalleryCurationRuleResponse> curationRules = effectiveCurationRulesById();
+        GalleryCurationRuleResponse assetRankingRule = curationRules.get("asset-ranking");
+        if (!isCurationRuleEnabled(assetRankingRule)) {
+            return PageResult.of(List.of(), 0, safeCurrent, 0);
+        }
+        int safeSize = resolveCurationSize(assetRankingRule, size, 10, 50);
         PageRequest pageRequest = PageRequest.of(safeCurrent - 1, safeSize);
 
         Page<AigcAsset> page = assetRepository.searchPublishedRanking(
-                parseContentType(contentType),
-                normalizeFilter(model),
-                normalizeFilter(keyword),
+                parsedContentType,
+                normalizedModel,
+                normalizedKeyword,
                 pageRequest);
 
         List<GalleryDTO> records = page.getContent().stream()
@@ -1259,31 +1267,58 @@ public class AigcServiceImpl implements AigcService {
     public GalleryCollectionsResponse getGalleryCollections(String contentType, String keyword, Integer size) {
         ContentType parsedContentType = parseContentType(contentType);
         String normalizedKeyword = normalizeFilter(keyword);
-        int collectionSize = size != null && size > 0
-                ? Math.min(size, GALLERY_COLLECTION_MAX_SIZE)
-                : GALLERY_COLLECTION_DEFAULT_SIZE;
+        Map<String, GalleryCurationRuleResponse> curationRules = effectiveCurationRulesById();
+        int collectionSize = resolveLargestCurationSize(
+                curationRules,
+                List.of("trending", "latest", "content-type"),
+                size,
+                GALLERY_COLLECTION_DEFAULT_SIZE,
+                GALLERY_COLLECTION_MAX_SIZE
+        );
         List<GalleryCollectionResponse> collections = new ArrayList<>();
 
-        addGalleryCollection(
-                collections,
-                "trending",
-                "热门复用",
-                "按点赞和收藏热度聚合的高反馈作品",
-                parsedContentType,
-                "trending",
-                loadGalleryRankingAssets(parsedContentType, normalizedKeyword, collectionSize)
-        );
-        addGalleryCollection(
-                collections,
-                "latest",
-                "最新发布",
-                "最近发布到灵感广场的创作结果",
-                parsedContentType,
-                "latest",
-                loadGalleryLatestAssets(parsedContentType, normalizedKeyword, collectionSize)
-        );
+        if (isCurationRuleEnabled(curationRules, "trending")) {
+            int ruleSize = resolveCurationSize(
+                    curationRules.get("trending"),
+                    size,
+                    GALLERY_COLLECTION_DEFAULT_SIZE,
+                    GALLERY_COLLECTION_MAX_SIZE
+            );
+            addGalleryCollection(
+                    collections,
+                    "trending",
+                    "热门复用",
+                    "按点赞和收藏热度聚合的高反馈作品",
+                    parsedContentType,
+                    "trending",
+                    loadGalleryRankingAssets(parsedContentType, normalizedKeyword, ruleSize)
+            );
+        }
+        if (isCurationRuleEnabled(curationRules, "latest")) {
+            int ruleSize = resolveCurationSize(
+                    curationRules.get("latest"),
+                    size,
+                    GALLERY_COLLECTION_DEFAULT_SIZE,
+                    GALLERY_COLLECTION_MAX_SIZE
+            );
+            addGalleryCollection(
+                    collections,
+                    "latest",
+                    "最新发布",
+                    "最近发布到灵感广场的创作结果",
+                    parsedContentType,
+                    "latest",
+                    loadGalleryLatestAssets(parsedContentType, normalizedKeyword, ruleSize)
+            );
+        }
 
-        if (parsedContentType == null) {
+        if (parsedContentType == null && isCurationRuleEnabled(curationRules, "content-type")) {
+            int ruleSize = resolveCurationSize(
+                    curationRules.get("content-type"),
+                    size,
+                    GALLERY_COLLECTION_DEFAULT_SIZE,
+                    GALLERY_COLLECTION_MAX_SIZE
+            );
             for (ContentType type : List.of(ContentType.IMAGE, ContentType.VIDEO, ContentType.AUDIO)) {
                 addGalleryCollection(
                         collections,
@@ -1292,7 +1327,7 @@ public class AigcServiceImpl implements AigcService {
                         "按内容类型聚合的高互动作品",
                         type,
                         "content-type",
-                        loadGalleryRankingAssets(type, normalizedKeyword, collectionSize)
+                        loadGalleryRankingAssets(type, normalizedKeyword, ruleSize)
                 );
             }
         }
@@ -1310,28 +1345,42 @@ public class AigcServiceImpl implements AigcService {
     public GalleryTopicsResponse getGalleryTopics(String contentType, String keyword, Integer size) {
         ContentType parsedContentType = parseContentType(contentType);
         String normalizedKeyword = normalizeFilter(keyword);
-        int topicSize = size != null && size > 0
-                ? Math.min(size, GALLERY_COLLECTION_MAX_SIZE)
-                : GALLERY_COLLECTION_DEFAULT_SIZE;
+        Map<String, GalleryCurationRuleResponse> curationRules = effectiveCurationRulesById();
+        List<GalleryTopicDefinition> topicDefinitions = galleryTopicDefinitions();
+        List<GalleryTopicDefinition> scopedTopicDefinitions = topicDefinitions.stream()
+                .filter(definition -> parsedContentType == null
+                        || definition.contentType() == null
+                        || parsedContentType == definition.contentType())
+                .toList();
+        int topicSize = resolveLargestCurationSize(
+                curationRules,
+                scopedTopicDefinitions.stream().map(GalleryTopicDefinition::id).toList(),
+                size,
+                GALLERY_COLLECTION_DEFAULT_SIZE,
+                GALLERY_COLLECTION_MAX_SIZE
+        );
         List<GalleryTopicResponse> topics = new ArrayList<>();
 
-        for (GalleryTopicDefinition definition : galleryTopicDefinitions()) {
-            if (parsedContentType != null
-                    && definition.contentType() != null
-                    && parsedContentType != definition.contentType()) {
+        for (GalleryTopicDefinition definition : scopedTopicDefinitions) {
+            GalleryCurationRuleResponse rule = curationRules.get(definition.id());
+            if (!isCurationRuleEnabled(rule)) {
                 continue;
             }
 
+            int ruleSize = resolveCurationSize(rule, size, GALLERY_COLLECTION_DEFAULT_SIZE, GALLERY_COLLECTION_MAX_SIZE);
+            int ruleCandidateLimit = resolveCurationMaxSize(rule, GALLERY_COLLECTION_MAX_SIZE)
+                    * GALLERY_TOPIC_CANDIDATE_MULTIPLIER;
             ContentType topicContentType = definition.contentType() != null
                     ? definition.contentType()
                     : parsedContentType;
             List<AigcAsset> candidates = loadGalleryRankingAssets(
                     topicContentType,
                     normalizedKeyword,
-                    Math.min(topicSize * GALLERY_TOPIC_CANDIDATE_MULTIPLIER, GALLERY_COLLECTION_MAX_SIZE * 4)
+                    Math.min(ruleSize * GALLERY_TOPIC_CANDIDATE_MULTIPLIER, ruleCandidateLimit)
             );
-            List<AigcAsset> assets = selectTopicAssets(candidates, definition.promptTokens(), topicSize);
-            addGalleryTopic(topics, definition, topicContentType, assets);
+            List<AigcAsset> assets = selectTopicAssets(candidates, definition.promptTokens(), ruleSize);
+            addGalleryTopic(topics, definition, topicContentType, assets,
+                    resolveCurationOperationHint(rule, definition.operationHint()));
         }
 
         return GalleryTopicsResponse.builder()
@@ -1347,9 +1396,22 @@ public class AigcServiceImpl implements AigcService {
     public GalleryCreatorRankingResponse getGalleryCreatorRanking(String contentType, String keyword, Integer size) {
         ContentType parsedContentType = parseContentType(contentType);
         String normalizedKeyword = normalizeFilter(keyword);
-        int rankingSize = size != null && size > 0
-                ? Math.min(size, GALLERY_CREATOR_RANKING_MAX_SIZE)
-                : GALLERY_CREATOR_RANKING_DEFAULT_SIZE;
+        GalleryCurationRuleResponse creatorRankingRule = effectiveCurationRulesById().get("creator-ranking");
+        if (!isCurationRuleEnabled(creatorRankingRule)) {
+            return GalleryCreatorRankingResponse.builder()
+                    .contentType(parsedContentType)
+                    .keyword(normalizedKeyword)
+                    .size(0)
+                    .generatedAt(DateUtils.nowIso())
+                    .creators(List.of())
+                    .build();
+        }
+        int rankingSize = resolveCurationSize(
+                creatorRankingRule,
+                size,
+                GALLERY_CREATOR_RANKING_DEFAULT_SIZE,
+                GALLERY_CREATOR_RANKING_MAX_SIZE
+        );
         PageRequest pageRequest = PageRequest.of(0, rankingSize);
         List<GalleryCreatorRankingItemResponse> creators = assetRepository.rankPublishedAuthors(
                         parsedContentType,
@@ -1548,6 +1610,56 @@ public class AigcServiceImpl implements AigcService {
                 "operationHint", rule.getOperationHint(),
                 "configSource", rule.getConfigSource()
         );
+    }
+
+    private Map<String, GalleryCurationRuleResponse> effectiveCurationRulesById() {
+        return galleryCurationConfigService.applyConfigs(baseGalleryCurationRules()).stream()
+                .collect(Collectors.toMap(
+                        GalleryCurationRuleResponse::getId,
+                        Function.identity(),
+                        (first, ignored) -> first,
+                        LinkedHashMap::new
+                ));
+    }
+
+    private int resolveLargestCurationSize(Map<String, GalleryCurationRuleResponse> rulesById, List<String> ruleIds,
+            Integer requestedSize, int fallbackDefaultSize, int fallbackMaxSize) {
+        return ruleIds.stream()
+                .map(rulesById::get)
+                .filter(this::isCurationRuleEnabled)
+                .mapToInt(rule -> resolveCurationSize(rule, requestedSize, fallbackDefaultSize, fallbackMaxSize))
+                .max()
+                .orElse(resolveCurationSize(null, requestedSize, fallbackDefaultSize, fallbackMaxSize));
+    }
+
+    private int resolveCurationSize(GalleryCurationRuleResponse rule, Integer requestedSize,
+            int fallbackDefaultSize, int fallbackMaxSize) {
+        int maxSize = resolveCurationMaxSize(rule, fallbackMaxSize);
+        int defaultSize = rule != null && rule.getDefaultSize() != null
+                ? rule.getDefaultSize()
+                : fallbackDefaultSize;
+        int targetSize = requestedSize != null && requestedSize > 0 ? requestedSize : defaultSize;
+        return Math.max(1, Math.min(targetSize, maxSize));
+    }
+
+    private int resolveCurationMaxSize(GalleryCurationRuleResponse rule, int fallbackMaxSize) {
+        int maxSize = rule != null && rule.getMaxSize() != null ? rule.getMaxSize() : fallbackMaxSize;
+        return Math.max(1, maxSize);
+    }
+
+    private boolean isCurationRuleEnabled(Map<String, GalleryCurationRuleResponse> rulesById, String ruleId) {
+        return isCurationRuleEnabled(rulesById.get(ruleId));
+    }
+
+    private boolean isCurationRuleEnabled(GalleryCurationRuleResponse rule) {
+        return rule == null || Boolean.TRUE.equals(rule.getEnabled());
+    }
+
+    private String resolveCurationOperationHint(GalleryCurationRuleResponse rule, String fallbackHint) {
+        if (rule != null && rule.getOperationHint() != null && !rule.getOperationHint().isBlank()) {
+            return rule.getOperationHint();
+        }
+        return fallbackHint;
     }
 
     @Override
@@ -1950,7 +2062,7 @@ public class AigcServiceImpl implements AigcService {
     }
 
     private void addGalleryTopic(List<GalleryTopicResponse> topics, GalleryTopicDefinition definition,
-            ContentType contentType, List<AigcAsset> assets) {
+            ContentType contentType, List<AigcAsset> assets, String operationHint) {
         if (assets == null || assets.isEmpty()) {
             return;
         }
@@ -1970,7 +2082,7 @@ public class AigcServiceImpl implements AigcService {
                 .totalLikeCount(totalLikeCount)
                 .totalFavoriteCount(totalFavoriteCount)
                 .heatScore(totalLikeCount + totalFavoriteCount * 2)
-                .operationHint(definition.operationHint())
+                .operationHint(operationHint)
                 .coverAsset(items.get(0))
                 .assets(items)
                 .build());

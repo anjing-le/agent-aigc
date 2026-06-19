@@ -31,7 +31,8 @@ aigc-demo-smoke: gallery collections=3 matched=trending
 aigc-demo-smoke: gallery topics=2 matched=course-cover
 aigc-demo-smoke: gallery creators=1 matched=demo-smoke
 aigc-demo-smoke: gallery curationRules=9 version=v1
-aigc-demo-smoke: gallery curationConfig=database rule=trending
+aigc-demo-smoke: gallery curationConfig=database rule=trending maxSize=2
+aigc-demo-smoke: gallery curationDataPlane=trending itemCount=1
 ```
 
 ## 业务冒烟证据

@@ -233,6 +233,24 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void getGalleryRankingReturnsEmptyWhenAssetRankingRuleDisabled() {
+        when(curationConfigRepository.findByRuleIdIn(any())).thenReturn(List.of(
+                curationConfig("asset-ranking", false, 5, 50, null)
+        ));
+
+        var result = aigcService.getGalleryRanking(null, null, null, null, null);
+
+        assertEquals(0L, result.getTotal());
+        assertEquals(0, result.getSize());
+        assertEquals(0, result.getRecords().size());
+        verify(assetRepository, never()).searchPublishedRanking(
+                org.mockito.ArgumentMatchers.<ContentType>any(),
+                org.mockito.ArgumentMatchers.<String>any(),
+                org.mockito.ArgumentMatchers.<String>any(),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class));
+    }
+
+    @Test
     void getGalleryCollectionsBuildsDynamicPublishedAssetCollections() {
         AigcAsset hotAsset = asset("asset-hot");
         hotAsset.setIsPublished(true);
@@ -296,6 +314,66 @@ class AigcServiceImplAssetTest {
     }
 
     @Test
+    void getGalleryCollectionsUsesCurationConfigForSectionsAndSizes() {
+        AigcAsset hotAsset = asset("asset-hot-configured");
+        hotAsset.setIsPublished(true);
+        hotAsset.setLikeCount(4);
+        hotAsset.setFavoriteCount(1);
+        AigcAsset imageAsset = asset("asset-image-configured");
+        imageAsset.setIsPublished(true);
+        imageAsset.setLikeCount(2);
+        imageAsset.setFavoriteCount(1);
+
+        when(curationConfigRepository.findByRuleIdIn(any())).thenReturn(List.of(
+                curationConfig("trending", true, 2, 2, null),
+                curationConfig("latest", false, 4, 8, null),
+                curationConfig("content-type", true, 1, 1, null)
+        ));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.<ContentType>isNull(),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0 && pageable.getPageSize() == 2)))
+                .thenReturn(new PageImpl<>(List.of(hotAsset)));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0 && pageable.getPageSize() == 1)))
+                .thenReturn(new PageImpl<>(List.of(imageAsset)));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.VIDEO),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.AUDIO),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        var response = aigcService.getGalleryCollections(null, " cat ", null);
+
+        assertEquals(2, response.getCollectionSize());
+        assertEquals(2, response.getCollections().size());
+        assertEquals("trending", response.getCollections().get(0).getId());
+        assertEquals(1, response.getCollections().get(0).getItemCount());
+        assertEquals("content-type-image", response.getCollections().get(1).getId());
+        assertEquals(1, response.getCollections().get(1).getItemCount());
+        assertEquals(false, response.getCollections().stream().anyMatch(collection ->
+                "latest".equals(collection.getId())));
+        verify(assetRepository, never()).searchPublished(
+                org.mockito.ArgumentMatchers.<ContentType>isNull(),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("cat"),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class));
+    }
+
+    @Test
     void getGalleryTopicsBuildsEditorialTopicsFromPublishedAssets() {
         AigcAsset courseCoverAsset = asset("asset-course-cover");
         courseCoverAsset.setPrompt("course cover image for AIGC workshop");
@@ -329,6 +407,39 @@ class AigcServiceImplAssetTest {
         assertEquals("share-ready", response.getTopics().get(1).getId());
         assertEquals(ContentType.IMAGE, response.getTopics().get(1).getContentType());
         assertEquals(2, response.getTopics().get(1).getItemCount());
+    }
+
+    @Test
+    void getGalleryTopicsUsesCurationConfigForSizeHintAndDisabledTopics() {
+        AigcAsset courseCoverAsset = asset("asset-course-cover-configured");
+        courseCoverAsset.setPrompt("course cover image for AIGC workshop");
+        courseCoverAsset.setIsPublished(true);
+        courseCoverAsset.setLikeCount(5);
+        courseCoverAsset.setFavoriteCount(2);
+        AigcAsset genericAsset = asset("asset-topic-generic");
+        genericAsset.setPrompt("blue futuristic abstract landscape");
+        genericAsset.setIsPublished(true);
+
+        when(curationConfigRepository.findByRuleIdIn(any())).thenReturn(List.of(
+                curationConfig("course-cover", true, 1, 1, "优先投放课程首屏"),
+                curationConfig("share-ready", false, 4, 8, null)
+        ));
+        when(assetRepository.searchPublishedRanking(
+                org.mockito.ArgumentMatchers.eq(ContentType.IMAGE),
+                org.mockito.ArgumentMatchers.<String>isNull(),
+                org.mockito.ArgumentMatchers.eq("course"),
+                org.mockito.ArgumentMatchers.<org.springframework.data.domain.Pageable>argThat(pageable ->
+                        pageable.getPageNumber() == 0 && pageable.getPageSize() == 4)))
+                .thenReturn(new PageImpl<>(List.of(courseCoverAsset, genericAsset)));
+
+        var response = aigcService.getGalleryTopics("IMAGE", " course ", null);
+
+        assertEquals(1, response.getTopicSize());
+        assertEquals(1, response.getTopics().size());
+        assertEquals("course-cover", response.getTopics().get(0).getId());
+        assertEquals(1, response.getTopics().get(0).getItemCount());
+        assertEquals("优先投放课程首屏", response.getTopics().get(0).getOperationHint());
+        assertEquals(false, response.getTopics().stream().anyMatch(topic -> "share-ready".equals(topic.getId())));
     }
 
     @Test
@@ -383,6 +494,24 @@ class AigcServiceImplAssetTest {
         assertEquals(14L, response.getCreators().get(0).getHeatScore());
         assertEquals(ContentType.IMAGE, response.getCreators().get(0).getDominantContentType());
         assertEquals("asset-creator-top", response.getCreators().get(0).getTopAsset().getId());
+    }
+
+    @Test
+    void getGalleryCreatorRankingReturnsEmptyWhenRuleDisabled() {
+        when(curationConfigRepository.findByRuleIdIn(any())).thenReturn(List.of(
+                curationConfig("creator-ranking", false, 5, 20, null)
+        ));
+
+        var response = aigcService.getGalleryCreatorRanking("IMAGE", " course ", 5);
+
+        assertEquals(ContentType.IMAGE, response.getContentType());
+        assertEquals("course", response.getKeyword());
+        assertEquals(0, response.getSize());
+        assertEquals(0, response.getCreators().size());
+        verify(assetRepository, never()).rankPublishedAuthors(
+                org.mockito.ArgumentMatchers.<ContentType>any(),
+                org.mockito.ArgumentMatchers.<String>any(),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class));
     }
 
     @Test
@@ -886,6 +1015,19 @@ class AigcServiceImplAssetTest {
         asset.setLikeCount(0);
         asset.setFavoriteCount(0);
         return asset;
+    }
+
+    private AigcGalleryCurationConfig curationConfig(String ruleId, Boolean enabled, Integer defaultSize,
+            Integer maxSize, String operationHint) {
+        AigcGalleryCurationConfig config = new AigcGalleryCurationConfig();
+        config.setRuleId(ruleId);
+        config.setEnabled(enabled);
+        config.setDefaultSize(defaultSize);
+        config.setMaxSize(maxSize);
+        config.setOperationHint(operationHint);
+        config.setUpdatedBy("test");
+        config.setUpdatedAt(LocalDateTime.of(2026, 6, 19, 10, 0));
+        return config;
     }
 
     private void givenImageProviders() {
